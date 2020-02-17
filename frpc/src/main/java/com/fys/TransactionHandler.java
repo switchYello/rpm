@@ -1,8 +1,6 @@
 package com.fys;
 
 import io.netty.channel.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 转换数据用的handler，将读到的数据传入out中
@@ -10,7 +8,6 @@ import org.slf4j.LoggerFactory;
  */
 public class TransactionHandler extends ChannelInboundHandlerAdapter {
 
-    private static Logger log = LoggerFactory.getLogger(TransactionHandler.class);
     private boolean autoRead;
     private Channel out;
 
@@ -27,15 +24,12 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
         } else {
             out.writeAndFlush(msg).addListener(new ChannelFutureListener() {
                 @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
+                public void operationComplete(ChannelFuture future) {
                     if (future.isSuccess()) {
                         ctx.read();
-                    } else {
-                        log.error("透传handler写入失败in:{},to:{}", ctx, out);
                     }
                 }
             });
-
         }
     }
 
