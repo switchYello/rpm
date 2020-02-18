@@ -116,6 +116,7 @@ public class Server {
                         } else {
                             log.info("向客户端发送创建连接指令失败");
                             promise.setFailure(future.cause());
+                            managerChanel.close();
                         }
                     });
             return promise;

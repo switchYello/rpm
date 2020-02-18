@@ -1,14 +1,15 @@
 package com.fys;
 
-import com.fys.handler.FrpsInit;
+import com.fys.cmd.handler.CmdEncoder;
+import com.fys.handler.FrpsHandler;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 public class App {
 
@@ -16,22 +17,32 @@ public class App {
     public static EventLoopGroup boss = new NioEventLoopGroup(1);
     public static EventLoopGroup work = new NioEventLoopGroup(1);
 
-    private static int port = 9050;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        Config.init();
 
         ServerBootstrap sb = new ServerBootstrap();
         sb.group(boss, work)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new FrpsInit());
-        ChannelFuture bind = sb.bind("127.0.0.1", port);
-        bind.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) {
-                if (future.isSuccess()) {
-                    log.info("服务端在端口:{}启动成功", port);
-                }
-            }
-        });
+                .option(ChannelOption.SO_RCVBUF, 32 * 1024)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
+                .childOption(ChannelOption.SO_RCVBUF, 128 * 1024)
+                .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
+                .childOption(ChannelOption.SO_LINGER, 1)
+                .childHandler(new ChannelInitializer<Channel>() {
+                    @Override
+                    protected void initChannel(Channel ch) throws Exception {
+                        ch.pipeline().addLast(new CmdEncoder());
+                        ch.pipeline().addLast(new FrpsHandler());
+                    }
+                })
+                .bind(Config.bingHost, Config.bingPort)
+                .addListener((ChannelFutureListener) future -> {
+                    if (future.isSuccess()) {
+                        log.info("服务端在端口:{}启动成功", Config.bingPort);
+                    } else {
+                        log.error("服务端在端口:" + Config.bingPort + "启动失败", future.cause());
+                    }
+                });
     }
 }
