@@ -18,16 +18,14 @@ import java.util.List;
 /**
  * hcy 2020/2/18
  */
-public class ClientHandler extends ReplayingDecoder<Void> {
+public class ManagerHandler extends ReplayingDecoder<Void> {
 
-    private static Logger log = LoggerFactory.getLogger(ClientHandler.class);
+    private static Logger log = LoggerFactory.getLogger(ManagerHandler.class);
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);
         log.info("客户端连接到服务器成功host：{}，port:{}", Config.serverHost, Config.serverPort);
-
-        ctx.writeAndFlush(new ManagerConnection(Config.serverWorkPort))
+        ctx.writeAndFlush(new ManagerConnection(Config.serverWorkPort, Config.localClientName))
                 .addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
@@ -41,10 +39,18 @@ public class ClientHandler extends ReplayingDecoder<Void> {
         int length = in.readInt();
         byte code = in.readByte();
 
-        if (code == Cmd.createNewConnection) {
+        if (code == Cmd.needCreateNewConnection) {
             CharSequence serverId = in.readCharSequence(length - 1, StandardCharsets.UTF_8);
             log.info("收到服务端NeedNewConnection serverId:{}", serverId);
             new Client(serverId.toString()).start();
+            return;
         }
+
+        if (code == Cmd.pong) {
+            log.info("收到服务端pong");
+            return;
+        }
+
     }
+
 }

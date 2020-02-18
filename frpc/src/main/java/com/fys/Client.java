@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 public class Client {
 
     private static EventLoopGroup work = AppClient.work;
-    private String serverhost = Config.serverHost;
+    private String serverHost = Config.serverHost;
     private int serverPort = Config.serverPort;
     private String serverId;
 
@@ -28,25 +28,17 @@ public class Client {
         Bootstrap b = new Bootstrap();
         b.group(work)
                 .channel(NioSocketChannel.class)
-                .remoteAddress(serverhost, serverPort)
+                .remoteAddress(serverHost, serverPort)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .option(ChannelOption.AUTO_READ, false)
-                .handler(new ClientInit(this))
+                .handler(new ChannelInitializer<Channel>() {
+                    @Override
+                    protected void initChannel(Channel ch) {
+                        ch.pipeline().addLast(new CmdEncoder());
+                        ch.pipeline().addLast(new ClientHandler(Client.this));
+                    }
+                })
                 .connect();
-    }
-
-    private static class ClientInit extends ChannelInitializer<Channel> {
-        private Client client;
-
-        public ClientInit(Client client) {
-            this.client = client;
-        }
-
-        @Override
-        protected void initChannel(Channel ch) throws Exception {
-            ch.pipeline().addLast(new CmdEncoder());
-            ch.pipeline().addLast(new ClientHandler(client));
-        }
     }
 
     /*
@@ -58,24 +50,31 @@ public class Client {
         private final int localPort = Config.localPort;
         private Client client;
 
-        public ClientHandler(Client client) {
+
+        @Sharable
+        private static class IgnoreHandler extends ChannelInboundHandlerAdapter {
+            private static IgnoreHandler INSTANCE = new IgnoreHandler();
+
+        }
+
+        ClientHandler(Client client) {
             this.client = client;
         }
 
         //到此方法说明clent已经连接到server了
         //在此连接到本地，然后将此连接的所有输出引入到本地连接
         @Override
-        public void channelActive(final ChannelHandlerContext ctx) throws Exception {
+        public void channelActive(final ChannelHandlerContext ctx) {
             //连接到本地需要代理的端口
-            ChannelFuture connectionToLocal = createConnectionToLocal("127.0.0.1", localPort, ctx);
-            //告诉服务器本连接是数据连接
-            ctx.writeAndFlush(new DataConnection(client.serverId));
-            //等待连接完成，转发数据
+            ChannelFuture connectionToLocal = createConnectionToLocal(localPort);
             connectionToLocal.addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
-                        ctx.pipeline().addLast(new TransactionHandler(future.channel(), false));
+                        ctx.pipeline().addLast("linkServer", new TransactionHandler(future.channel(), false));
+                        future.channel().pipeline().addLast("linkLocal", new TransactionHandler(ctx.channel(), true));
+                        //告诉服务器本连接是数据连接
+                        ctx.writeAndFlush(new DataConnection(client.serverId));
                         ctx.read();
                     } else {
                         log.info("连接到本地端口:{}失败", localPort);
@@ -86,13 +85,13 @@ public class Client {
         }
 
         //创建一个指向本地端口的连接
-        private ChannelFuture createConnectionToLocal(String host, int port, final ChannelHandlerContext ctx) {
+        private ChannelFuture createConnectionToLocal(int port) {
             Bootstrap b = new Bootstrap();
             return b.group(work)
                     .channel(NioSocketChannel.class)
-                    .remoteAddress(host, port)
+                    .remoteAddress("127.0.0.1", port)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-                    .handler(new TransactionHandler(ctx.channel(), true))
+                    .handler(IgnoreHandler.INSTANCE)
                     .connect();
         }
     }

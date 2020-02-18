@@ -17,6 +17,7 @@ public class Config {
     public static int serverPort;
     public static int serverWorkPort;
     public static int localPort;
+    public static String localClientName;
 
 
     public static void init() throws IOException {
@@ -28,8 +29,9 @@ public class Config {
             serverPort = toInt(prop.getProperty("serverPort"), "serverPort");
             serverWorkPort = toInt(prop.getProperty("serverWorkPort"), "serverWorkPort");
             localPort = toInt(prop.getProperty("localPort"), "localPort");
+            localClientName = toString(prop.getProperty("localClientName"), "localClientName");
         }
-        log.info("读取配置文件serverHost:{},serverPort:{},serverWorkPort:{},localPort{}", serverHost, serverPort, serverWorkPort, localPort);
+        log.info("读取配置文件serverHost:{},serverPort:{},serverWorkPort:{},localPort{},localClientName:{}", serverHost, serverPort, serverWorkPort, localPort, localClientName);
     }
 
     private static int toInt(String str, String name) {

@@ -24,7 +24,7 @@ public class NeedNewConnectionCmd implements Cmd {
     public ByteBuf toByte() {
         log.info("服务器-> client 需要新的连接id:{}", id);
         ByteBuf buffer = Unpooled.buffer();
-        buffer.writeByte(Cmd.createNewConnection).writeCharSequence(id, StandardCharsets.UTF_8);
+        buffer.writeByte(Cmd.needCreateNewConnection).writeCharSequence(id, StandardCharsets.UTF_8);
         return buffer;
     }
 

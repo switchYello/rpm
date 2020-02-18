@@ -13,10 +13,13 @@ public interface Cmd {
     byte managerCmd = 1;
 
     //server to client
-    byte createNewConnection = 3;
+    byte needCreateNewConnection = 3;
+
+    byte ping = 4;
+
+    byte pong = 5;
 
     //返回标志位  + 数据的字节数组
     ByteBuf toByte();
-
 
 }

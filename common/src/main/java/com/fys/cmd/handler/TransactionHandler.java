@@ -21,7 +21,7 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelRead(final ChannelHandlerContext ctx, Object msg) {
         if (autoRead) {
             out.writeAndFlush(msg);
         } else {
@@ -42,7 +42,10 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         if (out.isActive()) {
+            log.info("[{}]被关闭了，所以同步关闭另一侧", ctx.name());
             out.flush().close();
+        } else {
+            log.info("[{}]被关闭了，另一侧已经被关闭了，不处理", ctx.name());
         }
         super.channelInactive(ctx);
     }
