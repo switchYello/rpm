@@ -1,9 +1,10 @@
 package com.fys;
 
+import com.fys.cmd.clientToServer.DataConnection;
+import com.fys.cmd.handler.CmdEncoder;
+import com.fys.cmd.handler.TransactionHandler;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,15 +15,13 @@ import org.slf4j.LoggerFactory;
  */
 public class Client {
 
-    private static EventLoopGroup work = new NioEventLoopGroup(1);
-    private String serverhost;
-    private int serverPort;
-    private int localPort = 80;
+    private static EventLoopGroup work = AppClient.work;
+    private String serverhost = Config.serverHost;
+    private int serverPort = Config.serverPort;
+    private String serverId;
 
-
-    public Client(String serverhost, int serverPort) {
-        this.serverhost = serverhost;
-        this.serverPort = serverPort;
+    public Client(String serverId) {
+        this.serverId = serverId;
     }
 
     public void start() {
@@ -32,8 +31,22 @@ public class Client {
                 .remoteAddress(serverhost, serverPort)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .option(ChannelOption.AUTO_READ, false)
-                .handler(new ClientHandler())
+                .handler(new ClientInit(this))
                 .connect();
+    }
+
+    private static class ClientInit extends ChannelInitializer<Channel> {
+        private Client client;
+
+        public ClientInit(Client client) {
+            this.client = client;
+        }
+
+        @Override
+        protected void initChannel(Channel ch) throws Exception {
+            ch.pipeline().addLast(new CmdEncoder());
+            ch.pipeline().addLast(new ClientHandler(client));
+        }
     }
 
     /*
@@ -42,7 +55,12 @@ public class Client {
     private static class ClientHandler extends ChannelInboundHandlerAdapter {
 
         private static Logger log = LoggerFactory.getLogger(ClientHandler.class);
-        private int localPort = 80;
+        private final int localPort = Config.localPort;
+        private Client client;
+
+        public ClientHandler(Client client) {
+            this.client = client;
+        }
 
         //到此方法说明clent已经连接到server了
         //在此连接到本地，然后将此连接的所有输出引入到本地连接
@@ -51,7 +69,7 @@ public class Client {
             //连接到本地需要代理的端口
             ChannelFuture connectionToLocal = createConnectionToLocal("127.0.0.1", localPort, ctx);
             //告诉服务器本连接是数据连接
-            ctx.writeAndFlush(Unpooled.buffer().writeInt(1).writeByte(Cmd.dataCmd));
+            ctx.writeAndFlush(new DataConnection(client.serverId));
             //等待连接完成，转发数据
             connectionToLocal.addListener(new ChannelFutureListener() {
                 @Override
@@ -77,7 +95,6 @@ public class Client {
                     .handler(new TransactionHandler(ctx.channel(), true))
                     .connect();
         }
-
     }
 
 

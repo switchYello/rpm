@@ -1,7 +1,6 @@
 package com.fys.handler;
 
-import com.fys.ConnectionPool;
-import com.fys.Server;
+import com.fys.ServerManager;
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -9,6 +8,7 @@ import io.netty.handler.codec.ReplayingDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -28,10 +28,12 @@ public class FrpsHandler extends ReplayingDecoder<Void> {
         //读取标志位
         byte code = in.readByte();
 
+        //新连接的数据，并表明自己是数据连接
         if (code == Cmd.dataCmd) {
-            log.info("服务端读取到的数据长度是:{},数据标志位是:{},标志位是dataCmd，添加到连接池", length, code);
+            CharSequence serverId = in.readCharSequence(length - 1, StandardCharsets.UTF_8);
+            log.info("服务端读取到的数据长度是:{},数据标志位是:{},标志位是dataCmd，serverId:{}", length, code, serverId);
+            ServerManager.addConnection(serverId.toString(), ctx.channel());
             ctx.pipeline().remove(this);
-            ConnectionPool.addConnection(ctx);
             return;
         }
 
@@ -40,10 +42,10 @@ public class FrpsHandler extends ReplayingDecoder<Void> {
          *长度：标志位：port
          * */
         if (code == Cmd.managerCmd) {
-            ConnectionPool.managerHandlerContext = ctx;
             int port = in.readShort();
             log.info("服务端读取到的数据长度是:{},数据标志位是:{},标志位是managerCmd,将要监听的端口是:{}", length, code, port);
-            new Server("127.0.0.1", port).start();
+            ServerManager.startNewServer(port, ctx.channel());
+            //ctx.pipeline().remove(this);
             return;
         }
 

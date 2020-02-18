@@ -1,5 +1,6 @@
 package com.fys.handler;
 
+import com.fys.cmd.handler.CmdEncoder;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 
@@ -10,7 +11,8 @@ import io.netty.channel.ChannelInitializer;
 public class FrpsInit extends ChannelInitializer<Channel> {
 
     @Override
-    protected void initChannel(Channel ch) throws Exception {
+    protected void initChannel(Channel ch) {
+        ch.pipeline().addLast(new CmdEncoder());
         ch.pipeline().addLast(new FrpsHandler());
     }
 }
