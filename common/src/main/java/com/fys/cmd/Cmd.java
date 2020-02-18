@@ -9,8 +9,8 @@ import io.netty.buffer.ByteBuf;
  */
 public interface Cmd {
     //client to server
-    byte dataCmd = 0;
-    byte managerCmd = 1;
+    byte wantDataCmd = 0;
+    byte wantManagerCmd = 1;
 
     //server to client
     byte needCreateNewConnection = 3;

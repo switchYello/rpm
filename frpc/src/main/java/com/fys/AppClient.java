@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Hello world!
+ * 客户端启动类
  */
 public class AppClient {
 
@@ -26,6 +26,9 @@ public class AppClient {
     public static void main(String[] args) throws IOException {
         Config.init();
         ScheduledFuture<?> sf = scheduleConnection(4, TimeUnit.SECONDS);
+        Channel managerConnection = createManagerConnection();
+
+
     }
 
     private static ScheduledFuture<?> scheduleConnection(int delay, TimeUnit unit) {

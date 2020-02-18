@@ -24,7 +24,7 @@ public class DataConnection implements Cmd {
     public ByteBuf toByte() {
         log.info("client-> 服务器 此连接指定服务id:{}", serverId);
         ByteBuf buffer = Unpooled.buffer();
-        buffer.writeByte(Cmd.dataCmd).writeCharSequence(serverId, StandardCharsets.UTF_8);
+        buffer.writeByte(Cmd.wantDataCmd).writeCharSequence(serverId, StandardCharsets.UTF_8);
         return buffer;
     }
 

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -13,8 +14,8 @@ import java.util.Properties;
 public class Config {
 
     private static Logger log = LoggerFactory.getLogger(Config.class);
-    public static int bingPort;
-    public static String bingHost = "127.0.0.1";
+    public static int bindPort;
+    public static String bindHost = "127.0.0.1";
 
 
     public static void init() throws IOException {
@@ -22,10 +23,10 @@ public class Config {
         try (InputStream in = input) {
             Properties prop = new Properties();
             prop.load(in);
-            bingHost = toString(prop.getProperty("bingHost"), "bingHost");
-            bingPort = toInt(prop.getProperty("bingPort"), "bingPort");
+            bindHost = Optional.ofNullable(prop.getProperty("bindHost")).orElse(bindHost);
+            bindPort = toInt(prop.getProperty("bindPort"), "bindPort");
         }
-        log.info("读取配置文件bingPort:{}", bingPort);
+        log.info("读取配置文件bindPort:{}", bindPort);
     }
 
     private static int toInt(String str, String name) {

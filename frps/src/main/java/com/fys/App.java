@@ -36,12 +36,12 @@ public class App {
                         ch.pipeline().addLast(new FrpsHandler());
                     }
                 })
-                .bind(Config.bingHost, Config.bingPort)
+                .bind(Config.bindHost, Config.bindPort)
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
-                        log.info("服务端在端口:{}启动成功", Config.bingPort);
+                        log.info("服务端在端口:{}启动成功", Config.bindPort);
                     } else {
-                        log.error("服务端在端口:" + Config.bingPort + "启动失败", future.cause());
+                        log.error("服务端在端口:" + Config.bindPort + "启动失败", future.cause());
                     }
                 });
     }

@@ -18,9 +18,13 @@ public class ServerManager {
     private static Logger log = LoggerFactory.getLogger(ServerManager.class);
     private static List<Server> list = new ArrayList<>();
 
-    public static void startNewServer(int port, Channel managerChannel, String clientName) {
-        log.info("准备创建新server，端口:{},客户端:{}", port, clientName);
 
+    /**
+     * 开启新的服务，用户数据转发
+     */
+    public static void startNewServer(int port, Channel channel, String clientName) {
+        log.info("准备创建新server，端口:{},客户端:{}", port, clientName);
+        
         for (Iterator<Server> iterator = list.iterator(); iterator.hasNext(); ) {
             Server s = iterator.next();
             if (Objects.equals(s.getPort(), port)) {
@@ -29,8 +33,8 @@ public class ServerManager {
                 s.close();
             }
         }
-        Server server = new Server(port, managerChannel, clientName);
-        managerChannel.closeFuture().addListener((ChannelFutureListener) future -> {
+        Server server = new Server(port, channel, clientName);
+        channel.closeFuture().addListener((ChannelFutureListener) future -> {
             log.info("服务的ManagerChannel被关闭了，关闭server，端口:{},客户端:{}", server.getPort(), server.getClientName());
             server.close();
             list.remove(server);
@@ -39,6 +43,9 @@ public class ServerManager {
         server.start();
     }
 
+    /*
+     * 为指定serverId的服务添加链接
+     * */
     public static void addConnection(String serverId, Channel channel) {
         list.stream()
                 .filter(s -> Objects.equals(serverId, s.getId()))
