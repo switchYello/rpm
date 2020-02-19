@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -22,12 +23,22 @@ public class AppClient {
     private static Logger log = LoggerFactory.getLogger(AppClient.class);
     public static EventLoopGroup work = new NioEventLoopGroup(1);
 
-
+    /*
+     * -c=conf.properties
+     * */
     public static void main(String[] args) throws IOException {
-        Config.init();
+        log.info(Arrays.toString(args));
+        String confPath = null;
+        for (String arg : args) {
+            String[] split = arg.split("=");
+            assertTrue(split.length == 2, "参数不正确，无法解析:" + arg);
+            if ("-c".equals(split[0])) {
+                confPath = split[1];
+            }
+        }
+        Config.init(confPath);
         ScheduledFuture<?> sf = scheduleConnection(4, TimeUnit.SECONDS);
         Channel managerConnection = createManagerConnection();
-
 
     }
 
@@ -66,5 +77,10 @@ public class AppClient {
         return connect.channel();
     }
 
+    private static void assertTrue(boolean c, String message) {
+        if (!c) {
+            throw new RuntimeException(message);
+        }
+    }
 
 }

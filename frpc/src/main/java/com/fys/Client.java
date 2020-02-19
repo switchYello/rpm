@@ -89,7 +89,7 @@ public class Client {
             Bootstrap b = new Bootstrap();
             return b.group(work)
                     .channel(NioSocketChannel.class)
-                    .remoteAddress("127.0.0.1", port)
+                    .remoteAddress("0.0.0.0", port)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                     .handler(IgnoreHandler.INSTANCE)
                     .connect();
