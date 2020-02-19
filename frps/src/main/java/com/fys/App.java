@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class App {
 
@@ -18,9 +19,21 @@ public class App {
     public static EventLoopGroup work = new NioEventLoopGroup(1);
 
 
+    /*
+     * -p=9090
+     * */
     public static void main(String[] args) throws IOException {
-        Config.init();
-
+        log.info(Arrays.toString(args));
+        String confPath = null;
+        for (String arg : args) {
+            String[] split = arg.split("=");
+            assertTrue(split.length == 2, "参数不正确，无法解析:" + arg);
+            if ("-c".equals(split[0])) {
+                confPath = split[1];
+            }
+        }
+        Config.init(confPath);
+        
         ServerBootstrap sb = new ServerBootstrap();
         sb.group(boss, work)
                 .channel(NioServerSocketChannel.class)
@@ -45,4 +58,11 @@ public class App {
                     }
                 });
     }
+
+    private static void assertTrue(boolean c, String message) {
+        if (!c) {
+            throw new RuntimeException(message);
+        }
+    }
+
 }

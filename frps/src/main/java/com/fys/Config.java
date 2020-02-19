@@ -3,6 +3,7 @@ package com.fys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -18,8 +19,14 @@ public class Config {
     public static String bindHost = "127.0.0.1";
 
 
-    public static void init() throws IOException {
-        final InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream("config.properties");
+    public static void init(String configPath) throws IOException {
+        if (configPath == null) {
+            configPath = "config.properties";
+        }
+        InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream(configPath);
+        if (input == null) {
+            input = new FileInputStream(configPath);
+        }
         try (InputStream in = input) {
             Properties prop = new Properties();
             prop.load(in);

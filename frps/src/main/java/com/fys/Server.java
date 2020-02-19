@@ -61,7 +61,7 @@ public class Server {
                         ch.pipeline().addLast(new ServerHandler(Server.this));
                     }
                 })
-                .bind("127.0.0.1", port)
+                .bind(Config.bindHost, port)
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
                         log.info("服务端for:{}在端口:{}启动成功", clientName, port);
