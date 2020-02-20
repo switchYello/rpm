@@ -1,11 +1,6 @@
 package com.fys.cmd;
 
-import com.fys.cmd.clientToServer.WantDataCmd;
-import com.fys.cmd.clientToServer.WantManagerCmd;
-import com.fys.cmd.clientToServer.Pong;
 import io.netty.buffer.ByteBuf;
-
-import java.nio.charset.StandardCharsets;
 
 /**
  * hcy 2020/2/10
@@ -27,22 +22,8 @@ public interface Cmd {
         byte serverStartSuccessCmd = 7;
     }
 
-    //返回标志位  + 数据的字节数组
+    //返回 标志位 + 数据的字节数组
     ByteBuf toByte();
-
-    static Cmd encoder(byte code, ByteBuf msg) {
-        if (code == ClientToServer.wantDataCmd) {
-            return new WantDataCmd(msg.readCharSequence(msg.readableBytes(), StandardCharsets.UTF_8).toString());
-        }
-        if (code == ClientToServer.wantManagerCmd) {
-            return new WantManagerCmd(msg.readShort(), msg.readCharSequence(msg.readableBytes() - 2, StandardCharsets.UTF_8).toString());
-        }
-        if (code == ClientToServer.pong) {
-            return new Pong();
-        }
-
-        throw new RuntimeException("无法识别的指令");
-    }
 
 
 }
