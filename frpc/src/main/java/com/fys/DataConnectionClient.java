@@ -2,6 +2,7 @@ package com.fys;
 
 import com.fys.cmd.clientToServer.WantDataCmd;
 import com.fys.cmd.handler.CmdEncoder;
+import com.fys.cmd.handler.FlowManagerHandler;
 import com.fys.cmd.handler.TransactionHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -36,6 +37,7 @@ public class DataConnectionClient {
                     @Override
                     protected void initChannel(Channel ch) {
                         ch.pipeline().addLast(new CmdEncoder());
+                        ch.pipeline().addLast(FlowManagerHandler.INSTANCE);
                     }
                 })
                 .connect()

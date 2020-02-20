@@ -38,7 +38,7 @@ public class ServerStartSuccessHandler extends SimpleChannelInboundHandler<Serve
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, NeedCreateNewConnectionCmd msg) {
             log.info("服务器需要新连接");
-            log.info("收到服务端NeedNewConnection serverId:{}", serverId);
+            log.info("收到服务端NeedNewConnection");
             new DataConnectionClient(serverId).start();
         }
 
