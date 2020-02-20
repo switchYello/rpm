@@ -2,7 +2,6 @@ package com.fys;
 
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.handler.ServerCmdDecoder;
-import com.fys.handler.WantManagerCmdHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -48,7 +47,6 @@ public class App {
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
                         ch.pipeline().addLast(new ServerCmdDecoder());
-                        ch.pipeline().addLast(new WantManagerCmdHandler());
                     }
                 })
                 .bind(Config.bindHost, Config.bindPort)

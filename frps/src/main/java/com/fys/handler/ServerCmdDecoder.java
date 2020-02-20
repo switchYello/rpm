@@ -4,6 +4,7 @@ import com.fys.ServerManager;
 import com.fys.cmd.Cmd;
 import com.fys.cmd.clientToServer.Pong;
 import com.fys.cmd.clientToServer.WantManagerCmd;
+import com.fys.cmd.handler.FlowManagerHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -34,6 +35,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
             int port = in.readShort();
             String clientName = readStr(in, length - 1 - 2);
             log.info("服务端读取到的数据长度是:{},数据标志位是:{},标志位是managerCmd,将要监听的端口是:{},客户端名字:{}", length, flag, port, clientName);
+            ctx.pipeline().addLast(new WantManagerCmdHandler());
             out.add(new WantManagerCmd(port, clientName));
             return;
         }
@@ -44,11 +46,12 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
             return;
         }
 
-        //收到客户端新建的数据连接
+        //新建数据连接
         if (flag == Cmd.ClientToServer.wantDataCmd) {
             String serverId = readStr(in, length - 1);
             log.info("服务端读取到的数据长度是:{},数据标志位是:{},标志位是dataCmd，serverId:{}", length, flag, serverId);
-            ctx.pipeline().remove(this);
+            //替换成流量统计Handler
+            ctx.pipeline().replace(this, null, FlowManagerHandler.INSTANCE);
             ServerManager.addConnection(serverId, ctx.channel());
             return;
         }
