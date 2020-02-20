@@ -16,7 +16,7 @@ public class WantDataCmd implements Cmd {
     private static Logger log = LoggerFactory.getLogger(WantDataCmd.class);
     private String serverId;
 
-    public WantDataCmd(String serverId) {
+     public WantDataCmd(String serverId) {
         this.serverId = serverId;
     }
 

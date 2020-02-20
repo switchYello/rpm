@@ -13,18 +13,25 @@ import java.nio.charset.StandardCharsets;
 public class WantManagerCmd implements Cmd {
 
     private int serverWorkPort;
-    private String name;
+    private String clentName;
 
-    public WantManagerCmd(int serverWorkPort, String name) {
+    public WantManagerCmd(int serverWorkPort, String clentName) {
         this.serverWorkPort = serverWorkPort;
-        this.name = name;
+        this.clentName = clentName;
     }
 
     @Override
     public ByteBuf toByte() {
         ByteBuf buffer = Unpooled.buffer();
-        buffer.writeByte(ClientToServer.wantManagerCmd).writeShort(serverWorkPort).writeCharSequence(name, StandardCharsets.UTF_8);
+        buffer.writeByte(ClientToServer.wantManagerCmd).writeShort(serverWorkPort).writeCharSequence(clentName, StandardCharsets.UTF_8);
         return buffer;
     }
 
+    public int getServerWorkPort() {
+        return serverWorkPort;
+    }
+
+    public String getClentName() {
+        return clentName;
+    }
 }
