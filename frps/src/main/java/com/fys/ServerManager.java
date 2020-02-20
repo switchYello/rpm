@@ -1,7 +1,7 @@
 package com.fys;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +21,7 @@ public class ServerManager {
     /**
      * 开启新的服务，用户数据转发
      */
-    public static void startNewServer(int port, Channel managerChannel, String clientName) {
+    public static ChannelFuture startNewServer(int port, Channel managerChannel, String clientName) {
         log.info("准备创建新server，端口:{},客户端:{}", port, clientName);
 
         for (Iterator<Server> iterator = list.iterator(); iterator.hasNext(); ) {
@@ -33,14 +33,7 @@ public class ServerManager {
             }
         }
         Server server = new Server(port, managerChannel, clientName);
-        list.add(server);
-        server.start();
-
-        //为管理添加关闭事件，连接关闭时同时关闭Server
-        managerChannel.closeFuture().addListener((ChannelFutureListener) future -> {
-            log.info("服务的ManagerChannel被关闭了，关闭server，端口:{},客户端:{}", server.getPort(), server.getClientName());
-            server.close();
-        });
+        return server.start();
     }
 
     /*
@@ -54,16 +47,16 @@ public class ServerManager {
                 return;
             }
         }
-
-        //对于找不到Server的数据连接，直接关闭
+        //对于找不到Server的数据连接，直接关闭连接
         channel.close();
     }
 
-
     //关闭server，同时从list中移除
-    public static void unRegester(Server server) {
+    public static void unRegister(Server server) {
         list.remove(server);
     }
 
-
+    public static void register(Server server) {
+        list.add(server);
+    }
 }

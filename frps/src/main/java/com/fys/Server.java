@@ -2,6 +2,8 @@ package com.fys;
 
 import com.fys.cmd.handler.TransactionHandler;
 import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
+import com.fys.cmd.serverToClient.ServerStartFailCmd;
+import com.fys.cmd.serverToClient.ServerStartSuccessCmd;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -12,6 +14,7 @@ import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.UUID;
@@ -23,10 +26,6 @@ import java.util.UUID;
  * hcy 2020/2/17
  */
 public class Server {
-
-    enum Status {
-        creating, created, closeing, closed;
-    }
 
     private static Logger log = LoggerFactory.getLogger(Server.class);
     private EventLoopGroup boss = App.boss;
@@ -40,18 +39,21 @@ public class Server {
     private ChannelFuture bind;
     private Queue<Promise<Channel>> hasConnectionPromises = new LinkedList<>();
     private Queue<Promise<Channel>> waitConnections = new LinkedList<>();
-    private Status status;
 
 
     public Server(int port, Channel managerChanel, String clientName) {
         this.port = port;
         this.clientName = clientName;
         this.managerChanel = managerChanel;
-        this.status = Status.creating;
+        //为管理添加关闭事件，连接关闭时同时关闭Server
+        managerChanel.closeFuture().addListener((ChannelFutureListener) future -> {
+            log.info("服务的ManagerChannel被关闭了，关闭server，端口:{},客户端:{}", port, clientName);
+            close();
+        });
     }
 
-    //开启服务监听客户端要求的端口，等待用户连接但不自动读
-    public void start() {
+    //开启服务监听客户端要求的端口，等待用户连接但不自动读数据
+    public ChannelFuture start() {
         ServerBootstrap sb = new ServerBootstrap();
         bind = sb.group(boss, work)
                 .channel(NioServerSocketChannel.class)
@@ -68,15 +70,18 @@ public class Server {
                     }
                 })
                 .bind(Config.bindHost, port)
+                //添加服务开启成功失败事件
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
-                        status = Status.created;
+                        managerChanel.writeAndFlush(new ServerStartSuccessCmd(id));
+                        ServerManager.register(this);
                         log.info("服务端for:{}在端口:{}启动成功", clientName, port);
                     } else {
-                        status = Status.closed;
+                        managerChanel.writeAndFlush(new ServerStartFailCmd(future.toString()));
                         log.error("服务端for:{}在端口:{}启动失败", clientName, port, future.cause());
                     }
                 });
+        return bind;
     }
 
     public String getId() {
@@ -90,18 +95,6 @@ public class Server {
     public String getClientName() {
         return clientName;
     }
-
-
-    public void close() {
-        if (bind != null && bind.channel().isActive()) {
-            bind.channel().close();
-        }
-        managerChanel.close();
-        hasConnectionPromises.forEach(c -> c.cancel(true));
-        waitConnections.forEach(c -> c.cancel(true));
-        ServerManager.unRegester(this);
-    }
-
 
     //添加客户端连接到池中，如果有等待需要的promise则优先给promise
     public void addConnection(Channel dataChanel) {
@@ -123,7 +116,7 @@ public class Server {
     public Promise<Channel> getConnection() {
         if (hasConnectionPromises.isEmpty()) {
             Promise<Channel> promise = new DefaultPromise<>(work.next());
-            managerChanel.writeAndFlush(new NeedCreateNewConnectionCmd(id))
+            managerChanel.writeAndFlush(new NeedCreateNewConnectionCmd())
                     .addListener(future -> {
                         if (future.isSuccess()) {
                             waitConnections.add(promise);
@@ -136,6 +129,31 @@ public class Server {
             return promise;
         } else {
             return hasConnectionPromises.poll();
+        }
+    }
+
+    //关闭服务端，其余需要关闭的在服务端的监听事件里处理
+    public void close() {
+        ServerManager.unRegister(this);
+        if (bind != null && bind.channel().isActive()) {
+            bind.channel().close();
+        }
+        if (managerChanel != null && managerChanel.isActive()) {
+            managerChanel.close();
+        }
+        for (Iterator<Promise<Channel>> iterator = hasConnectionPromises.iterator(); iterator.hasNext(); ) {
+            Promise<Channel> next = iterator.next();
+            iterator.remove();
+            Channel now = next.getNow();
+            if (now != null && now.isActive()) {
+                now.close();
+            }
+            next.cancel(true);
+        }
+        for (Iterator<Promise<Channel>> iterator = waitConnections.iterator(); iterator.hasNext(); ) {
+            Promise<Channel> next = iterator.next();
+            iterator.remove();
+            next.cancel(true);
         }
     }
 
