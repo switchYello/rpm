@@ -16,7 +16,7 @@ public class PingHandler extends SimpleChannelInboundHandler<Ping> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Ping msg) {
-        log.info("收到服务端ping");
+        log.info("收到服务端ping，回复pong");
         ctx.writeAndFlush(new Pong());
     }
 

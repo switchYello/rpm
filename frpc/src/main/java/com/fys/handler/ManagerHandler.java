@@ -2,11 +2,11 @@ package com.fys.handler;
 
 import com.fys.Config;
 import com.fys.cmd.Cmd;
-import com.fys.cmd.clientToServer.ManagerConnection;
-import com.fys.cmd.serverToClient.NeedNewConnectionCmd;
+import com.fys.cmd.clientToServer.WantManagerCmd;
+import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
 import com.fys.cmd.serverToClient.Ping;
-import com.fys.cmd.serverToClient.ServerStartFail;
-import com.fys.cmd.serverToClient.ServerStartSuccess;
+import com.fys.cmd.serverToClient.ServerStartFailCmd;
+import com.fys.cmd.serverToClient.ServerStartSuccessCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -29,7 +29,7 @@ public class ManagerHandler extends ReplayingDecoder<Void> {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         log.info("客户端连接到服务器成功host：{}，port:{}", Config.serverHost, Config.serverPort);
-        ctx.writeAndFlush(new ManagerConnection(Config.serverWorkPort, Config.localClientName))
+        ctx.writeAndFlush(new WantManagerCmd(Config.serverWorkPort, Config.localClientName))
                 .addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
@@ -43,21 +43,25 @@ public class ManagerHandler extends ReplayingDecoder<Void> {
         int length = in.readInt();
         byte flag = in.readByte();
 
-        if (flag == Cmd.ServerToClient.needCreateNewConnection) {
-            out.add(new NeedNewConnectionCmd(in.readCharSequence(length - 1, UTF_8).toString()));
+        if (flag == Cmd.ServerToClient.needCreateNewConnectionCmd) {
+            out.add(new NeedCreateNewConnectionCmd(in.readCharSequence(length - 1, UTF_8).toString()));
             return;
         }
         if (flag == Cmd.ServerToClient.ping) {
             out.add(new Ping());
+            return;
         }
-        if (flag == Cmd.ServerToClient.serverStartFail) {
-            out.add(new ServerStartFail(in.readCharSequence(length - 1, UTF_8).toString()));
+        if (flag == Cmd.ServerToClient.serverStartFailCmd) {
+            out.add(new ServerStartFailCmd(in.readCharSequence(length - 1, UTF_8).toString()));
+            return;
         }
-        if (flag == Cmd.ServerToClient.serverStartSuccess) {
-            out.add(new ServerStartSuccess());
+        if (flag == Cmd.ServerToClient.serverStartSuccessCmd) {
+            out.add(new ServerStartSuccessCmd());
+            return;
         }
 
-        throw new RuntimeException("无法识别服务端发送的指令,数据长度:" + length + ",指令:" + flag);
+        log.error("无法识别服务端发送的指令,数据长度:{},指令:{}", length, flag);
+        ctx.close();
     }
 
 }

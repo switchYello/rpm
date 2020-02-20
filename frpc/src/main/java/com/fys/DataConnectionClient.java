@@ -1,6 +1,6 @@
 package com.fys;
 
-import com.fys.cmd.clientToServer.DataConnection;
+import com.fys.cmd.clientToServer.WantDataCmd;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.TransactionHandler;
 import io.netty.bootstrap.Bootstrap;
@@ -36,10 +36,10 @@ public class DataConnectionClient {
                     @Override
                     protected void initChannel(Channel ch) {
                         ch.pipeline().addLast(new CmdEncoder());
-//                        ch.pipeline().addLast(new DataConnectionHandler(DataConnectionClient.this));
                     }
                 })
                 .connect()
+                //此监听器内表示与服务器创建连接的状态
                 .addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
@@ -54,7 +54,7 @@ public class DataConnectionClient {
                                         connectionToServer.pipeline().addLast("linkServer", new TransactionHandler(future.channel(), false));
                                         future.channel().pipeline().addLast("linkLocal", new TransactionHandler(connectionToServer, true));
                                         //告诉服务器本连接是数据连接
-                                        connectionToServer.writeAndFlush(new DataConnection(serverId));
+                                        connectionToServer.writeAndFlush(new WantDataCmd(serverId));
                                         connectionToServer.read();
                                     } else {
                                         log.info("连接到本地端口:{}失败", Config.localPort);
@@ -62,10 +62,8 @@ public class DataConnectionClient {
                                     }
                                 }
                             });
-
-
                         } else {
-                            log.error("数据连接连接失败", future.cause());
+                            log.error("数据连接连接失败，无法连接到服务器", future.cause());
                         }
 
                     }
@@ -88,49 +86,5 @@ public class DataConnectionClient {
     private static class IgnoreHandler extends ChannelInboundHandlerAdapter {
         private static IgnoreHandler INSTANCE = new IgnoreHandler();
     }
-
-//
-//    /*
-//     * 数据传输handler处理逻辑
-//     * */
-//    private static class DataConnectionHandler extends ChannelInboundHandlerAdapter {
-//
-//        private static Logger log = LoggerFactory.getLogger(DataConnectionHandler.class);
-//        private final int localPort = Config.localPort;
-//        private DataConnectionClient dataConnection;
-//
-//
-//
-//
-//        DataConnectionHandler(DataConnectionClient dataConnection) {
-//            this.dataConnection = dataConnection;
-//        }
-//
-//        //到此方法说明clent已经连接到server了
-//        //在此连接到本地，然后将此连接的所有输出引入到本地连接
-//        @Override
-//        public void channelActive(final ChannelHandlerContext ctx) {
-//            //连接到本地需要代理的端口
-//            ChannelFuture connectionToLocal = createConnectionToLocal(localPort);
-//            connectionToLocal.addListener(new ChannelFutureListener() {
-//                @Override
-//                public void operationComplete(ChannelFuture future) throws Exception {
-//                    if (future.isSuccess()) {
-//                        ctx.pipeline().addLast("linkServer", new TransactionHandler(future.channel(), false));
-//                        future.channel().pipeline().addLast("linkLocal", new TransactionHandler(ctx.channel(), true));
-//                        //告诉服务器本连接是数据连接
-//                        ctx.writeAndFlush(new DataConnection(dataConnection.serverId));
-//                        ctx.read();
-//                    } else {
-//                        log.info("连接到本地端口:{}失败", localPort);
-//                        ctx.close();
-//                    }
-//                }
-//            });
-//        }
-//
-//
-//    }
-//
 
 }
