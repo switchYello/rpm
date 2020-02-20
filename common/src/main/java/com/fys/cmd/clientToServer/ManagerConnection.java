@@ -23,7 +23,7 @@ public class ManagerConnection implements Cmd {
     @Override
     public ByteBuf toByte() {
         ByteBuf buffer = Unpooled.buffer();
-        buffer.writeByte(Cmd.wantManagerCmd).writeShort(serverWorkPort).writeCharSequence(name, StandardCharsets.UTF_8);
+        buffer.writeByte(ClientToServer.wantManagerCmd).writeShort(serverWorkPort).writeCharSequence(name, StandardCharsets.UTF_8);
         return buffer;
     }
 

@@ -1,4 +1,4 @@
-package com.fys.cmd.clientToServer;
+package com.fys.cmd.serverToClient;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
@@ -11,7 +11,7 @@ public class Ping implements Cmd {
 
     @Override
     public ByteBuf toByte() {
-        return Unpooled.buffer(5).writeByte(Cmd.ping);
+        return Unpooled.buffer(5).writeByte(ServerToClient.ping);
     }
 
 }

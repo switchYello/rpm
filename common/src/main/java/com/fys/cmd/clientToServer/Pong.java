@@ -1,4 +1,4 @@
-package com.fys.cmd.handler;
+package com.fys.cmd.clientToServer;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
@@ -10,6 +10,6 @@ import io.netty.buffer.Unpooled;
 public class Pong implements Cmd {
     @Override
     public ByteBuf toByte() {
-        return Unpooled.buffer(5).writeByte(Cmd.pong);
+        return Unpooled.buffer(5).writeByte(ClientToServer.pong);
     }
 }
