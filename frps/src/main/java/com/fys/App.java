@@ -1,7 +1,7 @@
 package com.fys;
 
 import com.fys.cmd.handler.CmdEncoder;
-import com.fys.handler.FrpsHandler;
+import com.fys.handler.ServerManagerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -46,7 +46,7 @@ public class App {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
-                        ch.pipeline().addLast(new FrpsHandler());
+                        ch.pipeline().addLast(new ServerManagerHandler());
                     }
                 })
                 .bind(Config.bindHost, Config.bindPort)

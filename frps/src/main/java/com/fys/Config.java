@@ -16,7 +16,7 @@ public class Config {
 
     private static Logger log = LoggerFactory.getLogger(Config.class);
     public static int bindPort;
-    public static String bindHost = "127.0.0.1";
+    public static String bindHost = "0.0.0.0";
 
 
     public static void init(String configPath) throws IOException {
