@@ -1,8 +1,7 @@
 package com.fys;
 
-import com.fys.cmd.clientToServer.Ping;
 import com.fys.cmd.handler.CmdEncoder;
-import com.fys.handler.ManagerHandler;
+import com.fys.handler.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -36,10 +35,9 @@ public class AppClient {
                 confPath = split[1];
             }
         }
-        Config.init(confPath);
-        ScheduledFuture<?> sf = scheduleConnection(4, TimeUnit.SECONDS);
-        Channel managerConnection = createManagerConnection();
 
+        Config.init(confPath);
+        ScheduledFuture<?> sf = scheduleConnection(10, TimeUnit.SECONDS);
     }
 
     private static ScheduledFuture<?> scheduleConnection(int delay, TimeUnit unit) {
@@ -50,7 +48,6 @@ public class AppClient {
             public void run() {
                 if (managerConnection.isActive()) {
                     log.info("定时检测，管理连接正常");
-                    managerConnection.writeAndFlush(new Ping());
                     return;
                 }
                 log.info("定时检测，管理连接断开了，重新连");
@@ -70,6 +67,10 @@ public class AppClient {
                              protected void initChannel(Channel ch) {
                                  ch.pipeline().addLast(new CmdEncoder());
                                  ch.pipeline().addLast(new ManagerHandler());
+                                 ch.pipeline().addLast(new PingHandler());
+                                 ch.pipeline().addLast(new NeedNewConnectionHandler());
+                                 ch.pipeline().addLast(new ServerStartSuccessHandler());
+                                 ch.pipeline().addLast(new ServerStartFailHandler());
                              }
                          }
                 )

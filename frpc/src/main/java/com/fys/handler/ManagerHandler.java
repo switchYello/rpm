@@ -1,9 +1,12 @@
 package com.fys.handler;
 
-import com.fys.Client;
 import com.fys.Config;
 import com.fys.cmd.Cmd;
 import com.fys.cmd.clientToServer.ManagerConnection;
+import com.fys.cmd.serverToClient.NeedNewConnectionCmd;
+import com.fys.cmd.serverToClient.Ping;
+import com.fys.cmd.serverToClient.ServerStartFail;
+import com.fys.cmd.serverToClient.ServerStartSuccess;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -12,8 +15,9 @@ import io.netty.handler.codec.ReplayingDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * hcy 2020/2/18
@@ -37,20 +41,23 @@ public class ManagerHandler extends ReplayingDecoder<Void> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         int length = in.readInt();
-        byte code = in.readByte();
+        byte flag = in.readByte();
 
-        if (code == Cmd.needCreateNewConnection) {
-            CharSequence serverId = in.readCharSequence(length - 1, StandardCharsets.UTF_8);
-            log.info("收到服务端NeedNewConnection serverId:{}", serverId);
-            new Client(serverId.toString()).start();
+        if (flag == Cmd.ServerToClient.needCreateNewConnection) {
+            out.add(new NeedNewConnectionCmd(in.readCharSequence(length - 1, UTF_8).toString()));
             return;
         }
-
-        if (code == Cmd.pong) {
-            log.info("收到服务端pong");
-            return;
+        if (flag == Cmd.ServerToClient.ping) {
+            out.add(new Ping());
+        }
+        if (flag == Cmd.ServerToClient.serverStartFail) {
+            out.add(new ServerStartFail(in.readCharSequence(length - 1, UTF_8).toString()));
+        }
+        if (flag == Cmd.ServerToClient.serverStartSuccess) {
+            out.add(new ServerStartSuccess());
         }
 
+        throw new RuntimeException("无法识别服务端发送的指令,数据长度:" + length + ",指令:" + flag);
     }
 
 }
