@@ -7,12 +7,12 @@ import io.netty.buffer.Unpooled;
 /**
  * hcy 2020/2/19
  */
-public class ServerStartSuccess implements Cmd {
+public class ServerStartSuccessCmd implements Cmd {
 
 
     @Override
     public ByteBuf toByte() {
-        return Unpooled.buffer().writeByte(ServerToClient.serverStartSuccess);
+        return Unpooled.buffer().writeByte(ServerToClient.serverStartSuccessCmd);
     }
 
 }

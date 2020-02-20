@@ -11,12 +11,12 @@ import java.nio.charset.StandardCharsets;
 /**
  * hcy 2020/2/18
  */
-public class DataConnection implements Cmd {
+public class WantDataCmd implements Cmd {
 
-    private static Logger log = LoggerFactory.getLogger(DataConnection.class);
+    private static Logger log = LoggerFactory.getLogger(WantDataCmd.class);
     private String serverId;
 
-    public DataConnection(String serverId) {
+    public WantDataCmd(String serverId) {
         this.serverId = serverId;
     }
 

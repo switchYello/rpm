@@ -13,12 +13,12 @@ import java.nio.charset.StandardCharsets;
  * 服务端向客户端下发需要新连接请求，同时将服务端id发送给客户端
  * 客户端新连接时将id待会，服务点据此识别是哪一个客户端连接的
  */
-public class NeedNewConnectionCmd implements Cmd {
+public class NeedCreateNewConnectionCmd implements Cmd {
 
-    private static Logger log = LoggerFactory.getLogger(NeedNewConnectionCmd.class);
+    private static Logger log = LoggerFactory.getLogger(NeedCreateNewConnectionCmd.class);
     private String serverId;
 
-    public NeedNewConnectionCmd(String id) {
+    public NeedCreateNewConnectionCmd(String id) {
         this.serverId = id;
     }
 
@@ -26,7 +26,7 @@ public class NeedNewConnectionCmd implements Cmd {
     public ByteBuf toByte() {
         log.info("服务器-> client 需要新的连接id:{}", serverId);
         ByteBuf buffer = Unpooled.buffer();
-        buffer.writeByte(ServerToClient.needCreateNewConnection).writeCharSequence(serverId, StandardCharsets.UTF_8);
+        buffer.writeByte(ServerToClient.needCreateNewConnectionCmd).writeCharSequence(serverId, StandardCharsets.UTF_8);
         return buffer;
     }
 

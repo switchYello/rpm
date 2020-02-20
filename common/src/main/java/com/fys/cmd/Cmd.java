@@ -1,12 +1,8 @@
 package com.fys.cmd;
 
-import com.fys.cmd.clientToServer.DataConnection;
-import com.fys.cmd.clientToServer.ManagerConnection;
+import com.fys.cmd.clientToServer.WantDataCmd;
+import com.fys.cmd.clientToServer.WantManagerCmd;
 import com.fys.cmd.clientToServer.Pong;
-import com.fys.cmd.serverToClient.NeedNewConnectionCmd;
-import com.fys.cmd.serverToClient.Ping;
-import com.fys.cmd.serverToClient.ServerStartFail;
-import com.fys.cmd.serverToClient.ServerStartSuccess;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.charset.StandardCharsets;
@@ -25,10 +21,10 @@ public interface Cmd {
     }
 
     interface ServerToClient {
-        byte needCreateNewConnection = 3;
+        byte needCreateNewConnectionCmd = 3;
         byte ping = 4;
-        byte serverStartFail = 6;
-        byte serverStartSuccess = 7;
+        byte serverStartFailCmd = 6;
+        byte serverStartSuccessCmd = 7;
     }
 
     //返回标志位  + 数据的字节数组
@@ -36,10 +32,10 @@ public interface Cmd {
 
     static Cmd encoder(byte code, ByteBuf msg) {
         if (code == ClientToServer.wantDataCmd) {
-            return new DataConnection(msg.readCharSequence(msg.readableBytes(), StandardCharsets.UTF_8).toString());
+            return new WantDataCmd(msg.readCharSequence(msg.readableBytes(), StandardCharsets.UTF_8).toString());
         }
         if (code == ClientToServer.wantManagerCmd) {
-            return new ManagerConnection(msg.readShort(), msg.readCharSequence(msg.readableBytes() - 2, StandardCharsets.UTF_8).toString());
+            return new WantManagerCmd(msg.readShort(), msg.readCharSequence(msg.readableBytes() - 2, StandardCharsets.UTF_8).toString());
         }
         if (code == ClientToServer.pong) {
             return new Pong();
