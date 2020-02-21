@@ -1,8 +1,11 @@
 package com.fys.handler;
 
 import com.fys.DataConnectionClient;
+import com.fys.cmd.clientToServer.WantDataCmd;
 import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
 import com.fys.cmd.serverToClient.ServerStartSuccessCmd;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
@@ -37,9 +40,15 @@ public class ServerStartSuccessHandler extends SimpleChannelInboundHandler<Serve
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, NeedCreateNewConnectionCmd msg) {
-            log.info("服务器需要新连接");
             log.info("收到服务端NeedNewConnection");
-            new DataConnectionClient(serverId).start();
+            new DataConnectionClient().start().addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    if (future.isSuccess()) {
+                        future.channel().writeAndFlush(new WantDataCmd(msg.getConnectionToken(), serverId));
+                    }
+                }
+            });
         }
 
     }

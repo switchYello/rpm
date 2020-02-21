@@ -44,7 +44,8 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
         byte flag = in.readByte();
 
         if (flag == Cmd.ServerToClient.needCreateNewConnectionCmd) {
-            out.add(new NeedCreateNewConnectionCmd());
+            long connectionToken = in.readLong();
+            out.add(new NeedCreateNewConnectionCmd(connectionToken));
             return;
         }
         if (flag == Cmd.ServerToClient.ping) {

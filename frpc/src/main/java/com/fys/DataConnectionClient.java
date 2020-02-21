@@ -1,6 +1,5 @@
 package com.fys;
 
-import com.fys.cmd.clientToServer.WantDataCmd;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.FlowManagerHandler;
 import com.fys.cmd.handler.TransactionHandler;
@@ -20,15 +19,10 @@ public class DataConnectionClient {
     private static EventLoopGroup work = AppClient.work;
     private String serverHost = Config.serverHost;
     private int serverPort = Config.serverPort;
-    private String serverId;
 
-    public DataConnectionClient(String serverId) {
-        this.serverId = serverId;
-    }
-
-    public void start() {
+    public ChannelFuture start() {
         Bootstrap b = new Bootstrap();
-        b.group(work)
+        return b.group(work)
                 .channel(NioSocketChannel.class)
                 .remoteAddress(serverHost, serverPort)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
@@ -55,11 +49,9 @@ public class DataConnectionClient {
                                     if (future.isSuccess()) {
                                         connectionToServer.pipeline().addLast("linkServer", new TransactionHandler(future.channel(), false));
                                         future.channel().pipeline().addLast("linkLocal", new TransactionHandler(connectionToServer, true));
-                                        //告诉服务器本连接是数据连接
-                                        connectionToServer.writeAndFlush(new WantDataCmd(serverId));
                                         connectionToServer.read();
                                     } else {
-                                        log.info("连接到本地端口:{}失败", Config.localPort);
+                                        log.info("连接到本地端口:{}失败,关闭和服务器的连接", Config.localPort);
                                         connectionToServer.close();
                                     }
                                 }
@@ -67,7 +59,6 @@ public class DataConnectionClient {
                         } else {
                             log.error("数据连接连接失败，无法连接到服务器", future.cause());
                         }
-
                     }
                 });
     }
@@ -80,6 +71,8 @@ public class DataConnectionClient {
                 .channel(NioSocketChannel.class)
                 .remoteAddress("0.0.0.0", port)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .option(ChannelOption.TCP_NODELAY, true)
+                .option(ChannelOption.SO_RCVBUF, 32 * 1024)
                 .handler(IgnoreHandler.INSTANCE)
                 .connect();
     }

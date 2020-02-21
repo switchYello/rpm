@@ -87,6 +87,7 @@ public class AppClient {
                 .channel(NioSocketChannel.class)
                 .remoteAddress(Config.serverHost, Config.serverPort)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 4000)
+                .option(ChannelOption.TCP_NODELAY, true)
                 .handler(new ChannelInitializer<Channel>() {
                              @Override
                              protected void initChannel(Channel ch) {
