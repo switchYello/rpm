@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.UUID;
 
 /**
  * hcy 2020/2/18
@@ -18,7 +20,7 @@ public class Config {
     public static int serverPort;
     public static int serverWorkPort;
     public static int localPort;
-    public static String localClientName;
+    public static String localClientName = getSystemName();
 
 
     public static void init(String configPath) throws IOException {
@@ -36,7 +38,7 @@ public class Config {
             serverPort = toInt(prop.getProperty("serverPort"), "serverPort");
             serverWorkPort = toInt(prop.getProperty("serverWorkPort"), "serverWorkPort");
             localPort = toInt(prop.getProperty("localPort"), "localPort");
-            localClientName = toString(prop.getProperty("localClientName"), "localClientName");
+            localClientName = Optional.ofNullable(prop.getProperty("localClientName")).orElse(localClientName);
         }
         log.info("读取配置文件serverHost:{},serverPort:{},serverWorkPort:{},localPort{},localClientName:{}", serverHost, serverPort, serverWorkPort, localPort, localClientName);
     }
@@ -57,6 +59,14 @@ public class Config {
             throw new RuntimeException(name + "不能为空");
         }
         return str;
+    }
+
+    private static String getSystemName() {
+        String user = System.getProperty("user.name");
+        if (user == null || user.length() == 0) {
+            return UUID.randomUUID().toString().replace("-", "");
+        }
+        return user;
     }
 
 }

@@ -26,32 +26,32 @@ import java.util.concurrent.TimeoutException;
  */
 public class Server {
 
+    private enum Status {
+        start, stopIng, stop;
+    }
+
     private static Logger log = LoggerFactory.getLogger(Server.class);
     private EventLoopGroup boss = App.boss;
     private EventLoopGroup work = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
 
     //监听的地址和端口
-    private String id = UUID.randomUUID().toString();
+    private String id = UUID.randomUUID().toString().replaceAll("-", "");
     private String clientName;
     private int port;
-    private Channel managerChanel;
+    private Channel managerChannel;
     private ChannelFuture bind;
+    private volatile Status status = Status.start;
     //这些promise在等待连接的到来
     private Map<Long, Promise<Channel>> waitConnections = new ConcurrentHashMap<>();
 
 
-    public Server(int port, Channel managerChanel, String clientName) {
+    public Server(int port, Channel managerChannel, String clientName) {
         this.port = port;
         this.clientName = clientName;
-        this.managerChanel = managerChanel;
-        //服务启动成功，为管理添加关闭事件，连接关闭时同时关闭Server
-        managerChanel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
-            log.info("服务的ManagerChannel被关闭了，关闭server，端口:{},客户端:{}", port, clientName);
-            ServerManager.unRegister(this);
-            if (bind != null && bind.channel().isActive()) {
-                bind.channel().close();
-            }
-            work.shutdownGracefully();
+        this.managerChannel = managerChannel;
+        //服务启动成功，为管理添加关闭事件，关闭连接时同时关闭Server
+        managerChannel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
+            this.stop();
         });
     }
 
@@ -104,20 +104,19 @@ public class Server {
     public void addConnection(long token, Channel dataChanel) {
         Promise<Channel> promise = waitConnections.remove(token);
         if (promise == null) {
-            log.info("addConnection 但无法找到promise，可能promise已被取消");
+            log.debug("Server.addConnection 无法找到Promise，可能promise已被超时取消");
             dataChanel.close();
             return;
         }
         promise.setSuccess(dataChanel);
     }
 
-    //如果池中存在连接，则优先使用池中的，否则创建promise存入等待队列中
     public Promise<Channel> getConnection(EventLoop eventLoop) {
         Promise<Channel> promise = new DefaultPromise<>(eventLoop);
         long token = System.nanoTime();
         waitConnections.put(token, promise);
         ScheduledFuture<?> schedule = eventLoop.schedule(() -> promise.setFailure(new TimeoutException("promise超时无法获取连接")), Config.timeOut, TimeUnit.SECONDS);
-        //获取到连接promise被设为成功，超时promise被设为失败
+        //如果能成功获取到连接Promise被设为成功，若超时Promise被设为失败
         //设为成功时，则取消定时任务
         //设为失败时，则从map中移除promise （成功时不用移除，因为设置成功方法内已经移除过了）
         promise.addListener(future -> {
@@ -127,7 +126,7 @@ public class Server {
                 waitConnections.remove(token);
             }
         });
-        managerChanel.writeAndFlush(new NeedCreateNewConnectionCmd(token))
+        managerChannel.writeAndFlush(new NeedCreateNewConnectionCmd(token))
                 .addListener(future -> {
                     if (!future.isSuccess()) {
                         log.debug("向客户端发送创建连接指令失败");
@@ -140,9 +139,21 @@ public class Server {
      * 停止Server，即直接关闭manager连接，其他行为都在连接的回掉函数里处理
      * */
     public void stop() {
-        if (managerChanel != null && managerChanel.isActive()) {
-            managerChanel.close();
+        //防止多次关闭
+        if (status != Status.start) {
+            return;
         }
+        status = Status.stopIng;
+        log.info("服务的ManagerChannel被关闭了，关闭server，端口:{},客户端:{}", port, clientName);
+        if (managerChannel != null && managerChannel.isActive()) {
+            managerChannel.close();
+        }
+        ServerManager.unRegister(this);
+        if (bind != null && bind.channel().isActive()) {
+            bind.channel().close();
+        }
+        work.shutdownGracefully();
+        status = Status.stop;
     }
 
     //当外网用户连接到监听的端口后，将打开与客户端的连接，并传输数据
