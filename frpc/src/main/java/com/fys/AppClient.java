@@ -42,6 +42,10 @@ public class AppClient {
         new AppClient().start();
     }
 
+    private static void schedule(Runnable run, int time, TimeUnit timeUnit) {
+        work.schedule(run, time, timeUnit);
+    }
+
     public void start() {
         ChannelFuture managerConnectionFuture = createManagerConnection();
         //并为future添加事件,无论连接成功失败都在10秒后检查连接
@@ -53,9 +57,6 @@ public class AppClient {
         });
     }
 
-    private static void schedule(Runnable run, int time, TimeUnit timeUnit) {
-        work.schedule(run, time, timeUnit);
-    }
 
     private class ScheduleCheck implements Runnable {
 
@@ -92,10 +93,11 @@ public class AppClient {
                              @Override
                              protected void initChannel(Channel ch) {
                                  ch.pipeline().addLast(new CmdEncoder());
+
                                  ch.pipeline().addLast(new CmdDecoder());
-                                 ch.pipeline().addLast(new PingHandler());
-                                 ch.pipeline().addLast(new ServerStartSuccessHandler());
-                                 ch.pipeline().addLast(new ServerStartFailHandler());
+                                 ch.pipeline().addLast(PingHandler.INSTANCE);
+                                 ch.pipeline().addLast(ServerStartSuccessHandler.INSTANCE);
+                                 ch.pipeline().addLast(ServerStartFailHandler.INSTANCE);
                              }
                          }
                 )

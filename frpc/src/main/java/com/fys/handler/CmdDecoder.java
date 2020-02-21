@@ -43,13 +43,9 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
         int length = in.readInt();
         byte flag = in.readByte();
 
-        if (flag == Cmd.ServerToClient.needCreateNewConnectionCmd) {
-            long connectionToken = in.readLong();
-            out.add(new NeedCreateNewConnectionCmd(connectionToken));
-            return;
-        }
-        if (flag == Cmd.ServerToClient.ping) {
-            out.add(new Ping());
+        if (flag == Cmd.ServerToClient.serverStartSuccessCmd) {
+            String serverId = readStr(in, length - 1);
+            out.add(new ServerStartSuccessCmd(serverId));
             return;
         }
         if (flag == Cmd.ServerToClient.serverStartFailCmd) {
@@ -57,12 +53,15 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
             out.add(new ServerStartFailCmd(failMsg));
             return;
         }
-        if (flag == Cmd.ServerToClient.serverStartSuccessCmd) {
-            String serverId = readStr(in, length - 1);
-            out.add(new ServerStartSuccessCmd(serverId));
+        if (flag == Cmd.ServerToClient.ping) {
+            out.add(new Ping());
             return;
         }
-
+        if (flag == Cmd.ServerToClient.needCreateNewConnectionCmd) {
+            long connectionToken = in.readLong();
+            out.add(new NeedCreateNewConnectionCmd(connectionToken));
+            return;
+        }
         log.error("无法识别服务端发送的指令,数据长度:{},指令:{}", length, flag);
         ctx.close();
     }
