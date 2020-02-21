@@ -19,8 +19,11 @@
         </encoder>
     </appender>
 
-    <root level="debug">
+    <logger name="com" level="debug" additivity="false">
         <appender-ref ref="FILE"/>
+    </logger>
+
+    <root level="debug">
         <appender-ref ref="STDOUT"/>
     </root>
 

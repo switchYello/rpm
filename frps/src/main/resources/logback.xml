@@ -13,14 +13,18 @@
         </rollingPolicy>
     </appender>
 
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %C:%L-%m%n</Pattern>
         </encoder>
     </appender>
 
-    <root level="debug">
+    <logger name="com" level="debug" additivity="false">
         <appender-ref ref="FILE"/>
+    </logger>
+
+    <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>
 
