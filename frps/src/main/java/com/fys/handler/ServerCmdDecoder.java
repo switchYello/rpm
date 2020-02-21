@@ -55,7 +55,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
             //添加TimeOutHandler和FlowManagerHandler
             ctx.pipeline().remove(this);
             ctx.pipeline().addLast(new TimeOutHandler(0, 0, 120));
-            ctx.pipeline().addLast(this, null, FlowManagerHandler.INSTANCE);
+            ctx.pipeline().addLast(FlowManagerHandler.INSTANCE);
             ServerManager.addConnection(serverId, connectionToken, ctx.channel());
             return;
         }

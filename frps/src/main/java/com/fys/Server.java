@@ -41,7 +41,7 @@ public class Server {
     private ChannelFuture bind;
     //这些promise在等待连接的到来
     private Map<Long, Promise<Channel>> waitConnections = new ConcurrentHashMap<>();
-    
+
     public Server(int port, Channel managerChannel, String clientName) {
         this.port = port;
         this.clientName = clientName;
@@ -61,7 +61,6 @@ public class Server {
                 .channel(App.serverClass)
                 .option(ChannelOption.SO_RCVBUF, 32 * 1024)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
-                .option(ChannelOption.TCP_NODELAY, true)
                 .childOption(ChannelOption.SO_RCVBUF, 128 * 1024)
                 .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
                 .childOption(ChannelOption.TCP_NODELAY, true)

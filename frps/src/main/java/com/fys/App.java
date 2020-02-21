@@ -42,7 +42,6 @@ public class App {
                 .channel(serverClass)
                 .option(ChannelOption.SO_RCVBUF, 32 * 1024)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
-                .option(ChannelOption.TCP_NODELAY, true)
                 .childOption(ChannelOption.SO_RCVBUF, 128 * 1024)
                 .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
                 .childOption(ChannelOption.TCP_NODELAY, true)
