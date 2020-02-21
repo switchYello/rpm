@@ -21,8 +21,10 @@ public class Config {
 
 
     public static void init(String configPath) throws IOException {
+        log.info("准备读取配置文件");
         if (configPath == null) {
             configPath = "config.properties";
+            log.info("配置文件:{}", configPath);
         }
         InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream(configPath);
         if (input == null) {
@@ -34,7 +36,8 @@ public class Config {
             bindHost = Optional.ofNullable(prop.getProperty("bindHost")).orElse(bindHost);
             bindPort = toInt(prop.getProperty("bindPort"), "bindPort");
         }
-        log.info("读取配置文件bindPort:{}", bindPort);
+        log.info("bindHost", bindHost);
+        log.info("bindPort", bindPort);
     }
 
     private static int toInt(String str, String name) {

@@ -28,7 +28,7 @@ public class PingPongHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        ctx.executor().schedule(new SchedulePing(ctx), 1, TimeUnit.SECONDS);
+        ctx.executor().schedule(new SchedulePing(ctx), 2, TimeUnit.SECONDS);
         lastPong = System.currentTimeMillis();
         super.handlerAdded(ctx);
     }
@@ -37,7 +37,7 @@ public class PingPongHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof Pong) {
             lastPong = System.currentTimeMillis();
-            log.info("收到客户端pong");
+            log.debug("收到客户端pong");
         } else {
             super.channelRead(ctx, msg);
         }
@@ -57,7 +57,7 @@ public class PingPongHandler extends ChannelInboundHandlerAdapter {
                 return;
             }
             if (System.currentTimeMillis() - lastPong > maxPongDelay) {
-                log.info("超过最大pong超时时间断开连接");
+                log.error("超过最大Pong超时时间断开连接");
                 ctx.close();
                 return;
             }

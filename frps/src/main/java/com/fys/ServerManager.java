@@ -24,21 +24,27 @@ public class ServerManager {
      * 开启新的服务，用户数据转发
      */
     public static Promise<Server> startNewServer(int port, Channel managerChannel, String clientName) {
-        log.info("准备创建新server，端口:{},客户端:{}", port, clientName);
+        log.info("准备创建新Server，客户端:{},端口:{}", clientName, port);
 
         for (Server s : register) {
             if (Objects.equals(s.getPort(), port)) {
-                log.info("端口已被使用,关闭旧server，端口:{},客户端:{}", port, s.getClientName());
+                log.info("端口已被使用,关闭旧Server，客户端:{},端口:{}", s.getClientName(), port);
                 s.stop();
             }
         }
         register.removeAll(unRegister);
         unRegister.clear();
-        
+
         Server server = new Server(port, managerChannel, clientName);
         return server.start().addListener((GenericFutureListener<? extends Future<Server>>) future -> {
             if (future.isSuccess()) {
+                Server s = future.getNow();
+                log.info("注册Server,ClientName:{},Port:{}", s.getClientName(), s.getPort());
                 register.add(future.getNow());
+                log.debug("当前Server情况");
+                for (Server currentServer : register) {
+                    log.debug("ServerId:{},ServerPort:{},ClientName:{}", currentServer.getId(), currentServer.getPort(), currentServer.getClientName());
+                }
             }
         });
     }
@@ -49,7 +55,7 @@ public class ServerManager {
     public static void addConnection(String serverId, long token, Channel channel) {
         for (Server server : register) {
             if (Objects.equals(serverId, server.getId())) {
-                log.info("添加连接到服务:{}中", server.getClientName());
+                log.debug("添加连接到服务:{}中", server.getId());
                 server.addConnection(token, channel);
                 return;
             }

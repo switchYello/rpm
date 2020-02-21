@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -34,21 +33,20 @@ public class Server {
     private EventLoopGroup boss = App.boss;
     private EventLoopGroup work = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
 
-    //监听的地址和端口
-    private String id = UUID.randomUUID().toString().replaceAll("-", "");
-    private String clientName;
+    private volatile Status status = Status.start;
+    private final String id;
     private int port;
+    private String clientName;
     private Channel managerChannel;
     private ChannelFuture bind;
-    private volatile Status status = Status.start;
     //这些promise在等待连接的到来
     private Map<Long, Promise<Channel>> waitConnections = new ConcurrentHashMap<>();
-
-
+    
     public Server(int port, Channel managerChannel, String clientName) {
         this.port = port;
         this.clientName = clientName;
         this.managerChannel = managerChannel;
+        this.id = "Server_" + port + "_" + clientName;
         //服务启动成功，为管理添加关闭事件，关闭连接时同时关闭Server
         managerChannel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
             this.stop();
@@ -78,11 +76,11 @@ public class Server {
         //添加服务开启成功失败事件
         bind.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
+                log.info("Server在端口:{}启动成功", port);
                 promise.setSuccess(this);
-                log.info("服务端for:{}在端口:{}启动成功", clientName, port);
             } else {
+                log.error("Server在端口:" + port + "启动失败", future.cause());
                 promise.setFailure(future.cause());
-                log.error("服务端for:{}在端口:{}启动失败", clientName, port, future.cause());
             }
         });
         return promise;
@@ -104,7 +102,7 @@ public class Server {
     public void addConnection(long token, Channel dataChanel) {
         Promise<Channel> promise = waitConnections.remove(token);
         if (promise == null) {
-            log.debug("Server.addConnection 无法找到Promise，可能promise已被超时取消");
+            log.debug("Server.addConnection无法找到Promise，可能promise已被超时取消");
             dataChanel.close();
             return;
         }
@@ -115,7 +113,7 @@ public class Server {
         Promise<Channel> promise = new DefaultPromise<>(eventLoop);
         long token = System.nanoTime();
         waitConnections.put(token, promise);
-        ScheduledFuture<?> schedule = eventLoop.schedule(() -> promise.setFailure(new TimeoutException("promise超时无法获取连接")), Config.timeOut, TimeUnit.SECONDS);
+        ScheduledFuture<?> schedule = eventLoop.schedule(() -> promise.setFailure(new TimeoutException("Promise超时无法获取连接ClientName:" + clientName)), Config.timeOut, TimeUnit.SECONDS);
         //如果能成功获取到连接Promise被设为成功，若超时Promise被设为失败
         //设为成功时，则取消定时任务
         //设为失败时，则从map中移除promise （成功时不用移除，因为设置成功方法内已经移除过了）
@@ -144,7 +142,7 @@ public class Server {
             return;
         }
         status = Status.stopIng;
-        log.info("服务的ManagerChannel被关闭了，关闭server，端口:{},客户端:{}", port, clientName);
+        log.info("准备关闭Server，端口:{},客户端:{}", port, clientName);
         if (managerChannel != null && managerChannel.isActive()) {
             managerChannel.close();
         }
@@ -176,7 +174,7 @@ public class Server {
                     userConnection.read();
                 } else {
                     //promise失败可能是1：超时没结果被定时任务取消的
-                    log.error("服务端获取对客户端的连接失败", future.cause());
+                    log.error("服务端获取对客户端的连接失败,关闭userConnection", future.cause());
                     userConnection.close();
                 }
             });

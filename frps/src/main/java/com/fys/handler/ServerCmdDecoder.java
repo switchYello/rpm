@@ -5,6 +5,7 @@ import com.fys.cmd.Cmd;
 import com.fys.cmd.clientToServer.Pong;
 import com.fys.cmd.clientToServer.WantManagerCmd;
 import com.fys.cmd.handler.FlowManagerHandler;
+import com.fys.cmd.handler.TimeOutHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -25,7 +26,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
     private static Logger log = LoggerFactory.getLogger(ServerCmdDecoder.class);
 
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
 
         int length = in.readInt();
         byte flag = in.readByte();
@@ -34,8 +35,8 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         if (flag == Cmd.ClientToServer.wantManagerCmd) {
             int port = in.readShort();
             String clientName = readStr(in, length - 1 - 2);
-            log.info("服务端读取到的数据长度是:{},数据标志位是:{},标志位是managerCmd,将要监听的端口是:{},客户端名字:{}", length, flag, port, clientName);
-            ctx.pipeline().addLast(new WantManagerCmdHandler());
+            log.debug("读取到WantManagerCmd,Port:{},ClientName:{}", port, clientName);
+            ctx.pipeline().addLast(WantManagerCmdHandler.INSTANCE);
             out.add(new WantManagerCmd(port, clientName));
             return;
         }
@@ -50,10 +51,11 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         if (flag == Cmd.ClientToServer.wantDataCmd) {
             long connectionToken = in.readLong();
             String serverId = readStr(in, length - 1 - 8);
-
-            log.info("服务端读取到的数据长度是:{},数据标志位是:{},标志位是dataCmd，serverId:{}", length, flag, serverId);
-            //替换成流量统计Handler
-            ctx.pipeline().replace(this, null, FlowManagerHandler.INSTANCE);
+            log.debug("读取到WantDataCmd,ServerId:{},Token:{}", serverId, connectionToken);
+            //添加TimeOutHandler和FlowManagerHandler
+            ctx.pipeline().remove(this);
+            ctx.pipeline().addLast(new TimeOutHandler(0, 0, 120));
+            ctx.pipeline().addLast(this, null, FlowManagerHandler.INSTANCE);
             ServerManager.addConnection(serverId, connectionToken, ctx.channel());
             return;
         }
