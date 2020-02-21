@@ -23,7 +23,9 @@ public class ServerStartFailHandler extends SimpleChannelInboundHandler<ServerSt
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ServerStartFailCmd msg) {
         log.info("服务器无法创建server将关闭连接稍后尝试,因为:{}", msg.getFailMsg());
-        ctx.close();
+        if (ctx.channel().isActive()) {
+            ctx.close();
+        }
     }
 
 }

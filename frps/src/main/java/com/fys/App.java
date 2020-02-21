@@ -21,7 +21,6 @@ public class App {
     public static EventLoopGroup boss = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
     public static EventLoopGroup work = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
     public static Class<? extends ServerChannel> serverClass = Epoll.isAvailable() ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
-    public static Class<? extends Channel> workClass = Epoll.isAvailable() ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
 
     /*
      * -p=9090
