@@ -9,9 +9,12 @@ import io.netty.buffer.Unpooled;
  */
 public class Ping implements Cmd {
 
+    private byte[] data = {ServerToClient.ping};
+
     @Override
     public ByteBuf toByte() {
-        return Unpooled.buffer(5).writeByte(ServerToClient.ping);
+        return Unpooled.wrappedBuffer(data);
     }
+
 
 }

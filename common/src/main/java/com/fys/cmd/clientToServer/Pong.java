@@ -8,8 +8,11 @@ import io.netty.buffer.Unpooled;
  * hcy 2020/2/18
  */
 public class Pong implements Cmd {
+
+    private byte[] data = {ClientToServer.pong};
+
     @Override
     public ByteBuf toByte() {
-        return Unpooled.buffer(5).writeByte(ClientToServer.pong);
+        return Unpooled.wrappedBuffer(data);
     }
 }

@@ -25,5 +25,4 @@ public interface Cmd {
     //返回 标志位 + 数据的字节数组
     ByteBuf toByte();
 
-
 }

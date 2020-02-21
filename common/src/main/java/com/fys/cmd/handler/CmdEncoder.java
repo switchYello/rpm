@@ -15,9 +15,9 @@ public class CmdEncoder extends MessageToMessageEncoder<Cmd> {
 
     //输出
     @Override
-    protected void encode(ChannelHandlerContext ctx, Cmd msg, List<Object> out) throws Exception {
+    protected void encode(ChannelHandlerContext ctx, Cmd msg, List<Object> out) {
         ByteBuf data = msg.toByte();
-        ByteBuf byteBuf = Unpooled.buffer().writeInt(data.readableBytes()).writeBytes(data);
+        ByteBuf byteBuf = Unpooled.buffer(4 + data.readableBytes()).writeInt(data.readableBytes()).writeBytes(data);
         out.add(byteBuf);
     }
 

@@ -2,6 +2,7 @@ package com.fys.cmd.serverToClient;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 
 import java.nio.charset.StandardCharsets;
@@ -20,7 +21,7 @@ public class ServerStartSuccessCmd implements Cmd {
 
     @Override
     public ByteBuf toByte() {
-        ByteBuf msg = Unpooled.buffer();
+        ByteBuf msg = Unpooled.buffer(ByteBufUtil.utf8MaxBytes(serverId) + 1);
         msg.writeByte(ServerToClient.serverStartSuccessCmd).writeCharSequence(serverId, StandardCharsets.UTF_8);
         return msg;
     }

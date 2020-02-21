@@ -3,8 +3,6 @@ package com.fys.cmd.serverToClient;
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * hcy 2020/2/18
@@ -13,7 +11,6 @@ import org.slf4j.LoggerFactory;
  */
 public class NeedCreateNewConnectionCmd implements Cmd {
 
-    private static Logger log = LoggerFactory.getLogger(NeedCreateNewConnectionCmd.class);
     //服务端让客户端创建新连接，客户端收到后，将此token原样带回，标识哪个服务端请求的
     private long connectionToken;
 
@@ -23,7 +20,7 @@ public class NeedCreateNewConnectionCmd implements Cmd {
 
     @Override
     public ByteBuf toByte() {
-        ByteBuf buffer = Unpooled.buffer();
+        ByteBuf buffer = Unpooled.buffer(9);
         buffer.writeByte(ServerToClient.needCreateNewConnectionCmd);
         buffer.writeLong(connectionToken);
         return buffer;

@@ -2,6 +2,7 @@ package com.fys.cmd.clientToServer;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ public class WantDataCmd implements Cmd {
     @Override
     public ByteBuf toByte() {
         log.info("client-> 服务器 此连接指定服务id:{}", serverId);
-        ByteBuf buffer = Unpooled.buffer();
+        ByteBuf buffer = Unpooled.buffer(1 + 8 + ByteBufUtil.utf8MaxBytes(serverId));
         buffer.writeByte(ClientToServer.wantDataCmd).writeLong(connectionToken).writeCharSequence(serverId, StandardCharsets.UTF_8);
         return buffer;
     }

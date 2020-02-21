@@ -2,6 +2,7 @@ package com.fys.cmd.clientToServer;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 
 import java.nio.charset.StandardCharsets;
@@ -13,17 +14,17 @@ import java.nio.charset.StandardCharsets;
 public class WantManagerCmd implements Cmd {
 
     private int serverWorkPort;
-    private String clentName;
+    private String clientName;
 
-    public WantManagerCmd(int serverWorkPort, String clentName) {
+    public WantManagerCmd(int serverWorkPort, String clientName) {
         this.serverWorkPort = serverWorkPort;
-        this.clentName = clentName;
+        this.clientName = clientName;
     }
 
     @Override
     public ByteBuf toByte() {
-        ByteBuf buffer = Unpooled.buffer();
-        buffer.writeByte(ClientToServer.wantManagerCmd).writeShort(serverWorkPort).writeCharSequence(clentName, StandardCharsets.UTF_8);
+        ByteBuf buffer = Unpooled.buffer(1 + 2 + ByteBufUtil.utf8MaxBytes(clientName));
+        buffer.writeByte(ClientToServer.wantManagerCmd).writeShort(serverWorkPort).writeCharSequence(clientName, StandardCharsets.UTF_8);
         return buffer;
     }
 
@@ -31,7 +32,7 @@ public class WantManagerCmd implements Cmd {
         return serverWorkPort;
     }
 
-    public String getClentName() {
-        return clentName;
+    public String getClientName() {
+        return clientName;
     }
 }
