@@ -31,7 +31,8 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
                     if (future.isSuccess()) {
                         ctx.read();
                     } else {
-                        log.error("透传handler写入失败in:{},to:{}", ctx, out);
+                        log.error("透传handler写入失败in:" + ctx + ",to:" + out, future.cause());
+                        ctx.close();
                     }
                 }
             });

@@ -15,8 +15,10 @@ public class WantDataCmd implements Cmd {
 
     private static Logger log = LoggerFactory.getLogger(WantDataCmd.class);
     private String serverId;
+    private long connectionToken;
 
-     public WantDataCmd(String serverId) {
+    public WantDataCmd(long connectionToken, String serverId) {
+        this.connectionToken = connectionToken;
         this.serverId = serverId;
     }
 
@@ -24,7 +26,7 @@ public class WantDataCmd implements Cmd {
     public ByteBuf toByte() {
         log.info("client-> 服务器 此连接指定服务id:{}", serverId);
         ByteBuf buffer = Unpooled.buffer();
-        buffer.writeByte(ClientToServer.wantDataCmd).writeCharSequence(serverId, StandardCharsets.UTF_8);
+        buffer.writeByte(ClientToServer.wantDataCmd).writeLong(connectionToken).writeCharSequence(serverId, StandardCharsets.UTF_8);
         return buffer;
     }
 

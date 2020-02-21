@@ -34,7 +34,27 @@ public class FlowManagerHandler extends MessageToMessageCodec<ByteBuf, ByteBuf> 
         ScheduledFuture<?> scheduledFuture = ctx.executor().scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                log.info("进站流量:{}MB,出站流量:{}MB", inFlow.doubleValue() / 1024 / 1024 / 1024, outFlow.doubleValue() / 1024 / 1024 / 1024);
+                int[] ds = {1, 1024, 1024 * 1024, 1024 * 102 * 1024};
+                String[] dw = {"bit", "B", "KB", "MB"};
+                double inValue = inFlow.doubleValue();
+                double outValue = outFlow.doubleValue();
+
+                String in = "";
+                String out = "";
+                for (int i = ds.length - 1; i >= 0; i--) {
+                    if (inValue / ds[i] >= 1) {
+                        in = inValue / ds[i] + dw[i];
+                        break;
+                    }
+                }
+                for (int i = ds.length - 1; i >= 0; i--) {
+                    if (outValue / ds[i] >= 1) {
+                        out = outValue / ds[i] + dw[i];
+                        break;
+                    }
+                }
+
+                log.info("进站流量:{},出站流量:{}", in, out);
             }
         }, 10, 10, TimeUnit.SECONDS);
 
@@ -46,11 +66,13 @@ public class FlowManagerHandler extends MessageToMessageCodec<ByteBuf, ByteBuf> 
     @Override
     protected void encode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
         outFlow.addAndGet(msg.readableBytes());
+        out.add(msg.readRetainedSlice(msg.readableBytes()));
     }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
         inFlow.addAndGet(msg.readableBytes());
+        out.add(msg.readRetainedSlice(msg.readableBytes()));
     }
 
 }

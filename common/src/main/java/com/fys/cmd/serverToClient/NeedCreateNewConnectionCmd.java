@@ -14,12 +14,22 @@ import org.slf4j.LoggerFactory;
 public class NeedCreateNewConnectionCmd implements Cmd {
 
     private static Logger log = LoggerFactory.getLogger(NeedCreateNewConnectionCmd.class);
-    
+    //服务端让客户端创建新连接，客户端收到后，将此token原样带回，标识哪个服务端请求的
+    private long connectionToken;
+
+    public NeedCreateNewConnectionCmd(long connectionToken) {
+        this.connectionToken = connectionToken;
+    }
+
     @Override
     public ByteBuf toByte() {
         ByteBuf buffer = Unpooled.buffer();
         buffer.writeByte(ServerToClient.needCreateNewConnectionCmd);
+        buffer.writeLong(connectionToken);
         return buffer;
     }
 
+    public long getConnectionToken() {
+        return connectionToken;
+    }
 }
