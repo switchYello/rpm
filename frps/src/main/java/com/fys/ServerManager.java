@@ -1,7 +1,9 @@
 package com.fys;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +23,7 @@ public class ServerManager {
     /**
      * 开启新的服务，用户数据转发
      */
-    public static ChannelFuture startNewServer(int port, Channel managerChannel, String clientName) {
+    public static Promise<Server> startNewServer(int port, Channel managerChannel, String clientName) {
         log.info("准备创建新server，端口:{},客户端:{}", port, clientName);
 
         for (Iterator<Server> iterator = list.iterator(); iterator.hasNext(); ) {
@@ -29,21 +31,25 @@ public class ServerManager {
             if (Objects.equals(s.getPort(), port)) {
                 log.info("端口已被使用,关闭旧server，端口:{},客户端:{}", port, s.getClientName());
                 iterator.remove();
-                s.close();
+                s.stop();
             }
         }
         Server server = new Server(port, managerChannel, clientName);
-        return server.start();
+        return server.start().addListener((GenericFutureListener<? extends Future<Server>>) future -> {
+            if (future.isSuccess()) {
+                list.add(future.getNow());
+            }
+        });
     }
 
     /*
      * 为指定serverId的服务添加链接
      * */
-    public static void addConnection(String serverId, Channel channel) {
+    public static void addConnection(String serverId, long token, Channel channel) {
         for (Server server : list) {
             if (Objects.equals(serverId, server.getId())) {
                 log.info("添加连接到服务:{}中", server.getClientName());
-                server.addConnection(channel);
+                server.addConnection(token, channel);
                 return;
             }
         }
@@ -51,12 +57,4 @@ public class ServerManager {
         channel.close();
     }
 
-    //关闭server，同时从list中移除
-    public static void unRegister(Server server) {
-        list.remove(server);
-    }
-
-    public static void register(Server server) {
-        list.add(server);
-    }
 }

@@ -17,6 +17,7 @@ public class Config {
     private static Logger log = LoggerFactory.getLogger(Config.class);
     public static int bindPort;
     public static String bindHost = "0.0.0.0";
+    public static int timeOut = 5;
 
 
     public static void init(String configPath) throws IOException {

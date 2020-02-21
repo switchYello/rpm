@@ -48,11 +48,13 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
         //新建数据连接
         if (flag == Cmd.ClientToServer.wantDataCmd) {
-            String serverId = readStr(in, length - 1);
+            long connectionToken = in.readLong();
+            String serverId = readStr(in, length - 1 - 8);
+
             log.info("服务端读取到的数据长度是:{},数据标志位是:{},标志位是dataCmd，serverId:{}", length, flag, serverId);
             //替换成流量统计Handler
             ctx.pipeline().replace(this, null, FlowManagerHandler.INSTANCE);
-            ServerManager.addConnection(serverId, ctx.channel());
+            ServerManager.addConnection(serverId, connectionToken, ctx.channel());
             return;
         }
 

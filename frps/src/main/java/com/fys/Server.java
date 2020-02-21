@@ -2,22 +2,17 @@ package com.fys;
 
 import com.fys.cmd.handler.TransactionHandler;
 import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
-import com.fys.cmd.serverToClient.ServerStartFailCmd;
-import com.fys.cmd.serverToClient.ServerStartSuccessCmd;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.util.concurrent.DefaultPromise;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
-import io.netty.util.concurrent.Promise;
+import io.netty.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 客户端要求监听某一个端口后创建并启动此类
@@ -37,8 +32,8 @@ public class Server {
     private int port;
     private Channel managerChanel;
     private ChannelFuture bind;
-    private Queue<Promise<Channel>> hasConnectionPromises = new LinkedList<>();
-    private Queue<Promise<Channel>> waitConnections = new LinkedList<>();
+    //这些promise在等待连接的到来
+    private Map<Long, Promise<Channel>> waitConnections = new ConcurrentHashMap<>();
 
 
     public Server(int port, Channel managerChanel, String clientName) {
@@ -53,15 +48,17 @@ public class Server {
     }
 
     //开启服务监听客户端要求的端口，等待用户连接但不自动读数据
-    public ChannelFuture start() {
+    public Promise<Server> start() {
+        Promise<Server> promise = new DefaultPromise<>(work.next());
         ServerBootstrap sb = new ServerBootstrap();
         bind = sb.group(boss, work)
-                .channel(NioServerSocketChannel.class)
+                .channel(App.serverClass)
                 .option(ChannelOption.SO_RCVBUF, 32 * 1024)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
+                .option(ChannelOption.TCP_NODELAY, true)
                 .childOption(ChannelOption.SO_RCVBUF, 128 * 1024)
                 .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
-                .childOption(ChannelOption.SO_LINGER, 1)
+                .childOption(ChannelOption.TCP_NODELAY, true)
                 .childOption(ChannelOption.AUTO_READ, false)
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
@@ -73,15 +70,14 @@ public class Server {
                 //添加服务开启成功失败事件
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
-                        managerChanel.writeAndFlush(new ServerStartSuccessCmd(id));
-                        ServerManager.register(this);
+                        promise.setSuccess(this);
                         log.info("服务端for:{}在端口:{}启动成功", clientName, port);
                     } else {
-                        managerChanel.writeAndFlush(new ServerStartFailCmd(future.toString()));
+                        promise.setFailure(future.cause());
                         log.error("服务端for:{}在端口:{}启动失败", clientName, port, future.cause());
                     }
                 });
-        return bind;
+        return promise;
     }
 
     public String getId() {
@@ -97,63 +93,68 @@ public class Server {
     }
 
     //添加客户端连接到池中，如果有等待需要的promise则优先给promise
-    public void addConnection(Channel dataChanel) {
-        Promise<Channel> poll = waitConnections.poll();
-        if (poll == null) {
-            Promise<Channel> promise = new DefaultPromise<>(work.next());
-            promise.setSuccess(dataChanel);
-            hasConnectionPromises.add(promise);
+    public void addConnection(long token, Channel dataChanel) {
+        Promise<Channel> promise = waitConnections.get(token);
+        if (promise == null) {
+            log.info("addConnection 但无法找到promise，可能promise已被取消");
+            dataChanel.close();
             return;
         }
-        if (poll.isCancelled()) {
-            addConnection(dataChanel);
-        } else {
-            poll.setSuccess(dataChanel);
-        }
+        promise.setSuccess(dataChanel);
     }
 
     //如果池中存在连接，则优先使用池中的，否则创建promise存入等待队列中
     public Promise<Channel> getConnection() {
-        if (hasConnectionPromises.isEmpty()) {
-            Promise<Channel> promise = new DefaultPromise<>(work.next());
-            managerChanel.writeAndFlush(new NeedCreateNewConnectionCmd())
-                    .addListener(future -> {
-                        if (future.isSuccess()) {
-                            waitConnections.add(promise);
-                        } else {
-                            log.info("向客户端发送创建连接指令失败");
-                            promise.setFailure(future.cause());
-                            managerChanel.close();
-                        }
-                    });
-            return promise;
-        } else {
-            return hasConnectionPromises.poll();
+        Promise<Channel> promise = getTimeOutPromise(Config.timeOut);
+        long token = System.nanoTime();
+        waitConnections.put(token, promise);
+        promise.addListener(future -> waitConnections.remove(token));
+
+        managerChanel.writeAndFlush(new NeedCreateNewConnectionCmd(token))
+                .addListener(future -> {
+                    if (future.isSuccess()) {
+                    } else {
+                        log.info("向客户端发送创建连接指令失败");
+                    }
+                });
+        return promise;
+    }
+
+
+    /*
+     * 创建一个promise
+     * 这个promise会在指定时间后无结果则取消，有结果（无论成功失败）不会取消
+     * 只有在定时任务里这一个地方会取消promise，其他地方都不会给该promise设置失败
+     * */
+    private Promise<Channel> getTimeOutPromise(int timeOut) {
+        Promise<Channel> promise = new DefaultPromise<>(work.next());
+        ScheduledFuture<?> schedule = work.next().schedule(() -> promise.setFailure(new TimeoutException("promise超时无法获取连接")), timeOut, TimeUnit.SECONDS);
+        promise.addListener(future -> {
+            if (future.isSuccess()) {
+                schedule.cancel(true);
+            }
+        });
+        return promise;
+    }
+
+    /*
+     * 停止Server，即直接关闭manager连接，其他行为都在连接的回掉函数里处理
+     * */
+    public void stop() {
+        if (managerChanel != null && managerChanel.isActive()) {
+            managerChanel.close();
         }
     }
 
-    //关闭服务端，其余需要关闭的在服务端的监听事件里处理
-    public void close() {
-        ServerManager.unRegister(this);
+    /*
+     * 真实处理stop server，清理资源
+     * */
+    private void close() {
         if (bind != null && bind.channel().isActive()) {
             bind.channel().close();
         }
         if (managerChanel != null && managerChanel.isActive()) {
             managerChanel.close();
-        }
-        for (Iterator<Promise<Channel>> iterator = hasConnectionPromises.iterator(); iterator.hasNext(); ) {
-            Promise<Channel> next = iterator.next();
-            iterator.remove();
-            Channel now = next.getNow();
-            if (now != null && now.isActive()) {
-                now.close();
-            }
-            next.cancel(true);
-        }
-        for (Iterator<Promise<Channel>> iterator = waitConnections.iterator(); iterator.hasNext(); ) {
-            Promise<Channel> next = iterator.next();
-            iterator.remove();
-            next.cancel(true);
         }
     }
 
@@ -176,7 +177,8 @@ public class Server {
                     webConnection.pipeline().addLast("linkUser", new TransactionHandler(clientChannel, false));
                     webConnection.read();
                 } else {
-                    log.info("服务端获取对客户端失败");
+                    //promise失败可能是1：超时没结果被定时任务取消的
+                    log.error("服务端获取对客户端的连接失败", future.cause());
                     webConnection.close();
                 }
             });
