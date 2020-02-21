@@ -25,7 +25,7 @@ public class DataConnectionClient {
     private Channel channelToServer;
 
     /*
-     * 数据连接连接到服务器上时，如果不说明自己是数据连接，服务器不会主动发数据的，所以这里改成自动读提高性能
+     * 数据连接连接到服务器上时，如果不说明自己是数据连接，服务器是不会主动发数据的，所以这里改成自动读提高性能
      * */
     public Promise<DataConnectionClient> start() {
         Bootstrap b = new Bootstrap();
@@ -47,19 +47,22 @@ public class DataConnectionClient {
                     @Override
                     public void operationComplete(ChannelFuture future) {
                         if (future.isSuccess()) {
+                            log.debug("数据连接，连接到服务器成功，准备连接到本地 {} 端口", Config.localPort);
                             channelToServer = future.channel();
                             //连接到本地需要代理的端口
-                            createConnectionToLocal(Config.localPort, channelToServer.eventLoop()).addListener((ChannelFutureListener) localFuture -> {
-                                if (localFuture.isSuccess()) {
-                                    channelToServer.pipeline().addLast("linkServer", new TransactionHandler(localFuture.channel(), true));
-                                    localFuture.channel().pipeline().addLast("linkLocal", new TransactionHandler(channelToServer, true));
-                                    promise.setSuccess(DataConnectionClient.this);
-                                } else {
-                                    log.error("连接到本地端口:" + Config.localPort + "失败,关闭和服务器的连接", localFuture.cause());
-                                    promise.setFailure(localFuture.cause());
-                                    channelToServer.close();
-                                }
-                            });
+                            createConnectionToLocal(Config.localPort, channelToServer.eventLoop())
+                                    .addListener((ChannelFutureListener) localFuture -> {
+                                        if (localFuture.isSuccess()) {
+                                            log.debug("连接到本地 {} 端口成功", Config.localPort);
+                                            channelToServer.pipeline().addLast("linkServer", new TransactionHandler(localFuture.channel(), true));
+                                            localFuture.channel().pipeline().addLast("linkLocal", new TransactionHandler(channelToServer, true));
+                                            promise.setSuccess(DataConnectionClient.this);
+                                        } else {
+                                            log.error("连接到本地 " + Config.localPort + " 端口失败,即将关闭和服务器的连接", localFuture.cause());
+                                            channelToServer.close();
+                                            promise.setFailure(localFuture.cause());
+                                        }
+                                    });
                         } else {
                             log.error("数据连接连接失败，无法连接到服务器", future.cause());
                             promise.setFailure(future.cause());

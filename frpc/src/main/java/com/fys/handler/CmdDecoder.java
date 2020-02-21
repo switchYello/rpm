@@ -8,8 +8,6 @@ import com.fys.cmd.serverToClient.Ping;
 import com.fys.cmd.serverToClient.ServerStartFailCmd;
 import com.fys.cmd.serverToClient.ServerStartSuccessCmd;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
 import org.slf4j.Logger;
@@ -27,15 +25,8 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
     private static Logger log = LoggerFactory.getLogger(CmdDecoder.class);
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        log.info("客户端连接到服务器成功host：{}，port:{}", Config.serverHost, Config.serverPort);
-        ctx.writeAndFlush(new WantManagerCmd(Config.serverWorkPort, Config.localClientName))
-                .addListener(new ChannelFutureListener() {
-                    @Override
-                    public void operationComplete(ChannelFuture future) throws Exception {
-                        log.info("客户端发送信息表示自己是控制链接");
-                    }
-                });
+    public void channelActive(ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(new WantManagerCmd(Config.serverWorkPort, Config.localClientName));
     }
 
     @Override

@@ -40,7 +40,12 @@ public class Config {
             localPort = toInt(prop.getProperty("localPort"), "localPort");
             localClientName = Optional.ofNullable(prop.getProperty("localClientName")).orElse(localClientName);
         }
-        log.info("读取配置文件serverHost:{},serverPort:{},serverWorkPort:{},localPort{},localClientName:{}", serverHost, serverPort, serverWorkPort, localPort, localClientName);
+        log.info("读取配置文件");
+        log.info("服务器地址:{}", serverHost);
+        log.info("服务器端口:{}", serverPort);
+        log.info("服务器工作地址:{}", serverWorkPort);
+        log.info("本地端口:{}", localPort);
+        log.info("本地客户端名:{}", localClientName);
     }
 
     private static int toInt(String str, String name) {

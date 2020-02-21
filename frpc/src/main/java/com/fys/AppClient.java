@@ -73,11 +73,11 @@ public class AppClient {
         @Override
         public void run() {
             if (managerConnection.isActive()) {
-                log.info("定时检测，管理连接正常");
+                log.debug("定时检测，管理连接正常");
                 schedule(this, 20, TimeUnit.SECONDS);
                 return;
             }
-            log.info("定时检测，管理连接断开了，重新连");
+            log.info("定时检测，管理连接断开了，准备重新连..");
             start();
         }
     }
@@ -101,7 +101,14 @@ public class AppClient {
                              }
                          }
                 )
-                .connect();
+                .connect()
+                .addListener((ChannelFutureListener) future -> {
+                    if (future.isSuccess()) {
+                        log.info("连接成功{}:{}", Config.serverPort, Config.serverPort);
+                    } else {
+                        log.error("连接失败", future.cause());
+                    }
+                });
     }
 
     private static void assertTrue(boolean c, String message) {

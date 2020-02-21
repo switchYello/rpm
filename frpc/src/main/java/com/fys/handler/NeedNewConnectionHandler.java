@@ -18,6 +18,7 @@ public class NeedNewConnectionHandler extends SimpleChannelInboundHandler<NeedCr
     private Logger log = LoggerFactory.getLogger(NeedNewConnectionHandler.class);
 
     private String serverId;
+    private int connectionCount = 0;
 
     public NeedNewConnectionHandler(String serverId) {
         this.serverId = serverId;
@@ -25,7 +26,7 @@ public class NeedNewConnectionHandler extends SimpleChannelInboundHandler<NeedCr
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, NeedCreateNewConnectionCmd msg) {
-        log.info("收到服务端NeedNewConnection");
+        log.debug("收到服务端NeedNewConnection,ServerId{},Token:{},Count:{}", serverId, msg.getConnectionToken(), ++connectionCount);
         new DataConnectionClient().start().addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
             if (future.isSuccess()) {
                 future.getNow().write(new WantDataCmd(msg.getConnectionToken(), serverId));
