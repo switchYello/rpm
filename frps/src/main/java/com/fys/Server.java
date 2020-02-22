@@ -3,10 +3,8 @@ package com.fys;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.handler.TransactionHandler;
 import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
-import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.*;
 import org.slf4j.Logger;
@@ -25,7 +23,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class Server {
 
-    private enum Status {
+    public enum Status {
         start, stopIng, stop;
     }
 
@@ -97,6 +95,14 @@ public class Server {
         return clientName;
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
+    public EventLoop getEventLoop() {
+        return work.next();
+    }
+
     //添加客户端连接到池中，如果有等待需要的promise则优先给promise
     public void addConnection(long token, Channel dataChanel) {
         Promise<Channel> promise = waitConnections.remove(token);
@@ -136,8 +142,9 @@ public class Server {
 
     /*
      * 停止Server，即直接关闭manager连接，其他行为都在连接的回掉函数里处理
+     * 如果因为管理连接被关闭导致的server关闭,则UnRegister此Server.如果是主动关闭Server则不需要UnRegister
      * */
-    public void stop() {
+    private void stop() {
         //防止多次关闭
         if (status != Status.start) {
             return;

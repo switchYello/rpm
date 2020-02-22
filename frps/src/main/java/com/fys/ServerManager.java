@@ -1,6 +1,7 @@
 package com.fys;
 
 import io.netty.channel.Channel;
+import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
@@ -18,7 +19,6 @@ public class ServerManager {
 
     private static Logger log = LoggerFactory.getLogger(ServerManager.class);
     private static List<Server> register = new ArrayList<>();
-    private static List<Server> unRegister = new ArrayList<>();
 
     /**
      * 开启新的服务，用户数据转发
@@ -28,20 +28,20 @@ public class ServerManager {
 
         for (Server s : register) {
             if (Objects.equals(s.getPort(), port)) {
-                log.info("端口已被使用,关闭旧Server，客户端:{},端口:{}", s.getClientName(), port);
-                s.stop();
+                if (s.getStatus() == Server.Status.start) {
+                    return new DefaultPromise<Server>(s.getEventLoop())
+                            .setFailure(new IllegalStateException("Server:" + s.getId() + "正在使用端口:" + port + "，请更换其他端口"));
+                }
             }
         }
-        register.removeAll(unRegister);
-        unRegister.clear();
 
         Server server = new Server(port, managerChannel, clientName);
         return server.start().addListener((GenericFutureListener<? extends Future<Server>>) future -> {
             if (future.isSuccess()) {
                 Server s = future.getNow();
-                log.info("注册Server,ClientName:{},Port:{}", s.getClientName(), s.getPort());
+                log.info("注册到ServerManager,ClientName:{},Port:{}", s.getClientName(), s.getPort());
                 register.add(future.getNow());
-                log.debug("当前Server情况");
+                log.debug("当前Server如下");
                 for (Server currentServer : register) {
                     log.debug("ServerId:{},ServerPort:{},ClientName:{}", currentServer.getId(), currentServer.getPort(), currentServer.getClientName());
                 }
@@ -66,7 +66,7 @@ public class ServerManager {
     }
 
     public static void unRegister(Server server) {
-        unRegister.add(server);
+        register.remove(server);
     }
 
 }
