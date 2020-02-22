@@ -3,6 +3,7 @@ package com.fys.handler;
 import com.fys.Server;
 import com.fys.ServerManager;
 import com.fys.cmd.clientToServer.WantManagerCmd;
+import com.fys.cmd.handler.ExceptionHandler;
 import com.fys.cmd.serverToClient.ServerStartFailCmd;
 import com.fys.cmd.serverToClient.ServerStartSuccessCmd;
 import io.netty.channel.ChannelHandler;
@@ -34,18 +35,20 @@ public class WantManagerCmdHandler extends SimpleChannelInboundHandler<WantManag
     protected void channelRead0(ChannelHandlerContext ctx, WantManagerCmd msg) {
 
         //本地开启一个服务，返回开启服务的future
-        Promise<Server> serverStartFuture = ServerManager.startNewServer(msg.getServerWorkPort(), ctx.channel(), msg.getClientName());
+        Promise<Server> serverStartFuture = ServerManager.startNewServer(msg, ctx.channel());
 
         //只有服务器端启动成功才添加PingPongHandler
         serverStartFuture.addListener((GenericFutureListener<Future<Server>>) future -> {
             if (future.isSuccess()) {
                 Server server = future.getNow();
-                log.debug("回复客户端创建Server成功，ServerId:{},ServerPort:{}", server.getId(), server.getPort());
-                ctx.writeAndFlush(new ServerStartSuccessCmd(server.getId())).addListener(CLOSE_ON_FAILURE);
-                ctx.pipeline().addLast(new PingPongHandler());
+                log.debug("回复客户端创建Server成功，ServerId:{}", server.getId());
+                ctx.writeAndFlush(new ServerStartSuccessCmd(msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort()))
+                        .addListener(CLOSE_ON_FAILURE);
             } else {
-                log.debug("回复客户端创建Server失败");
-                ctx.writeAndFlush(new ServerStartFailCmd(future.cause() != null ? future.cause().toString() : "没找到原因")).addListener(CLOSE);
+                String cause = future.cause() != null ? future.cause().toString() : "没找到原因";
+                log.debug("回复客户端创建Server失败", cause);
+                ctx.writeAndFlush(new ServerStartFailCmd(msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort(), cause))
+                        .addListener(CLOSE);
             }
         });
     }

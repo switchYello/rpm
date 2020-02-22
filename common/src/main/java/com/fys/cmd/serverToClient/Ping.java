@@ -19,6 +19,21 @@ public class Ping implements Cmd {
         buf.writeByte(ServerToClient.ping);
     }
 
+    @Override
+    public short getServerPort() {
+        return 0;
+    }
+
+    @Override
+    public short getLocalPort() {
+        return 0;
+    }
+
+    @Override
+    public String getLocalHost() {
+        return null;
+    }
+
     public static Ping decoderFrom(ByteBuf in) {
         return instance;
     }

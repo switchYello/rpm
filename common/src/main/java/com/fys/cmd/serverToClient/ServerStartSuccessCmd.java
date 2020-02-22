@@ -2,10 +2,6 @@ package com.fys.cmd.serverToClient;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
-
-import java.nio.charset.StandardCharsets;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -14,27 +10,54 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class ServerStartSuccessCmd implements Cmd {
 
-    //既然服务器创建成功，则返回客户端时将id带回
-    private String serverId;
+    private short serverPort;
+    private String localHost;
+    private short localPort;
 
-    public ServerStartSuccessCmd(String serverId) {
-        this.serverId = serverId;
+    public ServerStartSuccessCmd(short serverPort, String localHost, short localPort) {
+        this.serverPort = serverPort;
+        this.localHost = localHost;
+        this.localPort = localPort;
     }
 
     @Override
     public void encoderTo(ByteBuf buf) {
         buf.writeByte(ServerToClient.serverStartSuccessCmd);
-        buf.writeShort(serverId.length());
-        buf.writeCharSequence(serverId, UTF_8);
+        buf.writeShort(serverPort);
+        buf.writeShort(localHost.length());
+        buf.writeCharSequence(localHost, UTF_8);
+        buf.writeShort(localPort);
     }
 
     public static ServerStartSuccessCmd decoderFrom(ByteBuf in) {
-        short serverIdLength = in.readShort();
-        CharSequence charSequence = in.readCharSequence(serverIdLength, UTF_8);
-        return new ServerStartSuccessCmd(charSequence.toString());
+        short serverPort = in.readShort();
+        short localHostLength = in.readShort();
+        CharSequence localHost = in.readCharSequence(localHostLength, UTF_8);
+        short localPort = in.readShort();
+        return new ServerStartSuccessCmd(serverPort, localHost.toString(), localPort);
     }
 
-    public String getServerId() {
-        return serverId;
+    @Override
+    public short getServerPort() {
+        return serverPort;
+    }
+
+    @Override
+    public short getLocalPort() {
+        return localPort;
+    }
+
+    @Override
+    public String getLocalHost() {
+        return localHost;
+    }
+
+    @Override
+    public String toString() {
+        return "ServerStartSuccessCmd{" +
+                "serverPort=" + serverPort +
+                ", localHost='" + localHost + '\'' +
+                ", localPort=" + localPort +
+                '}';
     }
 }

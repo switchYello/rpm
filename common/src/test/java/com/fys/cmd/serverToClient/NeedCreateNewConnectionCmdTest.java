@@ -15,10 +15,14 @@ public class NeedCreateNewConnectionCmdTest {
     @Test
     public void encoderTo() {
         ByteBuf buffer = Unpooled.buffer();
-        NeedCreateNewConnectionCmd src = new NeedCreateNewConnectionCmd(System.nanoTime());
+        NeedCreateNewConnectionCmd src = new NeedCreateNewConnectionCmd((short) 90, "127.0.0.2", (short) 100, System.nanoTime());
         src.encoderTo(buffer);
         assertEquals(Cmd.ServerToClient.needCreateNewConnectionCmd, buffer.readByte());
         NeedCreateNewConnectionCmd dec = NeedCreateNewConnectionCmd.decoderFrom(buffer);
         assertEquals(src.getConnectionToken(), dec.getConnectionToken());
+        assertEquals(src.getLocalPort(), dec.getLocalPort());
+        assertEquals(src.getServerPort(), dec.getServerPort());
+        assertEquals(src.getLocalHost(), dec.getLocalHost());
+        buffer.release();
     }
 }

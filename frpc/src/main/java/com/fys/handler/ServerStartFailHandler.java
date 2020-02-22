@@ -22,7 +22,8 @@ public class ServerStartFailHandler extends SimpleChannelInboundHandler<ServerSt
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ServerStartFailCmd msg) {
-        log.error("服务器创建Server失败,因为:{}", msg.getFailMsg());
+        log.error(msg.toString());
+        log.info("映射{}->{}:{}开启成功", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
         if (ctx.channel().isActive()) {
             ctx.close();
         }

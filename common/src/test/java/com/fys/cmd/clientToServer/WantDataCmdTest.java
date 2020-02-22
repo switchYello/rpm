@@ -2,6 +2,7 @@ package com.fys.cmd.clientToServer;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
@@ -17,11 +18,12 @@ public class WantDataCmdTest {
     @Test
     public void encoderTo() {
         ByteBuf buffer = Unpooled.buffer();
-        WantDataCmd src = new WantDataCmd(System.nanoTime(), UUID.randomUUID().toString());
+        WantDataCmd src = new WantDataCmd(System.nanoTime());
         src.encoderTo(buffer);
         assertEquals(Cmd.ClientToServer.wantDataCmd, buffer.readByte());
         WantDataCmd dec = WantDataCmd.decoderFrom(buffer);
         assertEquals(src.getConnectionToken(), dec.getConnectionToken());
-        assertEquals(src.getServerId(), dec.getServerId());
+        assertEquals(src.getConnectionToken(), dec.getConnectionToken());
+        buffer.release();
     }
 }

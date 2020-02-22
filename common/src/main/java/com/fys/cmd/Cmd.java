@@ -23,5 +23,9 @@ public interface Cmd {
 
     void encoderTo(ByteBuf buf);
 
+    short getServerPort();
 
+    short getLocalPort();
+
+    String getLocalHost();
 }

@@ -18,6 +18,21 @@ public class Pong implements Cmd {
         buf.writeByte(ClientToServer.pong);
     }
 
+    @Override
+    public short getServerPort() {
+        return 0;
+    }
+
+    @Override
+    public short getLocalPort() {
+        return 0;
+    }
+
+    @Override
+    public String getLocalHost() {
+        return null;
+    }
+
     public static Pong decoderFrom(ByteBuf in) {
         return instance;
     }

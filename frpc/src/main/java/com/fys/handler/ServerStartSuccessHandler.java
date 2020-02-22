@@ -22,8 +22,7 @@ public class ServerStartSuccessHandler extends SimpleChannelInboundHandler<Serve
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ServerStartSuccessCmd msg) {
-        log.info("服务器创建Server成功,ServerId:{}", msg.getServerId());
-        ctx.pipeline().replace(this, null, new NeedNewConnectionHandler(msg.getServerId()));
+        log.info("映射{}->{}:{}开启成功", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
     }
 
 }

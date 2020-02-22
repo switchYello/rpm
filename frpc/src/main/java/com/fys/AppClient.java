@@ -1,10 +1,10 @@
 package com.fys;
 
+import com.fys.cmd.clientToServer.WantManagerCmd;
 import com.fys.cmd.handler.CmdEncoder;
-import com.fys.handler.CmdDecoder;
-import com.fys.handler.PingHandler;
-import com.fys.handler.ServerStartFailHandler;
-import com.fys.handler.ServerStartSuccessHandler;
+import com.fys.cmd.handler.ExceptionHandler;
+import com.fys.cmd.listener.ErrorLogListener;
+import com.fys.handler.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -13,7 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,6 +25,7 @@ public class AppClient {
 
     private static Logger log = LoggerFactory.getLogger(AppClient.class);
     public static EventLoopGroup work = new NioEventLoopGroup(1);
+    private long startTime = System.currentTimeMillis();
 
     /*
      * -c=conf.properties
@@ -47,11 +50,28 @@ public class AppClient {
     }
 
     public void start() {
+        log.warn("上次坚持了:{}分钟", (System.currentTimeMillis() - startTime) / 1000 / 60.0);
+        startTime = System.currentTimeMillis();
+
         ChannelFuture managerConnectionFuture = createManagerConnection();
         //并为future添加事件,无论连接成功失败都在10秒后检查连接
         managerConnectionFuture.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) {
+                if (future.isSuccess()) {
+                    log.info("连接成功{}:{}", Config.serverHost, Config.serverPort);
+
+                    //开启配置文件中的映射
+                    for (Map.Entry<Integer, InetSocketAddress> entry : Config.works.entrySet()) {
+                        Integer serverPort = entry.getKey();
+                        InetSocketAddress localClient = entry.getValue();
+                        log.info("请求开启{}->{}的映射", serverPort, localClient);
+                        future.channel().writeAndFlush(new WantManagerCmd(serverPort, localClient.getHostString(), localClient.getPort()))
+                                .addListener(ErrorLogListener.INSTANCE);
+                    }
+                } else {
+                    log.error("连接失败", future.cause());
+                }
                 schedule(new ScheduleCheck(future.channel()), 10, TimeUnit.SECONDS);
             }
         });
@@ -98,17 +118,12 @@ public class AppClient {
                                  ch.pipeline().addLast(PingHandler.INSTANCE);
                                  ch.pipeline().addLast(ServerStartSuccessHandler.INSTANCE);
                                  ch.pipeline().addLast(ServerStartFailHandler.INSTANCE);
+                                 ch.pipeline().addLast(new NeedNewConnectionHandler());
+                                 ch.pipeline().addLast(ExceptionHandler.INSTANCE);
                              }
                          }
                 )
-                .connect()
-                .addListener((ChannelFutureListener) future -> {
-                    if (future.isSuccess()) {
-                        log.info("连接成功{}:{}", Config.serverPort, Config.serverPort);
-                    } else {
-                        log.error("连接失败", future.cause());
-                    }
-                });
+                .connect();
     }
 
     private static void assertTrue(boolean c, String message) {

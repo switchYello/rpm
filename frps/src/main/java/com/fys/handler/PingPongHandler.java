@@ -21,10 +21,10 @@ public class PingPongHandler extends ChannelInboundHandlerAdapter {
     private static Logger log = LoggerFactory.getLogger(PingPongHandler.class);
     //最后一次接收到pong的时间戳
     private long lastPong;
-    //最大多久没有pong就断开，毫秒
-    private static long maxPongDelay = 5000 * 4;
     //多长时间ping一次，秒
-    private int pingRate = 8;
+    private int pingRate = 10;
+    //最大多久没有pong就断开，毫秒
+    private long maxPongDelay = pingRate * 1000 * 4;
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {

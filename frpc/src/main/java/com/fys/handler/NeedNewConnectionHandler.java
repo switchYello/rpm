@@ -17,21 +17,20 @@ public class NeedNewConnectionHandler extends SimpleChannelInboundHandler<NeedCr
 
     private Logger log = LoggerFactory.getLogger(NeedNewConnectionHandler.class);
 
-    private String serverId;
     private int connectionCount = 0;
-
-    public NeedNewConnectionHandler(String serverId) {
-        this.serverId = serverId;
-    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, NeedCreateNewConnectionCmd msg) {
-        log.debug("收到服务端NeedNewConnection,ServerId:{},Token:{},Count:{}", serverId, msg.getConnectionToken(), ++connectionCount);
-        new DataConnectionClient().start().addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
-            if (future.isSuccess()) {
-                future.getNow().write(new WantDataCmd(msg.getConnectionToken(), serverId));
-            }
-        });
+        log.debug("收到服务端NeedNewConnection,ServerPort:{},LocalHost:{},LocalPort:{},Token:{},Count:{}", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort(), msg.getConnectionToken(), ++connectionCount);
+        new DataConnectionClient(msg).start()
+                .addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
+                    if (future.isSuccess()) {
+                        log.info("开启dataConnection成功");
+                        future.getNow().write(new WantDataCmd(msg.getConnectionToken()));
+                    } else {
+                        log.info("开启dataConnection失败", future.cause());
+                    }
+                });
     }
 
 }

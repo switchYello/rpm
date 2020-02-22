@@ -15,4 +15,6 @@ public class CmdEncoder extends MessageToByteEncoder<Cmd> {
     protected void encode(ChannelHandlerContext ctx, Cmd msg, ByteBuf out) {
         msg.encoderTo(out);
     }
+
+
 }

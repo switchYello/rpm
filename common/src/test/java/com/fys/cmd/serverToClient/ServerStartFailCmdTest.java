@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * hcy 2020/2/22
@@ -17,10 +17,14 @@ public class ServerStartFailCmdTest {
     @Test
     public void encoderTo() {
         ByteBuf buffer = Unpooled.buffer();
-        ServerStartFailCmd src = new ServerStartFailCmd(UUID.randomUUID().toString());
+        ServerStartFailCmd src = new ServerStartFailCmd((short) 80,"54.21.56.1", (short) 70, UUID.randomUUID().toString());
         src.encoderTo(buffer);
-        assertEquals(Cmd.ServerToClient.serverStartFailCmd,buffer.readByte());
+        assertEquals(Cmd.ServerToClient.serverStartFailCmd, buffer.readByte());
         ServerStartFailCmd dec = ServerStartFailCmd.decoderFrom(buffer);
         assertEquals(src.getFailMsg(), dec.getFailMsg());
+        assertEquals(src.getLocalPort(), dec.getLocalPort());
+        assertEquals(src.getServerPort(), dec.getServerPort());
+        assertEquals(src.getLocalHost(), dec.getLocalHost());
+        buffer.release();
     }
 }

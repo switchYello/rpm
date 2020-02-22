@@ -2,10 +2,6 @@ package com.fys.cmd.clientToServer;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
-
-import java.nio.charset.StandardCharsets;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -15,34 +11,59 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class WantManagerCmd implements Cmd {
 
-    private int serverWorkPort;
-    private String clientName;
+    private short serverWorkPort;
+    private String localHost;
+    private short localPort;
 
-    public WantManagerCmd(int serverWorkPort, String clientName) {
+    public WantManagerCmd(short serverWorkPort, String localHost, short localPort) {
         this.serverWorkPort = serverWorkPort;
-        this.clientName = clientName;
+        this.localHost = localHost;
+        this.localPort = localPort;
+    }
+
+    public WantManagerCmd(int serverWorkPort, String localHost, int localPort) {
+        this((short) serverWorkPort, localHost, (short) localPort);
     }
 
     @Override
     public void encoderTo(ByteBuf buf) {
         buf.writeByte(ClientToServer.wantManagerCmd);
         buf.writeShort(serverWorkPort);
-        buf.writeShort(clientName.length());
-        buf.writeCharSequence(clientName, UTF_8);
-    }
-    
-    public static WantManagerCmd decoderFrom(ByteBuf in) {
-        short serverWorkPort = in.readShort();
-        short clientNameLength = in.readShort();
-        CharSequence clientName = in.readCharSequence(clientNameLength, UTF_8);
-        return new WantManagerCmd(serverWorkPort, clientName.toString());
+        buf.writeShort(localHost.length());
+        buf.writeCharSequence(localHost, UTF_8);
+        buf.writeShort(localPort);
     }
 
-    public int getServerWorkPort() {
+
+    public static WantManagerCmd decoderFrom(ByteBuf in) {
+        short serverWorkPort = in.readShort();
+        short localHostLength = in.readShort();
+        CharSequence localHost = in.readCharSequence(localHostLength, UTF_8);
+        short localPort = in.readShort();
+        return new WantManagerCmd(serverWorkPort, localHost.toString(), localPort);
+    }
+
+    @Override
+    public short getServerPort() {
         return serverWorkPort;
     }
 
-    public String getClientName() {
-        return clientName;
+    @Override
+    public short getLocalPort() {
+        return localPort;
+    }
+
+    @Override
+    public String getLocalHost() {
+        return localHost;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "serverWorkPort=" + serverWorkPort +
+                ", localHost='" + localHost + '\'' +
+                ", localPort=" + localPort +
+                '}';
     }
 }

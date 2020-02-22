@@ -1,8 +1,6 @@
 package com.fys.handler;
 
-import com.fys.Config;
 import com.fys.cmd.Cmd;
-import com.fys.cmd.clientToServer.WantManagerCmd;
 import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
 import com.fys.cmd.serverToClient.Ping;
 import com.fys.cmd.serverToClient.ServerStartFailCmd;
@@ -23,16 +21,10 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
     private static Logger log = LoggerFactory.getLogger(CmdDecoder.class);
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new WantManagerCmd(Config.serverWorkPort, Config.localClientName));
-    }
-
-    @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         byte flag = in.readByte();
 
         if (flag == Cmd.ServerToClient.serverStartSuccessCmd) {
-            log.debug("收到服务创建成功信号");
             out.add(ServerStartSuccessCmd.decoderFrom(in));
             return;
         }

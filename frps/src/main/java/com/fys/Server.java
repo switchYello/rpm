@@ -1,19 +1,18 @@
 package com.fys;
 
+import com.fys.cmd.clientToServer.WantManagerCmd;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.handler.TransactionHandler;
-import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
+import com.fys.cmd.listener.ErrorLogListener;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.util.concurrent.*;
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * 客户端要求监听某一个端口后创建并启动此类
@@ -30,21 +29,18 @@ public class Server {
     private static Logger log = LoggerFactory.getLogger(Server.class);
     private EventLoopGroup boss = App.boss;
     private EventLoopGroup work = App.work;
-
     private volatile Status status = Status.start;
-    private final String id;
-    private int port;
-    private String clientName;
-    private Channel managerChannel;
-    private ChannelFuture bind;
-    //这些promise在等待连接的到来
-    private Map<Long, Promise<Channel>> waitConnections = new ConcurrentHashMap<>();
 
-    public Server(int port, Channel managerChannel, String clientName) {
-        this.port = port;
-        this.clientName = clientName;
+
+    private final String id;
+    private ChannelFuture bind;
+    private WantManagerCmd want;
+    private Channel managerChannel;
+
+    public Server(WantManagerCmd wantManagerCmd, Channel managerChannel) {
+        this.want = wantManagerCmd;
         this.managerChannel = managerChannel;
-        this.id = "Server_" + port + "_" + clientName;
+        this.id = "Server_[" + want.getServerPort() + "->" + want.getLocalPort() + "]";
         //服务启动成功，为管理添加关闭事件，关闭连接时同时关闭Server
         managerChannel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
             this.stop();
@@ -66,17 +62,17 @@ public class Server {
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) {
-                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 120));
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 90));
                         ch.pipeline().addLast(new ServerHandler(Server.this));
                     }
-                }).bind(Config.bindHost, port);
+                }).bind(Config.bindHost, want.getServerPort());
         //添加服务开启成功失败事件
         bind.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
-                log.info("Server在端口:{}启动成功", port);
+                log.info("Server在端口:{}启动成功", want.getServerPort());
                 promise.setSuccess(this);
             } else {
-                log.error("Server在端口:" + port + "启动失败", future.cause());
+                log.error("Server在端口:" + want.getServerPort() + "启动失败", future.cause());
                 promise.setFailure(future.cause());
             }
         });
@@ -87,12 +83,16 @@ public class Server {
         return id;
     }
 
-    public int getPort() {
-        return port;
+    public short getServerPort() {
+        return want.getServerPort();
     }
 
-    public String getClientName() {
-        return clientName;
+    public short getLocalPort() {
+        return want.getLocalPort();
+    }
+
+    public String getLocalHost() {
+        return want.getLocalHost();
     }
 
     public Status getStatus() {
@@ -103,41 +103,9 @@ public class Server {
         return work.next();
     }
 
-    //添加客户端连接到池中，如果有等待需要的promise则优先给promise
-    public void addConnection(long token, Channel dataChanel) {
-        Promise<Channel> promise = waitConnections.remove(token);
-        if (promise == null) {
-            log.debug("Server.addConnection无法找到Promise，可能promise已被超时取消");
-            dataChanel.close();
-            return;
-        }
-        promise.setSuccess(dataChanel);
-    }
-
-    public Promise<Channel> getConnection(EventLoop eventLoop) {
-        Promise<Channel> promise = new DefaultPromise<>(eventLoop);
-        long token = System.nanoTime();
-        waitConnections.put(token, promise);
-        ScheduledFuture<?> schedule = eventLoop.schedule(() -> promise.setFailure(new TimeoutException("Promise超时无法获取连接ClientName:" + clientName)), Config.timeOut, TimeUnit.SECONDS);
-        //如果能成功获取到连接Promise被设为成功，若超时Promise被设为失败
-        //设为成功时，则取消定时任务
-        //设为失败时，则从map中移除promise （成功时不用移除，因为设置成功方法内已经移除过了）
-        promise.addListener(future -> {
-            if (future.isSuccess()) {
-                schedule.cancel(true);
-            } else {
-                waitConnections.remove(token);
-            }
-        });
-        NeedCreateNewConnectionCmd needNewConn = new NeedCreateNewConnectionCmd(token);
-        log.info("向客户端请求新数据连接ServerId:{},NeedCreateNewConn:{}", id, needNewConn);
-        managerChannel.writeAndFlush(needNewConn)
-                .addListener(future -> {
-                    if (!future.isSuccess()) {
-                        log.debug("向客户端发送创建连接指令失败");
-                    }
-                });
-        return promise;
+    //向管理chanel输出，且必须写成功,失败就关闭
+    public ChannelFuture write(Object o) {
+        return managerChannel.writeAndFlush(o).addListeners(ErrorLogListener.INSTANCE, ChannelFutureListener.CLOSE_ON_FAILURE);
     }
 
     /*
@@ -150,16 +118,25 @@ public class Server {
             return;
         }
         status = Status.stopIng;
-        log.info("准备关闭Server，端口:{},客户端:{}", port, clientName);
+        log.info("准备关闭:{}", this);
+        ServerManager.unRegister(this);
         if (managerChannel != null && managerChannel.isActive()) {
             managerChannel.close();
         }
-        ServerManager.unRegister(this);
         if (bind != null && bind.channel().isActive()) {
             bind.channel().close();
         }
-        work.shutdownGracefully();
         status = Status.stop;
+    }
+
+    @Override
+    public String toString() {
+        return "Server{" +
+                "status=" + status +
+                ", serverPort=" + want.getServerPort() +
+                ", localHost=" + want.getLocalHost() +
+                ", localPort=" + want.getLocalPort() +
+                '}';
     }
 
     //当外网用户连接到监听的端口后，将打开与客户端的连接，并传输数据
@@ -174,7 +151,7 @@ public class Server {
         @Override
         public void channelActive(ChannelHandlerContext userConnection) {
             log.debug("Server:{} 被连接，准备获取客户端连接", server.getId());
-            Promise<Channel> promise = server.getConnection(userConnection.channel().eventLoop());
+            Promise<Channel> promise = ServerManager.getConnection(userConnection.channel().eventLoop(), server);
             promise.addListener((GenericFutureListener<Future<Channel>>) future -> {
                 if (future.isSuccess()) {
                     log.debug("Server:{} 获取客户端连接成功", server.getId());

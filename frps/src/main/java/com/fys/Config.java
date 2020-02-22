@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -18,6 +17,7 @@ public class Config {
     public static int bindPort;
     public static String bindHost = "0.0.0.0";
     public static int timeOut = 5;
+    public static String auto_token;
 
 
     public static void init(String configPath) throws IOException {
@@ -33,11 +33,14 @@ public class Config {
         try (InputStream in = input) {
             Properties prop = new Properties();
             prop.load(in);
-            bindHost = Optional.ofNullable(prop.getProperty("bindHost")).orElse(bindHost);
-            bindPort = toInt(prop.getProperty("bindPort"), "bindPort");
+            auto_token = toString(prop.getProperty("auto_token"), "auto_token");
+            String bindAt = toString(prop.getProperty("bindAt"), "bindAt");
+            String[] split = bindAt.trim().split(":");
+            bindHost = split[0].trim();
+            bindPort = Integer.valueOf(split[1].trim());
         }
-        log.info("bindHost", bindHost);
-        log.info("bindPort", bindPort);
+        log.info("bindHost:{}", bindHost);
+        log.info("bindPort:{}", bindPort);
     }
 
     private static int toInt(String str, String name) {

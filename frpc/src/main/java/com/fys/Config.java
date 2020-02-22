@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -16,11 +18,13 @@ import java.util.UUID;
 public class Config {
 
     private static Logger log = LoggerFactory.getLogger(Config.class);
+    //服务器的地址和端口
     public static String serverHost;
     public static int serverPort;
-    public static int serverWorkPort;
-    public static int localPort;
-    public static String localClientName = getSystemName();
+    //自动验证token
+    public static String auto_token;
+    //服务器端口->本地地址 的映射
+    public static Map<Integer, InetSocketAddress> works = new HashMap<>();
 
 
     public static void init(String configPath) throws IOException {
@@ -31,21 +35,33 @@ public class Config {
         if (input == null) {
             input = new FileInputStream(configPath);
         }
+        log.info("读取配置文件:{}", configPath);
         try (InputStream in = input) {
             Properties prop = new Properties();
             prop.load(in);
-            serverHost = toString(prop.getProperty("serverHost"), "serverHost");
-            serverPort = toInt(prop.getProperty("serverPort"), "serverPort");
-            serverWorkPort = toInt(prop.getProperty("serverWorkPort"), "serverWorkPort");
-            localPort = toInt(prop.getProperty("localPort"), "localPort");
-            localClientName = Optional.ofNullable(prop.getProperty("localClientName")).orElse(localClientName);
+            auto_token = toString(prop.getProperty("auto_token"), "auto_token");
+            log.info("aut_token:{}", auto_token);
+
+            InetSocketAddress inet = toInetSocket(prop.getProperty("serverBase"), "serverBase");
+            serverHost = inet.getHostName();
+            serverPort = inet.getPort();
+            log.info("服务器{}:{}", serverHost, serverPort);
+
+            String serverWorks = toString(prop.getProperty("serverWork"), "serverWork");
+            for (String s : serverWorks.split(",")) {
+                log.info("端口映射:{}", s);
+                String[] split = s.split("->");
+                Integer serverWorkPort = Integer.valueOf(split[0].trim());
+                InetSocketAddress localClient = toInetSocket(split[1], "serverWork");
+                if (serverWorkPort == serverPort) {
+                    throw new IllegalArgumentException("映射:" + s + "不正确,服务器端口已被管理使用，请切换其他端口");
+                }
+                InetSocketAddress put = works.put(serverWorkPort, localClient);
+                if (put != null) {
+                    throw new IllegalArgumentException("映射:" + s + "不正确,服务器端口重复");
+                }
+            }
         }
-        log.info("读取配置文件");
-        log.info("服务器地址:{}", serverHost);
-        log.info("服务器端口:{}", serverPort);
-        log.info("服务器工作地址:{}", serverWorkPort);
-        log.info("本地端口:{}", localPort);
-        log.info("本地客户端名:{}", localClientName);
     }
 
     private static int toInt(String str, String name) {
@@ -63,15 +79,19 @@ public class Config {
         if (str == null) {
             throw new RuntimeException(name + "不能为空");
         }
-        return str;
+        return str.trim();
     }
 
-    private static String getSystemName() {
-        String user = System.getProperty("user.name");
-        if (user == null || user.length() == 0) {
-            return UUID.randomUUID().toString().replace("-", "");
+    private static InetSocketAddress toInetSocket(String str, String msg) {
+        try {
+            String[] split = str.trim().split(":");
+            String host = split[0].trim();
+            int port = Integer.valueOf(split[1].trim());
+            return InetSocketAddress.createUnresolved(host, port);
+        } catch (Exception e) {
+            log.error("读取配置" + msg + "错误", e);
+            throw e;
         }
-        return user;
     }
 
 }

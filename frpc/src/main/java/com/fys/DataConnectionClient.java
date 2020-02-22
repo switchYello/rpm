@@ -1,9 +1,8 @@
 package com.fys;
 
-import com.fys.cmd.handler.CmdEncoder;
-import com.fys.cmd.handler.FlowManagerHandler;
-import com.fys.cmd.handler.TimeOutHandler;
-import com.fys.cmd.handler.TransactionHandler;
+import com.fys.cmd.handler.*;
+import com.fys.cmd.listener.ErrorLogListener;
+import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -23,6 +22,11 @@ public class DataConnectionClient {
     private String serverHost = Config.serverHost;
     private int serverPort = Config.serverPort;
     private Channel channelToServer;
+    private NeedCreateNewConnectionCmd msg;
+
+    public DataConnectionClient(NeedCreateNewConnectionCmd msg) {
+        this.msg = msg;
+    }
 
     /*
      * 数据连接连接到服务器上时，如果不说明自己是数据连接，服务器是不会主动发数据的，所以这里改成自动读提高性能
@@ -47,18 +51,18 @@ public class DataConnectionClient {
                     @Override
                     public void operationComplete(ChannelFuture future) {
                         if (future.isSuccess()) {
-                            log.debug("数据连接，连接到服务器成功，准备连接到本地 {} 端口", Config.localPort);
+                            log.debug("数据连接，连接到服务器成功，准备连接到本地 {} 端口", msg.getLocalPort());
                             channelToServer = future.channel();
                             //连接到本地需要代理的端口
-                            createConnectionToLocal(Config.localPort, channelToServer.eventLoop())
+                            createConnectionToLocal(msg.getLocalPort(), channelToServer.eventLoop())
                                     .addListener((ChannelFutureListener) localFuture -> {
                                         if (localFuture.isSuccess()) {
-                                            log.debug("连接到本地 {} 端口成功", Config.localPort);
+                                            log.debug("连接到本地 {} 端口成功", msg.getLocalPort());
                                             channelToServer.pipeline().addLast("linkServer", new TransactionHandler(localFuture.channel(), true));
                                             localFuture.channel().pipeline().addLast("linkLocal", new TransactionHandler(channelToServer, true));
                                             promise.setSuccess(DataConnectionClient.this);
                                         } else {
-                                            log.error("连接到本地 " + Config.localPort + " 端口失败,即将关闭和服务器的连接", localFuture.cause());
+                                            log.error("连接到本地 " + msg.getLocalPort() + " 端口失败,即将关闭和服务器的连接", localFuture.cause());
                                             channelToServer.close();
                                             promise.setFailure(localFuture.cause());
                                         }
@@ -75,7 +79,9 @@ public class DataConnectionClient {
     //通过数据连接向服务器发送数据，用于刚创建链接后向服务器发送信号标识自己是数据连接
     public void write(Object msg) {
         if (channelToServer != null) {
-            channelToServer.writeAndFlush(msg);
+            channelToServer.writeAndFlush(msg).addListener(ErrorLogListener.INSTANCE);
+        } else {
+            log.error("channelToServer is null");
         }
     }
 
@@ -84,11 +90,17 @@ public class DataConnectionClient {
         Bootstrap b = new Bootstrap();
         return b.group(group)
                 .channel(NioSocketChannel.class)
-                .remoteAddress("0.0.0.0", port)
+                .remoteAddress(msg.getLocalHost(), port)
                 .option(ChannelOption.SO_RCVBUF, 128 * 1024)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .option(ChannelOption.TCP_NODELAY, true)
-                .handler(new TimeOutHandler(0, 0, 120))
+                .handler(new ChannelInitializer<Channel>() {
+                    @Override
+                    protected void initChannel(Channel ch) throws Exception {
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 120));
+                        ch.pipeline().addLast(ExceptionHandler.INSTANCE);
+                    }
+                })
                 .connect();
     }
 

@@ -17,7 +17,7 @@ public class App {
     private static Logger log = LoggerFactory.getLogger(App.class);
     public static EventLoopGroup boss = new NioEventLoopGroup(1);
     public static EventLoopGroup work = new NioEventLoopGroup(1);
-  
+
     /*
      * -p=9090
      * */
@@ -54,8 +54,14 @@ public class App {
                         log.info("服务端在端口:{}启动成功", Config.bindPort);
                     } else {
                         log.error("服务端在端口:" + Config.bindPort + "启动失败", future.cause());
+                        stop();
                     }
                 });
+    }
+
+    private static void stop() {
+        boss.shutdownGracefully();
+        work.shutdownGracefully();
     }
 
     private static void assertTrue(boolean c, String message) {

@@ -5,6 +5,7 @@ import com.fys.cmd.Cmd;
 import com.fys.cmd.clientToServer.Pong;
 import com.fys.cmd.clientToServer.WantDataCmd;
 import com.fys.cmd.clientToServer.WantManagerCmd;
+import com.fys.cmd.handler.ExceptionHandler;
 import com.fys.cmd.handler.FlowManagerHandler;
 import com.fys.cmd.handler.TimeOutHandler;
 import io.netty.buffer.ByteBuf;
@@ -24,6 +25,8 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
     private static Logger log = LoggerFactory.getLogger(ServerCmdDecoder.class);
 
+    private boolean addHandler = false;
+
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
 
@@ -32,14 +35,13 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         //收到新增需要开启Server
         if (flag == Cmd.ClientToServer.wantManagerCmd) {
             WantManagerCmd wantManagerCmd = WantManagerCmd.decoderFrom(in);
-            ctx.pipeline().addLast(WantManagerCmdHandler.INSTANCE);
+            if (!addHandler) {
+                ctx.pipeline().addLast(WantManagerCmdHandler.INSTANCE);
+                ctx.pipeline().addLast(new PingPongHandler());
+                ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
+                addHandler = !addHandler;
+            }
             out.add(wantManagerCmd);
-            return;
-        }
-
-        //收到客户端pong,只有管理连接才能收到pong，因为数据连接在初次连接后会移除当前Handler
-        if (flag == Cmd.ClientToServer.pong) {
-            out.add(Pong.decoderFrom(in));
             return;
         }
 
@@ -50,7 +52,14 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
             ctx.pipeline().remove(this);
             ctx.pipeline().addLast(new TimeOutHandler(0, 0, 120));
             ctx.pipeline().addLast(FlowManagerHandler.INSTANCE);
-            ServerManager.addConnection(wantDataCmd.getServerId(), wantDataCmd.getConnectionToken(), ctx.channel());
+            ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
+            ServerManager.addConnection(wantDataCmd.getConnectionToken(), ctx.channel());
+            return;
+        }
+
+        //收到客户端pong,只有管理连接才能收到pong，因为数据连接在初次连接后会移除当前Handler
+        if (flag == Cmd.ClientToServer.pong) {
+            out.add(Pong.decoderFrom(in));
             return;
         }
 
