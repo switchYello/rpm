@@ -1,7 +1,6 @@
 package com.fys.cmd.serverToClient;
 
 import com.fys.cmd.Cmd;
-import com.fys.cmd.clientToServer.WantManagerCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;
@@ -18,7 +17,7 @@ public class NeedCreateNewConnectionCmdTest {
         ByteBuf buffer = Unpooled.buffer();
         NeedCreateNewConnectionCmd src = new NeedCreateNewConnectionCmd(System.nanoTime());
         src.encoderTo(buffer);
-        assertEquals(Cmd.ServerToClient.needCreateNewConnectionCmd,buffer.readByte());
+        assertEquals(Cmd.ServerToClient.needCreateNewConnectionCmd, buffer.readByte());
         NeedCreateNewConnectionCmd dec = NeedCreateNewConnectionCmd.decoderFrom(buffer);
         assertEquals(src.getConnectionToken(), dec.getConnectionToken());
     }

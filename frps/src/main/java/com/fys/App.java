@@ -4,9 +4,6 @@ import com.fys.cmd.handler.CmdEncoder;
 import com.fys.handler.ServerCmdDecoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
@@ -18,10 +15,9 @@ import java.util.Arrays;
 public class App {
 
     private static Logger log = LoggerFactory.getLogger(App.class);
-    public static EventLoopGroup boss = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
-    public static EventLoopGroup work = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
-    public static Class<? extends ServerChannel> serverClass = Epoll.isAvailable() ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
-
+    public static EventLoopGroup boss = new NioEventLoopGroup(1);
+    public static EventLoopGroup work = new NioEventLoopGroup(1);
+  
     /*
      * -p=9090
      * */
@@ -39,7 +35,7 @@ public class App {
 
         ServerBootstrap sb = new ServerBootstrap();
         sb.group(boss, work)
-                .channel(serverClass)
+                .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.SO_RCVBUF, 32 * 1024)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
                 .childOption(ChannelOption.SO_RCVBUF, 128 * 1024)

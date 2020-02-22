@@ -3,11 +3,11 @@ package com.fys;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.handler.TransactionHandler;
 import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ public class Server {
 
     private static Logger log = LoggerFactory.getLogger(Server.class);
     private EventLoopGroup boss = App.boss;
-    private EventLoopGroup work = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
+    private EventLoopGroup work = App.work;
 
     private volatile Status status = Status.start;
     private final String id;
@@ -58,7 +58,7 @@ public class Server {
         Promise<Server> promise = new DefaultPromise<>(work.next());
         ServerBootstrap sb = new ServerBootstrap();
         bind = sb.group(boss, work)
-                .channel(App.serverClass)
+                .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.SO_RCVBUF, 32 * 1024)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
                 .childOption(ChannelOption.SO_RCVBUF, 128 * 1024)
