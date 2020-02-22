@@ -19,7 +19,7 @@
         </encoder>
     </appender>
 
-    <logger name="com" level="debug" additivity="false">
+    <logger name="com" level="debug" additivity="true">
         <appender-ref ref="FILE"/>
     </logger>
 

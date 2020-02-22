@@ -2,7 +2,6 @@ package com.fys.cmd.serverToClient;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * hcy 2020/2/18
@@ -18,15 +17,26 @@ public class NeedCreateNewConnectionCmd implements Cmd {
         this.connectionToken = connectionToken;
     }
 
+
     @Override
-    public ByteBuf toByte() {
-        ByteBuf buffer = Unpooled.buffer(9);
-        buffer.writeByte(ServerToClient.needCreateNewConnectionCmd);
-        buffer.writeLong(connectionToken);
-        return buffer;
+    public void encoderTo(ByteBuf buf) {
+        buf.writeByte(ServerToClient.needCreateNewConnectionCmd);
+        buf.writeLong(connectionToken);
+    }
+
+    public static NeedCreateNewConnectionCmd decoderFrom(ByteBuf in) {
+        long connectionToken = in.readLong();
+        return new NeedCreateNewConnectionCmd(connectionToken);
     }
 
     public long getConnectionToken() {
         return connectionToken;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "connectionToken=" + connectionToken +
+                '}';
     }
 }

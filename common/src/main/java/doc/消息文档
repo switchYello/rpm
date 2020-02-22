@@ -1,0 +1,8 @@
+消息总是已下面格式出现：
+
+    flaglength\n
+    key : value\n
+    key : value\n
+    key : value\n
+    \n
+    data

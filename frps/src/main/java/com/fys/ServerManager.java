@@ -60,6 +60,7 @@ public class ServerManager {
                 return;
             }
         }
+        log.info("找不到对应的Server无法添加连接,ServerId:{},Token:{}", serverId, token);
         //对于找不到Server的数据连接，直接关闭连接
         channel.close();
     }

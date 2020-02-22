@@ -7,7 +7,7 @@ import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * hcy 2020/2/18
@@ -23,13 +23,35 @@ public class WantDataCmd implements Cmd {
         this.serverId = serverId;
     }
 
+
     @Override
-    public ByteBuf toByte() {
-        log.info("client-> 服务器 此连接指定服务id:{}", serverId);
-        ByteBuf buffer = Unpooled.buffer(1 + 8 + ByteBufUtil.utf8MaxBytes(serverId));
-        buffer.writeByte(ClientToServer.wantDataCmd).writeLong(connectionToken).writeCharSequence(serverId, StandardCharsets.UTF_8);
-        return buffer;
+    public void encoderTo(ByteBuf buf) {
+        buf.writeByte(ClientToServer.wantDataCmd);  //flag
+        buf.writeShort(serverId.length());          //serverId Length
+        buf.writeCharSequence(serverId, UTF_8);     //serverId
+        buf.writeLong(connectionToken);             //Token
     }
 
+    public static WantDataCmd decoderFrom(ByteBuf in) {
+        short serverIdLength = in.readShort();
+        CharSequence serverIdSequence = in.readCharSequence(serverIdLength, UTF_8);
+        long token = in.readLong();
+        return new WantDataCmd(token, serverIdSequence.toString());
+    }
 
+    public String getServerId() {
+        return serverId;
+    }
+
+    public long getConnectionToken() {
+        return connectionToken;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "serverId='" + serverId + '\'' +
+                ", connectionToken=" + connectionToken +
+                '}';
+    }
 }

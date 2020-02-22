@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 /**
  * hcy 2020/2/18
  */
@@ -31,34 +29,28 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        int length = in.readInt();
         byte flag = in.readByte();
 
         if (flag == Cmd.ServerToClient.serverStartSuccessCmd) {
-            String serverId = readStr(in, length - 1);
-            out.add(new ServerStartSuccessCmd(serverId));
+            log.debug("收到服务创建成功信号");
+            out.add(ServerStartSuccessCmd.decoderFrom(in));
             return;
         }
         if (flag == Cmd.ServerToClient.serverStartFailCmd) {
-            String failMsg = readStr(in, length - 1);
-            out.add(new ServerStartFailCmd(failMsg));
+            out.add(ServerStartFailCmd.decoderFrom(in));
             return;
         }
         if (flag == Cmd.ServerToClient.ping) {
-            out.add(new Ping());
+            out.add(Ping.decoderFrom(in));
             return;
         }
         if (flag == Cmd.ServerToClient.needCreateNewConnectionCmd) {
-            long connectionToken = in.readLong();
-            out.add(new NeedCreateNewConnectionCmd(connectionToken));
+            out.add(NeedCreateNewConnectionCmd.decoderFrom(in));
             return;
         }
-        log.error("无法识别服务端发送的指令,数据长度:{},指令:{}", length, flag);
+        log.error("无法识别服务端发送的指令,指令:{}", flag);
         ctx.close();
     }
 
-    private String readStr(ByteBuf in, int length) {
-        return in.readCharSequence(length, UTF_8).toString();
-    }
 
 }

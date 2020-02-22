@@ -9,12 +9,17 @@ import io.netty.buffer.Unpooled;
  */
 public class Ping implements Cmd {
 
+    private static Ping instance = new Ping();
+
     private byte[] data = {ServerToClient.ping};
 
+
     @Override
-    public ByteBuf toByte() {
-        return Unpooled.wrappedBuffer(data);
+    public void encoderTo(ByteBuf buf) {
+        buf.writeByte(ServerToClient.ping);
     }
 
-
+    public static Ping decoderFrom(ByteBuf in) {
+        return instance;
+    }
 }

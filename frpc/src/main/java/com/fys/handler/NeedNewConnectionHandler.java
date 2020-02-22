@@ -26,7 +26,7 @@ public class NeedNewConnectionHandler extends SimpleChannelInboundHandler<NeedCr
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, NeedCreateNewConnectionCmd msg) {
-        log.debug("收到服务端NeedNewConnection,ServerId{},Token:{},Count:{}", serverId, msg.getConnectionToken(), ++connectionCount);
+        log.debug("收到服务端NeedNewConnection,ServerId:{},Token:{},Count:{}", serverId, msg.getConnectionToken(), ++connectionCount);
         new DataConnectionClient().start().addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
             if (future.isSuccess()) {
                 future.getNow().write(new WantDataCmd(msg.getConnectionToken(), serverId));

@@ -21,7 +21,7 @@ public interface Cmd {
         byte serverStartSuccessCmd = 7;
     }
 
-    //返回 标志位 + 数据的字节数组
-    ByteBuf toByte();
+    void encoderTo(ByteBuf buf);
+
 
 }

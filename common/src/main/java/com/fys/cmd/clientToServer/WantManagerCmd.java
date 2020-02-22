@@ -7,6 +7,8 @@ import io.netty.buffer.Unpooled;
 
 import java.nio.charset.StandardCharsets;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * 由客户端发给服务端，表明自己是一个管理器连接，并发送想要管理的端口
  * hcy 2020/2/18
@@ -22,10 +24,18 @@ public class WantManagerCmd implements Cmd {
     }
 
     @Override
-    public ByteBuf toByte() {
-        ByteBuf buffer = Unpooled.buffer(1 + 2 + ByteBufUtil.utf8MaxBytes(clientName));
-        buffer.writeByte(ClientToServer.wantManagerCmd).writeShort(serverWorkPort).writeCharSequence(clientName, StandardCharsets.UTF_8);
-        return buffer;
+    public void encoderTo(ByteBuf buf) {
+        buf.writeByte(ClientToServer.wantManagerCmd);
+        buf.writeShort(serverWorkPort);
+        buf.writeShort(clientName.length());
+        buf.writeCharSequence(clientName, UTF_8);
+    }
+    
+    public static WantManagerCmd decoderFrom(ByteBuf in) {
+        short serverWorkPort = in.readShort();
+        short clientNameLength = in.readShort();
+        CharSequence clientName = in.readCharSequence(clientNameLength, UTF_8);
+        return new WantManagerCmd(serverWorkPort, clientName.toString());
     }
 
     public int getServerWorkPort() {

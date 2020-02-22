@@ -123,7 +123,9 @@ public class Server {
                 waitConnections.remove(token);
             }
         });
-        managerChannel.writeAndFlush(new NeedCreateNewConnectionCmd(token))
+        NeedCreateNewConnectionCmd needNewConn = new NeedCreateNewConnectionCmd(token);
+        log.info("向客户端请求新数据连接ServerId:{},NeedCreateNewConn:{}", id, needNewConn);
+        managerChannel.writeAndFlush(needNewConn)
                 .addListener(future -> {
                     if (!future.isSuccess()) {
                         log.debug("向客户端发送创建连接指令失败");
@@ -164,9 +166,11 @@ public class Server {
 
         @Override
         public void channelActive(ChannelHandlerContext userConnection) {
+            log.debug("Server:{} 被连接，准备获取客户端连接", server.getId());
             Promise<Channel> promise = server.getConnection(userConnection.channel().eventLoop());
             promise.addListener((GenericFutureListener<Future<Channel>>) future -> {
                 if (future.isSuccess()) {
+                    log.debug("Server:{} 获取客户端连接成功", server.getId());
                     Channel clientChannel = future.getNow();
                     clientChannel.pipeline().addLast("linkClient", new TransactionHandler(userConnection.channel(), true));
                     userConnection.pipeline().addLast("linkUser", new TransactionHandler(clientChannel, false));

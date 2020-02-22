@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 
-import java.nio.charset.StandardCharsets;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * 告诉客户端，无法创建server，并返回无法创建的原因
@@ -18,11 +18,18 @@ public class ServerStartFailCmd implements Cmd {
         this.failMsg = failMsg;
     }
 
+
     @Override
-    public ByteBuf toByte() {
-        ByteBuf buffer = Unpooled.buffer(ByteBufUtil.utf8MaxBytes(failMsg) + 1);
-        buffer.writeByte(ServerToClient.serverStartFailCmd).writeCharSequence(failMsg, StandardCharsets.UTF_8);
-        return buffer;
+    public void encoderTo(ByteBuf buf) {
+        buf.writeByte(ServerToClient.serverStartFailCmd);
+        buf.writeShort(failMsg.length());
+        buf.writeCharSequence(failMsg, UTF_8);
+    }
+
+    public static ServerStartFailCmd decoderFrom(ByteBuf in) {
+        short msgLength = in.readShort();
+        CharSequence charSequence = in.readCharSequence(msgLength, UTF_8);
+        return new ServerStartFailCmd(charSequence.toString());
     }
 
     public String getFailMsg() {

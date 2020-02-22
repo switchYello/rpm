@@ -9,10 +9,17 @@ import io.netty.buffer.Unpooled;
  */
 public class Pong implements Cmd {
 
+    private static Pong instance = new Pong();
+
     private byte[] data = {ClientToServer.pong};
 
     @Override
-    public ByteBuf toByte() {
-        return Unpooled.wrappedBuffer(data);
+    public void encoderTo(ByteBuf buf) {
+        buf.writeByte(ClientToServer.pong);
     }
+
+    public static Pong decoderFrom(ByteBuf in) {
+        return instance;
+    }
+
 }
