@@ -2,56 +2,62 @@ package com.fys.cmd.clientToServer;
 
 import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * hcy 2020/2/18
  */
 public class WantDataCmd implements Cmd {
 
-    private static Logger log = LoggerFactory.getLogger(WantDataCmd.class);
-    private long connectionToken;
+    private short serverPort;
+    private String localHost;
+    private short localPort;
 
-    public WantDataCmd(long connectionToken) {
-        this.connectionToken = connectionToken;
+    public WantDataCmd(short serverPort, String localHost, short localPort) {
+        this.serverPort = serverPort;
+        this.localHost = localHost;
+        this.localPort = localPort;
     }
-
 
     @Override
     public void encoderTo(ByteBuf buf) {
         buf.writeByte(ClientToServer.wantDataCmd);  //flag
-        buf.writeLong(connectionToken);             //Token
+        buf.writeShort(serverPort);             //Token
+        buf.writeShort(localHost.length());
+        buf.writeCharSequence(localHost, UTF_8);
+        buf.writeShort(localPort);
+    }
+
+    public static WantDataCmd decoderFrom(ByteBuf in) {
+        short serverPort = in.readShort();
+        CharSequence localHost = in.readCharSequence(in.readShort(), UTF_8);
+        short localPort = in.readShort();
+        return new WantDataCmd(serverPort, localHost.toString(), localPort);
     }
 
     @Override
     public short getServerPort() {
-        return 0;
+        return serverPort;
     }
 
     @Override
     public short getLocalPort() {
-        return 0;
+        return localPort;
     }
 
     @Override
     public String getLocalHost() {
-        return null;
+        return localHost;
     }
 
-    public static WantDataCmd decoderFrom(ByteBuf in) {
-        long token = in.readLong();
-        return new WantDataCmd(token);
-    }
-
-    public long getConnectionToken() {
-        return connectionToken;
-    }
 
     @Override
     public String toString() {
         return "WantDataCmd{" +
-                "connectionToken=" + connectionToken +
+                "serverPort=" + serverPort +
+                ", localHost='" + localHost + '\'' +
+                ", localPort=" + localPort +
                 '}';
     }
 }

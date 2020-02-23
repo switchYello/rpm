@@ -15,14 +15,12 @@ public class NeedCreateNewConnectionCmd implements Cmd {
     private short serverPort;
     private String localHost;
     private short localPort;
-    //服务端让客户端创建新连接，客户端收到后，将此token原样带回，标识哪个服务端请求的
-    private long connectionToken;
 
-    public NeedCreateNewConnectionCmd(short serverPort, String localHost, short localPort, long connectionToken) {
+    //意思是 servePort端口号所在的服务想要客户端连接到 localHost:localPort 上
+    public NeedCreateNewConnectionCmd(short serverPort, String localHost, short localPort) {
         this.serverPort = serverPort;
-        this.localPort = localPort;
         this.localHost = localHost;
-        this.connectionToken = connectionToken;
+        this.localPort = localPort;
     }
 
     @Override
@@ -32,7 +30,6 @@ public class NeedCreateNewConnectionCmd implements Cmd {
         buf.writeShort(localHost.length());
         buf.writeCharSequence(localHost, UTF_8);
         buf.writeShort(localPort);
-        buf.writeLong(connectionToken);
     }
 
     public static NeedCreateNewConnectionCmd decoderFrom(ByteBuf in) {
@@ -40,12 +37,7 @@ public class NeedCreateNewConnectionCmd implements Cmd {
         short localHostLength = in.readShort();
         CharSequence localHost = in.readCharSequence(localHostLength, UTF_8);
         short localPort = in.readShort();
-        long connectionToken = in.readLong();
-        return new NeedCreateNewConnectionCmd(serverPort, localHost.toString(), localPort, connectionToken);
-    }
-
-    public long getConnectionToken() {
-        return connectionToken;
+        return new NeedCreateNewConnectionCmd(serverPort, localHost.toString(), localPort);
     }
 
     @Override
@@ -69,7 +61,6 @@ public class NeedCreateNewConnectionCmd implements Cmd {
                 "serverPort=" + serverPort +
                 ", localHost='" + localHost + '\'' +
                 ", localPort=" + localPort +
-                ", connectionToken=" + connectionToken +
                 '}';
     }
 }

@@ -21,11 +21,19 @@ public interface Cmd {
         byte serverStartSuccessCmd = 7;
     }
 
+    /*
+     * 将当前对象序列化到Bytebuf中
+     * */
     void encoderTo(ByteBuf buf);
 
+    //发送者的服务器端口
     short getServerPort();
 
+    //想要发送到的客户端端口
+    String getLocalHost();
+
+    //想要发送到的客户端端口
     short getLocalPort();
 
-    String getLocalHost();
+
 }

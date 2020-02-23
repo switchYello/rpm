@@ -18,12 +18,13 @@ public class WantDataCmdTest {
     @Test
     public void encoderTo() {
         ByteBuf buffer = Unpooled.buffer();
-        WantDataCmd src = new WantDataCmd(System.nanoTime());
+        WantDataCmd src = new WantDataCmd((short) 90,"127.0.2.8",(short) 80);
         src.encoderTo(buffer);
         assertEquals(Cmd.ClientToServer.wantDataCmd, buffer.readByte());
         WantDataCmd dec = WantDataCmd.decoderFrom(buffer);
-        assertEquals(src.getConnectionToken(), dec.getConnectionToken());
-        assertEquals(src.getConnectionToken(), dec.getConnectionToken());
+        assertEquals(src.getLocalHost(),dec.getLocalHost());
+        assertEquals(src.getLocalPort(), dec.getLocalPort());
+        assertEquals(src.getServerPort(), dec.getServerPort());
         buffer.release();
     }
 }
