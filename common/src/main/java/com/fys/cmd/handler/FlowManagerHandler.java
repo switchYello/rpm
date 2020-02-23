@@ -22,43 +22,47 @@ public class FlowManagerHandler extends MessageToMessageCodec<ByteBuf, ByteBuf> 
 
     private static Logger log = LoggerFactory.getLogger(FlowManagerHandler.class);
 
-    public static FlowManagerHandler INSTANCE = new FlowManagerHandler();
+    public String name;
+
+    public FlowManagerHandler(String name) {
+        this.name = name;
+    }
+
+    public static FlowManagerHandler INSTANCE = new FlowManagerHandler("=");
     private AtomicLong inFlow = new AtomicLong(0);
     private AtomicLong outFlow = new AtomicLong(0);
 
-    private FlowManagerHandler() {
-    }
+   private static final int[]    ds =    {  1,   1024,  1024 * 1024,  1024 * 1024 * 1024};
+   private static final String[] dw =    {"bit", "B",      "KB",            "MB"};
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         ScheduledFuture<?> scheduledFuture = ctx.executor().scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                int[] ds = {1, 1024, 1024 * 1024, 1024 * 102 * 1024};
-                String[] dw = {"bit", "B", "KB", "MB"};
-                double inValue = inFlow.doubleValue();
+                double inValue =  inFlow.doubleValue();
                 double outValue = outFlow.doubleValue();
 
                 String in = "";
                 String out = "";
                 for (int i = ds.length - 1; i >= 0; i--) {
-                    if (inValue / ds[i] >= 1) {
+                    if (inValue > ds[i]) {
                         in = inValue / ds[i] + dw[i];
                         break;
                     }
                 }
                 for (int i = ds.length - 1; i >= 0; i--) {
-                    if (outValue / ds[i] >= 1) {
+                    if (outValue > ds[i]) {
                         out = outValue / ds[i] + dw[i];
                         break;
                     }
                 }
 
-                log.info("进站流量:{},出站流量:{}", in, out);
+                log.info("{}的进站流量:{},出站流量:{}",name, in, out);
             }
         }, 10, 10, TimeUnit.SECONDS);
 
-
+        //这里添加关闭定时的监听
         ctx.channel().closeFuture().addListener((ChannelFutureListener) future -> scheduledFuture.cancel(true));
         super.handlerAdded(ctx);
     }

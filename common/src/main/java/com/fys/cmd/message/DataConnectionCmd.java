@@ -1,6 +1,5 @@
-package com.fys.cmd.clientToServer;
+package com.fys.cmd.message;
 
-import com.fys.cmd.Cmd;
 import io.netty.buffer.ByteBuf;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -8,32 +7,36 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * hcy 2020/2/18
  */
-public class WantDataCmd implements Cmd {
+public class DataConnectionCmd implements Cmd {
 
     private short serverPort;
     private String localHost;
     private short localPort;
+    private long token;
 
-    public WantDataCmd(short serverPort, String localHost, short localPort) {
+    public DataConnectionCmd(short serverPort, String localHost, short localPort, long token) {
         this.serverPort = serverPort;
         this.localHost = localHost;
         this.localPort = localPort;
+        this.token = token;
     }
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeByte(ClientToServer.wantDataCmd);  //flag
-        buf.writeShort(serverPort);             //Token
+        buf.writeByte(Cmd.dataConnectionCmd);  //flag
+        buf.writeShort(serverPort);
         buf.writeShort(localHost.length());
         buf.writeCharSequence(localHost, UTF_8);
         buf.writeShort(localPort);
+        buf.writeLong(token);
     }
 
-    public static WantDataCmd decoderFrom(ByteBuf in) {
+    public static DataConnectionCmd decoderFrom(ByteBuf in) {
         short serverPort = in.readShort();
         CharSequence localHost = in.readCharSequence(in.readShort(), UTF_8);
         short localPort = in.readShort();
-        return new WantDataCmd(serverPort, localHost.toString(), localPort);
+        long token = in.readLong();
+        return new DataConnectionCmd(serverPort, localHost.toString(), localPort, token);
     }
 
     @Override
@@ -51,13 +54,18 @@ public class WantDataCmd implements Cmd {
         return localHost;
     }
 
+    public long getToken() {
+        return token;
+    }
 
     @Override
     public String toString() {
-        return "WantDataCmd{" +
+        return "DataConnectionCmd{" +
                 "serverPort=" + serverPort +
                 ", localHost='" + localHost + '\'' +
                 ", localPort=" + localPort +
+                ", token=" + token +
                 '}';
     }
+
 }

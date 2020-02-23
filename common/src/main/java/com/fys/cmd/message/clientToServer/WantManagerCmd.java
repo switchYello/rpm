@@ -1,6 +1,6 @@
-package com.fys.cmd.clientToServer;
+package com.fys.cmd.message.clientToServer;
 
-import com.fys.cmd.Cmd;
+import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 
 import static java.nio.charset.StandardCharsets.UTF_8;

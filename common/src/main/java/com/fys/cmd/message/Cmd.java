@@ -1,4 +1,4 @@
-package com.fys.cmd;
+package com.fys.cmd.message;
 
 import io.netty.buffer.ByteBuf;
 
@@ -8,18 +8,19 @@ import io.netty.buffer.ByteBuf;
  */
 public interface Cmd {
 
-    interface ClientToServer {
-        byte wantDataCmd = 0;
-        byte wantManagerCmd = 1;
-        byte pong = 5;
-    }
+    byte dataConnectionCmd = 0;
 
     interface ServerToClient {
-        byte needCreateNewConnectionCmd = 3;
+        byte serverStartSuccessCmd = 2;
+        byte serverStartFailCmd = 3;
         byte ping = 4;
-        byte serverStartFailCmd = 6;
-        byte serverStartSuccessCmd = 7;
     }
+
+    interface ClientToServer {
+        byte wantManagerCmd = 5;
+        byte pong = 6;
+    }
+
 
     /*
      * 将当前对象序列化到Bytebuf中

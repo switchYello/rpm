@@ -1,6 +1,6 @@
-package com.fys.cmd.serverToClient;
+package com.fys.cmd.message.serverToClient;
 
-import com.fys.cmd.Cmd;
+import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;

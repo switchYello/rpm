@@ -1,21 +1,18 @@
-package com.fys.cmd.clientToServer;
+package com.fys.cmd.message.serverToClient;
 
-import com.fys.cmd.Cmd;
+import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 /**
  * hcy 2020/2/18
  */
-public class Pong implements Cmd {
+public class Ping implements Cmd {
 
-    private static Pong instance = new Pong();
-
-    private byte[] data = {ClientToServer.pong};
+    private static Ping instance = new Ping();
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeByte(ClientToServer.pong);
+        buf.writeByte(ServerToClient.ping);
     }
 
     @Override
@@ -33,8 +30,7 @@ public class Pong implements Cmd {
         return null;
     }
 
-    public static Pong decoderFrom(ByteBuf in) {
+    public static Ping decoderFrom(ByteBuf in) {
         return instance;
     }
-
 }
