@@ -3,9 +3,9 @@
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %C:%L-%m%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %C-%m%n</pattern>
         </encoder>
-        <file>frps.log</file>
+        <file>remotePortMapping.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
             <maxFileSize>5MB</maxFileSize>

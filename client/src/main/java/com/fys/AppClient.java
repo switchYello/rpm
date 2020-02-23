@@ -1,6 +1,6 @@
 package com.fys;
 
-import com.fys.cmd.clientToServer.WantManagerCmd;
+import com.fys.cmd.message.clientToServer.WantManagerCmd;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ExceptionHandler;
 import com.fys.cmd.listener.ErrorLogListener;
@@ -114,7 +114,7 @@ public class AppClient {
                                  ch.pipeline().addLast(PingHandler.INSTANCE);
                                  ch.pipeline().addLast(ServerStartSuccessHandler.INSTANCE);
                                  ch.pipeline().addLast(ServerStartFailHandler.INSTANCE);
-                                 ch.pipeline().addLast(NeedNewConnectionHandler.INSTANCE);
+                                 ch.pipeline().addLast(DataConnectionHandler.INSTANCE);
                                  ch.pipeline().addLast(ExceptionHandler.INSTANCE);
                              }
                          }

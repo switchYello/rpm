@@ -5,7 +5,7 @@
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %C:%L-%m%n</pattern>
         </encoder>
-        <file>frpc.log</file>
+        <file>remotePortMapping.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
             <maxFileSize>5MB</maxFileSize>

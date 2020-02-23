@@ -1,13 +1,13 @@
 package com.fys.handler;
 
 import com.fys.ServerManager;
-import com.fys.cmd.Cmd;
-import com.fys.cmd.clientToServer.Pong;
-import com.fys.cmd.clientToServer.WantDataCmd;
-import com.fys.cmd.clientToServer.WantManagerCmd;
 import com.fys.cmd.handler.ExceptionHandler;
 import com.fys.cmd.handler.FlowManagerHandler;
 import com.fys.cmd.handler.TimeOutHandler;
+import com.fys.cmd.message.Cmd;
+import com.fys.cmd.message.DataConnectionCmd;
+import com.fys.cmd.message.clientToServer.Pong;
+import com.fys.cmd.message.clientToServer.WantManagerCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -25,6 +25,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
     private static Logger log = LoggerFactory.getLogger(ServerCmdDecoder.class);
 
+    //因为每个ManagerChannel能开启多个Server，但只需要添加一份Handler即可，所以设置这个标志位
     private boolean addHandler = false;
 
     @Override
@@ -46,18 +47,18 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         }
 
         //新建数据连接
-        if (flag == Cmd.ClientToServer.wantDataCmd) {
-            WantDataCmd wantDataCmd = WantDataCmd.decoderFrom(in);
-            log.debug("获取客户端连接:{}", wantDataCmd);
+        if (flag == Cmd.dataConnectionCmd) {
+            DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
+            log.debug("获取客户端连接:{}", cmd);
             ctx.pipeline().remove(this);
-            ctx.pipeline().addLast(new TimeOutHandler(0, 0, 120));
-            ctx.pipeline().addLast(FlowManagerHandler.INSTANCE);
+            //这个客户端和服务端之间的超时检测，时间放长一些起保护作用即可，实际不需要这里做判断
+            ctx.pipeline().addLast(new TimeOutHandler(0, 0, 300));
             ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
-            ServerManager.addConnection(wantDataCmd.getServerPort(), ctx.channel());
+            ServerManager.addConnection(cmd.getToken(), ctx.channel());
             return;
         }
 
-        //收到客户端pong,只有管理连接才能收到pong，因为数据连接在初次连接后会移除当前Handler
+        //收到客户端pong,只有管理连接才能收到pong，数据连接不会发送Ping也就不会收到Pong
         if (flag == Cmd.ClientToServer.pong) {
             out.add(Pong.decoderFrom(in));
             return;

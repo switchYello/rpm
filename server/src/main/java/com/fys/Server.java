@@ -1,9 +1,10 @@
 package com.fys;
 
-import com.fys.cmd.clientToServer.WantManagerCmd;
+import com.fys.cmd.handler.FlowManagerHandler;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.handler.TransactionHandler;
 import com.fys.cmd.listener.ErrorLogListener;
+import com.fys.cmd.message.clientToServer.WantManagerCmd;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -35,11 +36,14 @@ public class Server {
     private ChannelFuture bind;
     private WantManagerCmd want;
     private Channel managerChannel;
+    //一个Server内的连接共用一个流量统计
+    private FlowManagerHandler flowManagerHandler;
 
     public Server(WantManagerCmd wantManagerCmd, Channel managerChannel) {
         this.want = wantManagerCmd;
         this.managerChannel = managerChannel;
         this.id = "[SID" + want.getServerPort() + " -> " + want.getLocalHost() + ":" + want.getLocalPort() + "]";
+        this.flowManagerHandler = new FlowManagerHandler(id);
         //服务启动成功，为管理添加关闭事件，关闭连接时同时关闭Server
         managerChannel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
             this.stop();
@@ -62,6 +66,7 @@ public class Server {
                     @Override
                     protected void initChannel(Channel ch) {
                         ch.pipeline().addLast(new TimeOutHandler(0, 0, 120));
+                        ch.pipeline().addLast(flowManagerHandler);
                         ch.pipeline().addLast(new ServerHandler(Server.this));
                     }
                 }).bind(Config.bindHost, want.getServerPort());
@@ -94,13 +99,6 @@ public class Server {
         return want.getLocalHost();
     }
 
-    public Status getStatus() {
-        return status;
-    }
-
-    public EventLoop getEventLoop() {
-        return work.next();
-    }
 
     //向管理chanel输出，且必须写成功,失败就关闭
     public ChannelFuture write(Object o) {

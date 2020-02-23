@@ -1,7 +1,7 @@
 package com.fys.handler;
 
-import com.fys.cmd.clientToServer.Pong;
-import com.fys.cmd.serverToClient.Ping;
+import com.fys.cmd.message.clientToServer.Pong;
+import com.fys.cmd.message.serverToClient.Ping;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

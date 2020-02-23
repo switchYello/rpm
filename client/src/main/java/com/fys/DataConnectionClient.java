@@ -2,7 +2,7 @@ package com.fys;
 
 import com.fys.cmd.handler.*;
 import com.fys.cmd.listener.ErrorLogListener;
-import com.fys.cmd.serverToClient.NeedCreateNewConnectionCmd;
+import com.fys.cmd.message.DataConnectionCmd;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -21,9 +21,9 @@ public class DataConnectionClient {
 
     private static EventLoopGroup work = AppClient.work;
     private Channel channelToServer;
-    private NeedCreateNewConnectionCmd msg;
+    private DataConnectionCmd msg;
 
-    public DataConnectionClient(NeedCreateNewConnectionCmd msg) {
+    public DataConnectionClient(DataConnectionCmd msg) {
         this.msg = msg;
     }
 
@@ -71,6 +71,7 @@ public class DataConnectionClient {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new TimeOutHandler(0, 0, 120));
+                        ch.pipeline().addLast(FlowManagerHandler.INSTANCE);
                         ch.pipeline().addLast(ExceptionHandler.INSTANCE);
                     }
                 })
@@ -84,7 +85,6 @@ public class DataConnectionClient {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
-                        ch.pipeline().addLast(FlowManagerHandler.INSTANCE);
                     }
                 })
                 .connect(host, port);

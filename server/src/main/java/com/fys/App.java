@@ -19,7 +19,7 @@ public class App {
     public static EventLoopGroup work = new NioEventLoopGroup(1);
 
     /*
-     * -p=9090
+     * -c=9090
      * */
     public static void main(String[] args) throws IOException {
         log.info(Arrays.toString(args));
@@ -45,6 +45,7 @@ public class App {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
+
                         ch.pipeline().addLast(new ServerCmdDecoder());
                     }
                 })

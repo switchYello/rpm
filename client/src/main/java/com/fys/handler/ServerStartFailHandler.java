@@ -1,6 +1,6 @@
 package com.fys.handler;
 
-import com.fys.cmd.serverToClient.ServerStartFailCmd;
+import com.fys.cmd.message.serverToClient.ServerStartFailCmd;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
