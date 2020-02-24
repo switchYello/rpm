@@ -66,7 +66,7 @@ public class DataConnectionClient {
                 .handler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
-                        ch.pipeline().addLast(FlowManagerHandler.INSTANCE);
+                        ch.pipeline().addLast(FlowManagerHandler.ClientFLowManager);
                         ch.pipeline().addLast(new TimeOutHandler(0, 0, 180));
                         ch.pipeline().addLast(ExceptionHandler.NAME, ExceptionHandler.INSTANCE);
                     }

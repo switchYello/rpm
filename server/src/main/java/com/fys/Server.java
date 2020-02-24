@@ -54,7 +54,7 @@ public class Server {
         this.want = wantManagerCmd;
         this.managerChannel = managerChannel;
         this.id = "[SID " + want.getServerPort() + " -> " + want.getLocalHost() + ":" + want.getLocalPort() + "]";
-        this.flowManagerHandler = new FlowManagerHandler(id);
+        this.flowManagerHandler = new FlowManagerHandler(id,"发送到使用者的","从使用者接收到的");
         //服务启动成功，为管理添加关闭事件，关闭连接时同时暂停Server
         managerChannel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
             pause();

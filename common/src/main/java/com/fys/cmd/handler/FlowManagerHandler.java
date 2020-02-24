@@ -22,20 +22,22 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FlowManagerHandler extends MessageToMessageCodec<ByteBuf, ByteBuf> {
 
     private static Logger log = LoggerFactory.getLogger(FlowManagerHandler.class);
-
-    public String serverName;
-
-    public FlowManagerHandler(String serverName) {
-        this.serverName = serverName;
-    }
-
-    public static FlowManagerHandler INSTANCE = new FlowManagerHandler("$");
-    private AtomicLong inFlow = new AtomicLong(0);
-    private AtomicLong outFlow = new AtomicLong(0);
-
     private static final int[] ds = {0, 1024, 1024 * 1024, 1024 * 1024 * 1024};
     private static final String[] dw = {"B", "KB", "MB", "GB"};
     private static final DecimalFormat format = new DecimalFormat(".##");
+    public static FlowManagerHandler ClientFLowManager = new FlowManagerHandler("Client", "发送到本地端口的", "从本地端口接收的");
+
+    private AtomicLong decodeFlow = new AtomicLong(0);
+    private AtomicLong encodeFlow = new AtomicLong(0);
+
+    public String serverName;
+    private String encodeName, decodeName;
+
+    public FlowManagerHandler(String serverName, String encodeName, String decodeName) {
+        this.serverName = serverName;
+        this.encodeName = encodeName;
+        this.decodeName = decodeName;
+    }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
@@ -43,25 +45,24 @@ public class FlowManagerHandler extends MessageToMessageCodec<ByteBuf, ByteBuf> 
             @Override
             public void run() {
 
-                double inValue = inFlow.doubleValue();
-                double outValue = outFlow.doubleValue();
 
-                String in = "";
-                String out = "";
+                String decode = "";
                 for (int i = ds.length - 1; i >= 0; i--) {
-                    if (inValue > ds[i]) {
-                        in = format.format(inValue / ds[i]) + dw[i];
-                        break;
-                    }
-                }
-                for (int i = ds.length - 1; i >= 0; i--) {
-                    if (outValue > ds[i]) {
-                        out = format.format(outValue / ds[i]) + dw[i];
+                    if (decodeFlow.doubleValue() > ds[i]) {
+                        decode = format.format(decodeFlow.doubleValue() / ds[i]) + dw[i];
                         break;
                     }
                 }
 
-                log.info("{}的进站流量:{},出站流量:{}", serverName, in, out);
+                String encode = "";
+                for (int i = ds.length - 1; i >= 0; i--) {
+                    if (encodeFlow.doubleValue() > ds[i]) {
+                        encode = format.format(encodeFlow.doubleValue() / ds[i]) + dw[i];
+                        break;
+                    }
+                }
+
+                log.info("{}:{}流量:{},{}流量:{}", serverName, decodeName, decode, encodeName, encode);
             }
         }, 30, 60, TimeUnit.SECONDS);
 
@@ -72,13 +73,13 @@ public class FlowManagerHandler extends MessageToMessageCodec<ByteBuf, ByteBuf> 
 
     @Override
     protected void encode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
-        outFlow.addAndGet(msg.readableBytes());
+        encodeFlow.addAndGet(msg.readableBytes());
         out.add(msg.readRetainedSlice(msg.readableBytes()));
     }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
-        inFlow.addAndGet(msg.readableBytes());
+        decodeFlow.addAndGet(msg.readableBytes());
         out.add(msg.readRetainedSlice(msg.readableBytes()));
     }
 
