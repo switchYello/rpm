@@ -14,7 +14,7 @@ public class DataConnectionCmdTest {
     @Test
     public void encoderTo() {
         ByteBuf buffer = Unpooled.buffer();
-        DataConnectionCmd src = new DataConnectionCmd((short) 90, "127.0.2.8", (short) 80, System.nanoTime());
+        DataConnectionCmd src = new DataConnectionCmd( 90, "127.0.2.8",  80, System.nanoTime());
         src.encoderTo(buffer);
         assertEquals(Cmd.dataConnectionCmd, buffer.readByte());
         DataConnectionCmd dec = DataConnectionCmd.decoderFrom(buffer);

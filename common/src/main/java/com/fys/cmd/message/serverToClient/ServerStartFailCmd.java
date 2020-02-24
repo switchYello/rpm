@@ -10,12 +10,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class ServerStartFailCmd implements Cmd {
 
-    private short serverPort;
+    private int serverPort;
     private String localHost;
-    private short localPort;
+    private int localPort;
     private String failMsg;
 
-    public ServerStartFailCmd(short serverPort, String localHost, short localPort, String failMsg) {
+    public ServerStartFailCmd(int serverPort, String localHost, int localPort, String failMsg) {
         this.serverPort = serverPort;
         this.localHost = localHost;
         this.localPort = localPort;
@@ -34,22 +34,22 @@ public class ServerStartFailCmd implements Cmd {
     }
 
     public static ServerStartFailCmd decoderFrom(ByteBuf in) {
-        short serverPort = in.readShort();
-        short localHostLength = in.readShort();
+        int serverPort = in.readUnsignedShort();
+        int localHostLength = in.readUnsignedShort();
         CharSequence localHost = in.readCharSequence(localHostLength, UTF_8);
-        short localPort = in.readShort();
-        short msgLength = in.readShort();
+        int localPort = in.readUnsignedShort();
+        int msgLength = in.readUnsignedShort();
         CharSequence charSequence = in.readCharSequence(msgLength, UTF_8);
         return new ServerStartFailCmd(serverPort, localHost.toString(), localPort, charSequence.toString());
     }
 
     @Override
-    public short getServerPort() {
+    public int getServerPort() {
         return serverPort;
     }
 
     @Override
-    public short getLocalPort() {
+    public int getLocalPort() {
         return localPort;
     }
 

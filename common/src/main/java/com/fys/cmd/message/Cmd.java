@@ -28,13 +28,13 @@ public interface Cmd {
     void encoderTo(ByteBuf buf);
 
     //发送者的服务器端口
-    short getServerPort();
+    int getServerPort();
 
     //想要发送到的客户端端口
     String getLocalHost();
 
     //想要发送到的客户端端口
-    short getLocalPort();
+    int getLocalPort();
 
 
 }

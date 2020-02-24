@@ -10,11 +10,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class ServerStartSuccessCmd implements Cmd {
 
-    private short serverPort;
+    private int serverPort;
     private String localHost;
-    private short localPort;
+    private int localPort;
 
-    public ServerStartSuccessCmd(short serverPort, String localHost, short localPort) {
+    public ServerStartSuccessCmd(int serverPort, String localHost, int localPort) {
         this.serverPort = serverPort;
         this.localHost = localHost;
         this.localPort = localPort;
@@ -30,20 +30,20 @@ public class ServerStartSuccessCmd implements Cmd {
     }
 
     public static ServerStartSuccessCmd decoderFrom(ByteBuf in) {
-        short serverPort = in.readShort();
-        short localHostLength = in.readShort();
+        int serverPort = in.readUnsignedShort();
+        int localHostLength = in.readUnsignedShort();
         CharSequence localHost = in.readCharSequence(localHostLength, UTF_8);
-        short localPort = in.readShort();
+        int localPort = in.readUnsignedShort();
         return new ServerStartSuccessCmd(serverPort, localHost.toString(), localPort);
     }
 
     @Override
-    public short getServerPort() {
+    public int getServerPort() {
         return serverPort;
     }
 
     @Override
-    public short getLocalPort() {
+    public int getLocalPort() {
         return localPort;
     }
 

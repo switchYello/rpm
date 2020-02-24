@@ -15,7 +15,7 @@ public class ServerStartSuccessCmdTest {
     @Test
     public void encoderTo() {
         ByteBuf buffer = Unpooled.buffer();
-        ServerStartSuccessCmd src = new ServerStartSuccessCmd((short) 70, "127.0.5.7", (short) 50);
+        ServerStartSuccessCmd src = new ServerStartSuccessCmd( 70, "127.0.5.7", 50);
         src.encoderTo(buffer);
         assertEquals(Cmd.ServerToClient.serverStartSuccessCmd, buffer.readByte());
         ServerStartSuccessCmd dec = ServerStartSuccessCmd.decoderFrom(buffer);

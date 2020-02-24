@@ -1,9 +1,9 @@
 package com.fys.handler;
 
+import com.fys.Config;
 import com.fys.ServerManager;
+import com.fys.cmd.exception.AuthenticationException;
 import com.fys.cmd.handler.ExceptionHandler;
-import com.fys.cmd.handler.FlowManagerHandler;
-import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.clientToServer.Pong;
@@ -28,42 +28,48 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
     //因为每个ManagerChannel能开启多个Server，但只需要添加一份Handler即可，所以设置这个标志位
     private boolean addHandler = false;
 
+    private static String password = Config.auto_token;
+
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+        try {
+            byte flag = in.readByte();
 
-        byte flag = in.readByte();
-
-        //收到新增需要开启Server
-        if (flag == Cmd.ClientToServer.wantManagerCmd) {
-            WantManagerCmd wantManagerCmd = WantManagerCmd.decoderFrom(in);
-            if (!addHandler) {
-                ctx.pipeline().addLast(WantManagerCmdHandler.INSTANCE);
-                ctx.pipeline().addLast(new PingPongHandler());
-                ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
-                addHandler = !addHandler;
+            //收到新增需要开启Server
+            if (flag == Cmd.ClientToServer.wantManagerCmd) {
+                WantManagerCmd wantManagerCmd = WantManagerCmd.decoderFrom(in, password);
+                if (!addHandler) {
+                    ctx.pipeline().addLast(WantManagerCmdHandler.INSTANCE);
+                    ctx.pipeline().addLast(new PingPongHandler());
+                    ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
+                    addHandler = !addHandler;
+                }
+                out.add(wantManagerCmd);
+                return;
             }
-            out.add(wantManagerCmd);
-            return;
-        }
 
-        //新建数据连接
-        if (flag == Cmd.dataConnectionCmd) {
-            DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
-            log.debug("获取客户端连接:{}", cmd);
-            ctx.pipeline().remove(this);
-            ServerManager.addConnection(cmd.getToken(), ctx.channel());
-            return;
-        }
+            //新建数据连接
+            if (flag == Cmd.dataConnectionCmd) {
+                DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
+                log.debug("获取客户端连接:{}", cmd);
+                ctx.pipeline().remove(this);
+                ServerManager.addConnection(cmd.getToken(), ctx.channel());
+                return;
+            }
 
-        //收到客户端pong,只有管理连接才能收到pong，数据连接不会发送Ping也就不会收到Pong
-        if (flag == Cmd.ClientToServer.pong) {
-            out.add(Pong.decoderFrom(in));
-            return;
-        }
+            //收到客户端pong,只有管理连接才能收到pong，数据连接不会发送Ping也就不会收到Pong
+            if (flag == Cmd.ClientToServer.pong) {
+                out.add(Pong.decoderFrom(in));
+                return;
+            }
+            //无法识别的指令
+            log.error("无法识别客户端发送的指令,指令:{}", flag);
+            ctx.close();
 
-        //无法识别的指令
-        log.error("无法识别客户端发送的指令,指令:{}", flag);
-        ctx.close();
+        } catch (AuthenticationException e) {
+            log.error("密钥不对");
+            ctx.close();
+        }
     }
 
 }

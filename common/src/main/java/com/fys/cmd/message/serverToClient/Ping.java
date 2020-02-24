@@ -20,12 +20,12 @@ public class Ping implements Cmd {
     }
 
     @Override
-    public short getServerPort() {
+    public int getServerPort() {
         return 0;
     }
 
     @Override
-    public short getLocalPort() {
+    public int getLocalPort() {
         return 0;
     }
 

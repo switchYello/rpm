@@ -1,5 +1,6 @@
 package com.fys.cmd.message.clientToServer;
 
+import com.fys.cmd.exception.AuthenticationException;
 import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 
@@ -11,18 +12,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class WantManagerCmd implements Cmd {
 
-    private short serverWorkPort;
+    private int serverWorkPort;
     private String localHost;
-    private short localPort;
+    private int localPort;
+    private int hash;
 
-    public WantManagerCmd(short serverWorkPort, String localHost, short localPort) {
+    public WantManagerCmd(int serverWorkPort, String localHost, int localPort, String password) {
         this.serverWorkPort = serverWorkPort;
         this.localHost = localHost;
         this.localPort = localPort;
-    }
-
-    public WantManagerCmd(int serverWorkPort, String localHost, int localPort) {
-        this((short) serverWorkPort, localHost, (short) localPort);
+        this.hash = (serverWorkPort + localHost + localPort + password).hashCode();
     }
 
     @Override
@@ -32,24 +31,28 @@ public class WantManagerCmd implements Cmd {
         buf.writeShort(localHost.length());
         buf.writeCharSequence(localHost, UTF_8);
         buf.writeShort(localPort);
+        buf.writeInt(hash);
     }
 
 
-    public static WantManagerCmd decoderFrom(ByteBuf in) {
-        short serverWorkPort = in.readShort();
-        short localHostLength = in.readShort();
-        CharSequence localHost = in.readCharSequence(localHostLength, UTF_8);
-        short localPort = in.readShort();
-        return new WantManagerCmd(serverWorkPort, localHost.toString(), localPort);
+    public static WantManagerCmd decoderFrom(ByteBuf in, String password) {
+        int serverWorkPort = in.readUnsignedShort();
+        CharSequence localHost = in.readCharSequence(in.readUnsignedShort(), UTF_8);
+        int localPort = in.readUnsignedShort();
+        int hash = in.readInt();
+        if ((serverWorkPort + localHost.toString() + localPort + password).hashCode() == hash) {
+            return new WantManagerCmd(serverWorkPort, localHost.toString(), localPort, password);
+        }
+        throw AuthenticationException.INSTANCE;
     }
 
     @Override
-    public short getServerPort() {
+    public int getServerPort() {
         return serverWorkPort;
     }
 
     @Override
-    public short getLocalPort() {
+    public int getLocalPort() {
         return localPort;
     }
 

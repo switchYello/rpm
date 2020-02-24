@@ -15,10 +15,10 @@ public class WantManagerCmdTest {
     @Test
     public void encoderTo() {
         ByteBuf buffer = Unpooled.buffer();
-        WantManagerCmd src = new WantManagerCmd((short) 70,"127.0.0.1", (short) 90);
+        WantManagerCmd src = new WantManagerCmd(70,"127.0.0.1",  90,"153");
         src.encoderTo(buffer);
         assertEquals(Cmd.ClientToServer.wantManagerCmd, buffer.readByte());
-        WantManagerCmd dec = WantManagerCmd.decoderFrom(buffer);
+        WantManagerCmd dec = WantManagerCmd.decoderFrom(buffer,"153");
         assertEquals(src.getLocalPort(), dec.getLocalPort());
         assertEquals(src.getServerPort(), dec.getServerPort());
         assertEquals(src.getLocalHost(), dec.getLocalHost());

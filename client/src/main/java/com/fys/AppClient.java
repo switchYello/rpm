@@ -1,9 +1,9 @@
 package com.fys;
 
-import com.fys.cmd.message.clientToServer.WantManagerCmd;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ExceptionHandler;
 import com.fys.cmd.listener.ErrorLogListener;
+import com.fys.cmd.message.clientToServer.WantManagerCmd;
 import com.fys.handler.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -63,7 +63,7 @@ public class AppClient {
                 for (Map.Entry<Integer, InetSocketAddress> entry : Config.works.entrySet()) {
                     Integer serverPort = entry.getKey();
                     InetSocketAddress localClient = entry.getValue();
-                    future.channel().writeAndFlush(new WantManagerCmd(serverPort, localClient.getHostString(), localClient.getPort()))
+                    future.channel().writeAndFlush(new WantManagerCmd(serverPort, localClient.getHostString(), localClient.getPort(), Config.auto_token))
                             .addListener(ErrorLogListener.INSTANCE);
                 }
             } else {
@@ -90,7 +90,7 @@ public class AppClient {
         public void run() {
             if (managerConnection.isActive()) {
                 log.debug("定时检测，管理连接正常");
-                schedule(this, 20, TimeUnit.SECONDS);
+                schedule(this, 15, TimeUnit.SECONDS);
                 return;
             }
             log.info("定时检测，管理连接断开了，准备重新连..");

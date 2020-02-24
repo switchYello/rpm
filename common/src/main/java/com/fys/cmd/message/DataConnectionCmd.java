@@ -9,12 +9,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class DataConnectionCmd implements Cmd {
 
-    private short serverPort;
+    private int serverPort;
     private String localHost;
-    private short localPort;
+    private int localPort;
     private long token;
 
-    public DataConnectionCmd(short serverPort, String localHost, short localPort, long token) {
+    public DataConnectionCmd(int serverPort, String localHost, int localPort, long token) {
         this.serverPort = serverPort;
         this.localHost = localHost;
         this.localPort = localPort;
@@ -32,20 +32,20 @@ public class DataConnectionCmd implements Cmd {
     }
 
     public static DataConnectionCmd decoderFrom(ByteBuf in) {
-        short serverPort = in.readShort();
+        int serverPort = in.readUnsignedShort();
         CharSequence localHost = in.readCharSequence(in.readShort(), UTF_8);
-        short localPort = in.readShort();
+        int localPort = in.readUnsignedShort();
         long token = in.readLong();
         return new DataConnectionCmd(serverPort, localHost.toString(), localPort, token);
     }
 
     @Override
-    public short getServerPort() {
+    public int getServerPort() {
         return serverPort;
     }
 
     @Override
-    public short getLocalPort() {
+    public int getLocalPort() {
         return localPort;
     }
 

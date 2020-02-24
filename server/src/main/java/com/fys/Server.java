@@ -9,12 +9,14 @@ import com.fys.cmd.message.clientToServer.WantManagerCmd;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
+import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * 客户端要求监听某一个端口后创建并启动此类
@@ -23,9 +25,14 @@ import org.slf4j.LoggerFactory;
  * hcy 2020/2/17
  */
 public class Server {
-
+    /*
+     * 刚创建完成是init状态，启动完成后转成start，
+     * 如果managerChannel关闭了，则pause一段时间等待复用（一段时间后没有再次请求则关闭）
+     * stop服务一被标记终止
+     *
+     * */
     public enum Status {
-        start, stopIng, stop
+        start, pause, stop
     }
 
     private static Logger log = LoggerFactory.getLogger(Server.class);
@@ -33,27 +40,29 @@ public class Server {
     private EventLoopGroup work = App.work;
     private volatile Status status = Status.start;
 
-    private final String id;
+    private String id;
     private ChannelFuture bind;
     private WantManagerCmd want;
     private Channel managerChannel;
     //一个Server内的连接共用一个流量统计
     private FlowManagerHandler flowManagerHandler;
 
+    //定时停止server
+    private ScheduledFuture<?> stopSchedule;
+
     public Server(WantManagerCmd wantManagerCmd, Channel managerChannel) {
         this.want = wantManagerCmd;
         this.managerChannel = managerChannel;
         this.id = "[SID " + want.getServerPort() + " -> " + want.getLocalHost() + ":" + want.getLocalPort() + "]";
         this.flowManagerHandler = new FlowManagerHandler(id);
-        //服务启动成功，为管理添加关闭事件，关闭连接时同时关闭Server
+        //服务启动成功，为管理添加关闭事件，关闭连接时同时暂停Server
         managerChannel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
-            this.stop();
+            pause();
         });
     }
 
     //开启服务监听客户端要求的端口，等待用户连接但不自动读数据
-    public Promise<Server> start() {
-        Promise<Server> promise = new DefaultPromise<>(work.next());
+    public void start(Promise<Server> promise) {
         ServerBootstrap sb = new ServerBootstrap();
         bind = sb.group(boss, work)
                 .channel(NioServerSocketChannel.class)
@@ -80,18 +89,17 @@ public class Server {
                 promise.setFailure(future.cause());
             }
         });
-        return promise;
     }
 
     public String getId() {
         return id;
     }
 
-    public short getServerPort() {
+    public int getServerPort() {
         return want.getServerPort();
     }
 
-    public short getLocalPort() {
+    public int getLocalPort() {
         return want.getLocalPort();
     }
 
@@ -110,20 +118,70 @@ public class Server {
     }
 
     /*
-     * 停止Server，即直接关闭manager连接，其他行为都在连接的回掉函数里处理
-     * 如果因为管理连接被关闭导致的server关闭,则UnRegister此Server.如果是主动关闭Server则不需要UnRegister
+     * 重新将服务标记成启动状态
      * */
-    private void stop() {
-        //防止多次关闭
-        if (status != Status.start) {
+    public void reStart(WantManagerCmd wantManagerCmd, Channel managerChannel, Promise<Server> promise) {
+        stopSchedule.cancel(true);
+        if (this.status != Status.pause) {
+            promise.setFailure(new IllegalStateException("当前server:" + this.getId() + "不处于pause状态,不能重启"));
             return;
         }
-        status = Status.stopIng;
-        log.info("准备关闭:{}", this);
-        if (bind != null && bind.channel().isActive()) {
-            bind.channel().close();
+        this.want = wantManagerCmd;
+        this.managerChannel = managerChannel;
+        this.id = "[SID " + want.getServerPort() + " -> " + want.getLocalHost() + ":" + want.getLocalPort() + "]";
+        //服务启动成功，为管理添加关闭事件，关闭连接时同时暂停Server
+        managerChannel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
+            pause();
+        });
+        this.status = Status.start;
+        promise.setSuccess(this);
+    }
+
+    /*
+     * 管理连接断了，暂停对外服务
+     * 一定时间后如果扔是pause则停止服务（因为可能会被重连）
+     * 执行pause操作前面判断状态使用managerChannel的eventLoop
+     * 后面添加到ServerMnager操作使用ServerManager的EventLoop操作
+     * */
+    private void pause() {
+        if (this.status != Status.start) {
+            return;
         }
-        status = Status.stop;
+        this.status = Status.pause;
+        ServerManager.pauseServer(this);
+        stopSchedule = ServerManager.schedule(() -> {
+            if (this.status == Status.pause) {
+                stop();
+            }
+        }, 30, TimeUnit.SECONDS);
+    }
+
+    /*
+     * pause内设置的定时任务触发后回掉此函数，设置定时任务时使用的是ServerManager的EventLoop,
+     * 所以此函数一定会使用ServerManager的EventLoop执行
+     * */
+    private void stop() {
+        log.info("准备关闭:{}", this);
+        //防止多次关闭
+        if (status == Status.stop) {
+            log.info("关闭{}失败，已经处于关闭状态", this);
+            return;
+        }
+        this.status = Status.stop;
+        ServerManager.stopServer(this);
+        if (bind != null && bind.channel().isActive()) {
+            bind.channel().close().addListener((ChannelFutureListener) future -> {
+                if (future.isSuccess()) {
+                    log.info("关闭服务:{}成功", id);
+                } else {
+                    log.info("关闭服务:" + id + "失败，因为", future.cause());
+                }
+            });
+        }
+    }
+
+    public Status getStatus() {
+        return status;
     }
 
     @Override
@@ -144,8 +202,16 @@ public class Server {
 
         @Override
         public void channelActive(ChannelHandlerContext userConnection) {
+
+            Status currentStatus = server.getStatus();
+            if (currentStatus != Status.start) {
+                log.info("Server:{} 状态是 {} 状态，不准接受连接", server.getId(), currentStatus);
+                userConnection.close();
+                return;
+            }
+
             log.debug("Server:{} 被连接，准备获取客户端连接", server.getId());
-            Promise<Channel> promise = ServerManager.getConnection(userConnection.channel().eventLoop(), server);
+            Promise<Channel> promise = ServerManager.getConnection(server);
             promise.addListener((GenericFutureListener<Future<Channel>>) future -> {
                 if (future.isSuccess()) {
                     Channel clientChannel = future.getNow();
