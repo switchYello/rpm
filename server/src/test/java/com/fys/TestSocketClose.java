@@ -9,6 +9,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * hcy 2020/2/23
  */
@@ -21,10 +23,11 @@ public class TestSocketClose {
         ChannelFuture bind = sb.group(boss, boss)
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInboundHandlerAdapter())
-                .bind(Config.bindHost, 8899)
+                .bind(Config.bindHost, 35647)
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
                         System.out.println("ServerSocketChannel启动成功");
+
                         //启动成功就关闭channel
                         future.channel().close().addListener((ChannelFutureListener) future1 -> {
                             if (!future1.isSuccess()) {
@@ -45,8 +48,9 @@ public class TestSocketClose {
             System.out.println("服务关闭成功");
             boss.shutdownGracefully();
             boss.shutdownGracefully();
+
         });
-        Thread.sleep(1000);
+        TimeUnit.MILLISECONDS.sleep(500);
     }
 
 

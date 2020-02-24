@@ -15,6 +15,8 @@ public class ExceptionHandler extends ChannelInboundHandlerAdapter {
     private static Logger log = LoggerFactory.getLogger(ExceptionHandler.class);
     public static ExceptionHandler INSTANCE = new ExceptionHandler();
 
+    public static final String NAME = "ExceptionHandler";
+
     private ExceptionHandler() {
     }
 

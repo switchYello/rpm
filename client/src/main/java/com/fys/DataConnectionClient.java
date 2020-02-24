@@ -8,16 +8,12 @@ import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Promise;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * hcy 2020/2/17
  * 由客户端连接到服务端，用户传输数据
  */
 public class DataConnectionClient {
-
-    private static Logger log = LoggerFactory.getLogger(DataConnectionClient.class);
 
     private static EventLoopGroup work = AppClient.work;
     private Channel channelToServer;
@@ -39,8 +35,8 @@ public class DataConnectionClient {
                 createConnectionToServer(Config.serverHost, Config.serverPort).addListener((ChannelFutureListener) serverFuture -> {
                     if (serverFuture.isSuccess()) {
                         this.channelToServer = serverFuture.channel();
-                        channelToServer.pipeline().addLast("linkServer", new TransactionHandler(channelToLocal, true));
-                        channelToLocal.pipeline().addLast("linkLocal", new TransactionHandler(channelToServer, true));
+                        channelToServer.pipeline().addBefore(ExceptionHandler.NAME, "linkServer", new TransactionHandler(channelToLocal, true));
+                        channelToLocal.pipeline().addBefore(ExceptionHandler.NAME, "linkLocal", new TransactionHandler(channelToServer, true));
                         promise.setSuccess(DataConnectionClient.this);
                     } else {
                         channelToLocal.close();
@@ -70,9 +66,9 @@ public class DataConnectionClient {
                 .handler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
-                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 120));
                         ch.pipeline().addLast(FlowManagerHandler.INSTANCE);
-                        ch.pipeline().addLast(ExceptionHandler.INSTANCE);
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 180));
+                        ch.pipeline().addLast(ExceptionHandler.NAME, ExceptionHandler.INSTANCE);
                     }
                 })
                 .connect(host, port);
@@ -85,6 +81,7 @@ public class DataConnectionClient {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
+                        ch.pipeline().addLast(ExceptionHandler.NAME, ExceptionHandler.INSTANCE);
                     }
                 })
                 .connect(host, port);

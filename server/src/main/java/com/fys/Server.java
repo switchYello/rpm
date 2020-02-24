@@ -1,5 +1,6 @@
 package com.fys;
 
+import com.fys.cmd.handler.ExceptionHandler;
 import com.fys.cmd.handler.FlowManagerHandler;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.handler.TransactionHandler;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class Server {
 
     public enum Status {
-        start, stopIng, stop;
+        start, stopIng, stop
     }
 
     private static Logger log = LoggerFactory.getLogger(Server.class);
@@ -42,7 +43,7 @@ public class Server {
     public Server(WantManagerCmd wantManagerCmd, Channel managerChannel) {
         this.want = wantManagerCmd;
         this.managerChannel = managerChannel;
-        this.id = "[SID" + want.getServerPort() + " -> " + want.getLocalHost() + ":" + want.getLocalPort() + "]";
+        this.id = "[SID " + want.getServerPort() + " -> " + want.getLocalHost() + ":" + want.getLocalPort() + "]";
         this.flowManagerHandler = new FlowManagerHandler(id);
         //服务启动成功，为管理添加关闭事件，关闭连接时同时关闭Server
         managerChannel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
@@ -65,18 +66,17 @@ public class Server {
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) {
-                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 120));
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 180));
                         ch.pipeline().addLast(flowManagerHandler);
                         ch.pipeline().addLast(new ServerHandler(Server.this));
+                        ch.pipeline().addLast(ExceptionHandler.INSTANCE);
                     }
                 }).bind(Config.bindHost, want.getServerPort());
         //添加服务开启成功失败事件
         bind.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
-                log.info("Server:{}启动成功", id);
                 promise.setSuccess(this);
             } else {
-                log.error("Server:" + id + "启动失败", future.cause());
                 promise.setFailure(future.cause());
             }
         });
@@ -150,7 +150,8 @@ public class Server {
                 if (future.isSuccess()) {
                     Channel clientChannel = future.getNow();
                     clientChannel.pipeline().addLast("linkClient", new TransactionHandler(userConnection.channel(), true));
-                    userConnection.pipeline().addLast("linkUser", new TransactionHandler(clientChannel, false));
+                    clientChannel.pipeline().addLast(ExceptionHandler.INSTANCE);
+                    userConnection.pipeline().replace(this, "linkUser", new TransactionHandler(clientChannel, false));
                     userConnection.read();
                 } else {
                     //promise失败可能是：超时没结果被定时任务取消的

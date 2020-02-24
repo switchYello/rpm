@@ -1,8 +1,1 @@
-消息总是已下面格式出现：
-
-    flaglength\n
-    key : value\n
-    key : value\n
-    key : value\n
-    \n
-    data
+消息总是已一个字节的flag开始,后面格式每个消息各不相同.但消息体内的方法能够实现自身的序列化和返序列化

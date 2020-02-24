@@ -1,6 +1,7 @@
 package com.fys;
 
 import com.fys.cmd.handler.CmdEncoder;
+import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.handler.ServerCmdDecoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -45,7 +46,8 @@ public class App {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
-
+                        //这是管理连接和数据连接使用的超时检测，一般用不到，时间十分钟
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 600));
                         ch.pipeline().addLast(new ServerCmdDecoder());
                     }
                 })

@@ -40,12 +40,12 @@ public class WantManagerCmdHandler extends SimpleChannelInboundHandler<WantManag
         serverStartFuture.addListener((GenericFutureListener<Future<Server>>) future -> {
             if (future.isSuccess()) {
                 Server server = future.getNow();
-                log.debug("回复客户端创建Server成功，ServerId:{}", server.getId());
+                log.debug("创建Server成功回复客户端，ServerId:{}", server.getId());
                 ctx.writeAndFlush(new ServerStartSuccessCmd(msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort()))
                         .addListener(CLOSE_ON_FAILURE);
             } else {
+                log.error("创建Server失败回复客户端," + msg.toString(), future.cause());
                 String cause = future.cause() != null ? future.cause().toString() : "未知原因";
-                log.debug("回复客户端创建Server失败", cause);
                 ctx.writeAndFlush(new ServerStartFailCmd(msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort(), cause))
                         .addListener(CLOSE);
             }

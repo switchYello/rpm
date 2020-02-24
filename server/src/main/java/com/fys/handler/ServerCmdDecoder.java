@@ -51,9 +51,6 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
             DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
             log.debug("获取客户端连接:{}", cmd);
             ctx.pipeline().remove(this);
-            //这个客户端和服务端之间的超时检测，时间放长一些起保护作用即可，实际不需要这里做判断
-            ctx.pipeline().addLast(new TimeOutHandler(0, 0, 300));
-            ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
             ServerManager.addConnection(cmd.getToken(), ctx.channel());
             return;
         }

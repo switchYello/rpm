@@ -15,6 +15,10 @@ public class Ping implements Cmd {
         buf.writeByte(ServerToClient.ping);
     }
 
+    public static Ping decoderFrom(ByteBuf in) {
+        return instance;
+    }
+
     @Override
     public short getServerPort() {
         return 0;
@@ -30,7 +34,5 @@ public class Ping implements Cmd {
         return null;
     }
 
-    public static Ping decoderFrom(ByteBuf in) {
-        return instance;
-    }
+
 }

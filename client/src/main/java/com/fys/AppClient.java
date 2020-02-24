@@ -50,7 +50,7 @@ public class AppClient {
     }
 
     public void start() {
-        log.warn("上次坚持了:{}分钟", (System.currentTimeMillis() - startTime) / 1000 / 60.0);
+        log.info("上次坚持了:{}分钟", (System.currentTimeMillis() - startTime) / 1000 / 60.0);
         startTime = System.currentTimeMillis();
 
         ChannelFuture managerConnectionFuture = createManagerConnection();

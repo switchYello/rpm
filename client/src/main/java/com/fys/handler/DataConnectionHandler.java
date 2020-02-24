@@ -32,7 +32,7 @@ public class DataConnectionHandler extends SimpleChannelInboundHandler<DataConne
         new DataConnectionClient(msg).start()
                 .addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
                     if (future.isSuccess()) {
-                        log.info("开启dataConnection{} -> {}:{}成功", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
+                        log.debug("开启dataConnection{} -> {}:{}成功", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
                         future.getNow().write(msg);
                     } else {
                         log.info("开启dataConnection失败", future.cause());

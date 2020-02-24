@@ -39,7 +39,7 @@ public class ServerManager {
     public static void addConnection(long token, Channel channel) {
         Promise<Channel> promise = waitConnections.remove(token);
         if (promise == null) {
-            log.debug("ServerManager.addConnection无法找到Promise，可能promise已被超时取消");
+            log.info("ServerManager.addConnection无法找到Promise，可能promise已被超时取消Channel:{}", channel);
             channel.close();
             return;
         }
@@ -68,7 +68,6 @@ public class ServerManager {
                 });
             } else {
                 promise.setFailure(future.cause());
-                log.debug("向客户端发送创建连接指令失败");
             }
         });
         return promise;
