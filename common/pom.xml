@@ -13,7 +13,6 @@
     <artifactId>common</artifactId>
     <name>common</name>
 
-
     <dependencies>
         <dependency>
             <groupId>io.netty</groupId>
