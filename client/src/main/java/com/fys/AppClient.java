@@ -57,7 +57,7 @@ public class AppClient {
         //并为future添加事件,无论连接成功失败都在10秒后检查连接
         managerConnectionFuture.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
-                log.info("连接成功{}:{}", Config.serverHost, Config.serverPort);
+                log.info("连接成功{}:{}等待服务端验证", Config.serverHost, Config.serverPort);
 
                 //开启配置文件中的映射
                 for (Map.Entry<Integer, InetSocketAddress> entry : Config.works.entrySet()) {
