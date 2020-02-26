@@ -8,6 +8,7 @@ import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.clientToServer.Pong;
 import com.fys.cmd.message.clientToServer.WantManagerCmd;
+import com.fys.cmd.message.serverToClient.ServerStartFailCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -15,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+
+import static io.netty.channel.ChannelFutureListener.CLOSE;
 
 /**
  * hcy 2020/2/10
@@ -67,8 +70,9 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
             ctx.close();
 
         } catch (AuthenticationException e) {
-            log.error("密钥不对");
-            ctx.close();
+            log.error("密钥不对:{}", ctx);
+            ctx.writeAndFlush(new ServerStartFailCmd(0, "未知", 0, "验证不通过,您被拒绝连接了"))
+                    .addListener(CLOSE);
         }
     }
 
