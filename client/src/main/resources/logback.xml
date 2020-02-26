@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
 
-    <property name="consolePattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %C:%L-%m%n"/>
+    <property name="consolePattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %C-%m%n"/>
     <property name="filePattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %C-%m%n"/>
 
     <!--输出info级别的日志到控制台-->

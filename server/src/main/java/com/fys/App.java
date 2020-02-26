@@ -21,7 +21,7 @@ public class App {
     public static EventLoopGroup work = new NioEventLoopGroup(1);
 
     /*
-     * -c=9090
+     * -c config.properties
      * */
     public static void main(String[] args) throws IOException {
         log.info(Arrays.toString(args));
@@ -33,7 +33,7 @@ public class App {
                 break;
             }
         }
-        
+
         Config.init(confPath);
         ServerBootstrap sb = new ServerBootstrap();
         sb.group(boss, work)
