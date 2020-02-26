@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -27,12 +28,14 @@ public class Config {
 
 
     public static void init(String configPath) throws IOException {
+        //没有传配置文件参数，默认取jar包下的config.properties
         if (configPath == null) {
-            configPath = "config.properties";
+            init("config.properties");
         }
-        InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream(configPath);
+        InputStream input = getResource(configPath);
         if (input == null) {
-            input = new FileInputStream(configPath);
+            configPath = "config_system_default.properties";
+            input = getResource(configPath);
         }
         log.info("读取配置文件:{}", configPath);
         try (InputStream in = input) {
@@ -91,6 +94,19 @@ public class Config {
         } catch (Exception e) {
             log.error("读取配置" + msg + "错误", e);
             throw e;
+        }
+    }
+
+    private static InputStream getResource(String resourceName) {
+        InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream(resourceName);
+        if (input != null) {
+            return input;
+        }
+
+        try {
+            return new FileInputStream(resourceName);
+        } catch (FileNotFoundException e) {
+            return null;
         }
     }
 

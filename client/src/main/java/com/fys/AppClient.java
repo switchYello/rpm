@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -28,16 +29,16 @@ public class AppClient {
     private long startTime = System.currentTimeMillis();
 
     /*
-     * -c=conf.properties
+     * -c conf.properties
      * */
     public static void main(String[] args) throws IOException {
         log.info(Arrays.toString(args));
         String confPath = null;
-        for (String arg : args) {
-            String[] split = arg.split("=");
-            assertTrue(split.length == 2, "参数不正确，无法解析:" + arg);
-            if ("-c".equals(split[0])) {
-                confPath = split[1];
+        Iterator<String> iterator = Arrays.asList(args).iterator();
+        while (iterator.hasNext()) {
+            if ("-c".equals(iterator.next().trim())) {
+                confPath = iterator.hasNext() ? iterator.next().trim() : null;
+                break;
             }
         }
 
@@ -120,12 +121,6 @@ public class AppClient {
                          }
                 )
                 .connect();
-    }
-
-    private static void assertTrue(boolean c, String message) {
-        if (!c) {
-            throw new RuntimeException(message);
-        }
     }
 
 }
