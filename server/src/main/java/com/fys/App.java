@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 
 public class App {
 
@@ -25,15 +26,15 @@ public class App {
     public static void main(String[] args) throws IOException {
         log.info(Arrays.toString(args));
         String confPath = null;
-        for (String arg : args) {
-            String[] split = arg.split("=");
-            assertTrue(split.length == 2, "参数不正确，无法解析:" + arg);
-            if ("-c".equals(split[0])) {
-                confPath = split[1];
+        Iterator<String> iterator = Arrays.asList(args).iterator();
+        while (iterator.hasNext()) {
+            if ("-c".equals(iterator.next().trim())) {
+                confPath = iterator.hasNext() ? iterator.next().trim() : null;
+                break;
             }
         }
+        
         Config.init(confPath);
-
         ServerBootstrap sb = new ServerBootstrap();
         sb.group(boss, work)
                 .channel(NioServerSocketChannel.class)
