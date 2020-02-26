@@ -28,11 +28,11 @@ public class Config {
 
 
     public static void init(String configPath) throws IOException {
-        //没有传配置文件参数，默认取jar包下的config.properties
-        if (configPath == null) {
-            init("config.properties");
-        }
         InputStream input = getResource(configPath);
+        if (input == null) {
+            configPath = "config.properties";
+            input = getResource(configPath);
+        }
         if (input == null) {
             configPath = "config_system_default.properties";
             input = getResource(configPath);
@@ -98,11 +98,13 @@ public class Config {
     }
 
     private static InputStream getResource(String resourceName) {
+        if (resourceName == null) {
+            return null;
+        }
         InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream(resourceName);
         if (input != null) {
             return input;
         }
-
         try {
             return new FileInputStream(resourceName);
         } catch (FileNotFoundException e) {
