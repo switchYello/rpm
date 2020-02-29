@@ -53,7 +53,7 @@ public class ServerManager {
      * */
     public static void addConnection(long token, Channel channel) {
         execute(() -> {
-            Promise<Channel> promise = waitConnections.remove(token);
+            Promise<Channel> promise = waitConnections.get(token);
             if (promise == null) {
                 log.info("ServerManager.addConnection无法找到Promise，可能promise已被超时取消Channel:{}", channel);
                 channel.close();
@@ -72,19 +72,14 @@ public class ServerManager {
             if (future.isSuccess()) {
                 execute(() -> {
                     waitConnections.put(token, promise);
-                });
-
-                //设置定时任务，超时则设置promise为failure
-                ScheduledFuture<?> schedule = schedule(() -> {
-                    waitConnections.remove(token);
-                    promise.setFailure(new TimeoutException("Promise超时无法获取连接"));
-                }, Config.timeOut, TimeUnit.SECONDS);
-
-                //若为成功时，则取消定时任务
-                promise.addListener(f -> {
-                    if (f.isSuccess()) {
-                        schedule.cancel(true);
-                    }
+                    //设置定时任务，超时则设置promise为failure
+                    schedule(() -> {
+                        waitConnections.remove(token);
+                        //说明result还没被设置值，说明还没成功
+                        if (promise.isCancellable()) {
+                            promise.setFailure(new TimeoutException("Promise超时无法获取连接"));
+                        }
+                    }, Config.timeOut, TimeUnit.SECONDS);
                 });
             } else {
                 promise.setFailure(future.cause());
@@ -100,7 +95,6 @@ public class ServerManager {
                 pauses.put(server.getServerPort(), server);
             }
         });
-
     }
 
     /*停止服务*/
