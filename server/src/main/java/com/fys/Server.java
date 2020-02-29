@@ -217,8 +217,8 @@ public class Server {
                     Channel clientChannel = future.getNow();
                     clientChannel.pipeline().addLast("linkClient", new TransactionHandler(userConnection.channel(), true));
                     clientChannel.pipeline().addLast(ExceptionHandler.INSTANCE);
-                    userConnection.pipeline().replace(this, "linkUser", new TransactionHandler(clientChannel, false));
-                    userConnection.read();
+                    userConnection.pipeline().replace(this, "linkUser", new TransactionHandler(clientChannel, true));
+                    userConnection.channel().config().setAutoRead(true);
                 } else {
                     //promise失败可能是：超时没结果被定时任务取消的
                     log.error("服务端获取对客户端的连接失败,关闭userConnection", future.cause());
