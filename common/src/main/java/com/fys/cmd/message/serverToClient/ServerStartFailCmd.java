@@ -2,6 +2,7 @@ package com.fys.cmd.message.serverToClient;
 
 import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -26,10 +27,10 @@ public class ServerStartFailCmd implements Cmd {
     public void encoderTo(ByteBuf buf) {
         buf.writeByte(ServerToClient.serverStartFailCmd);
         buf.writeShort(serverPort);
-        buf.writeShort(localHost.length());
+        buf.writeShort(ByteBufUtil.utf8Bytes(localHost));
         buf.writeCharSequence(localHost, UTF_8);
         buf.writeShort(localPort);
-        buf.writeShort(failMsg.length());
+        buf.writeShort(ByteBufUtil.utf8Bytes(failMsg));
         buf.writeCharSequence(failMsg, UTF_8);
     }
 

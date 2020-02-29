@@ -33,7 +33,7 @@ public class WantManagerCmd implements Cmd {
     public void encoderTo(ByteBuf buf) {
         buf.writeByte(ClientToServer.wantManagerCmd); //标志位
         buf.writeShort(serverWorkPort);             //服务端口
-        buf.writeShort(localHost.length());         //本地host 长度
+        buf.writeShort(ByteBufUtil.utf8Bytes(localHost));         //本地host 长度
         buf.writeCharSequence(localHost, UTF_8);    //本地host
         buf.writeShort(localPort);                  //本地端口
         buf.writeBytes(md5);                        //md5
