@@ -26,23 +26,7 @@
         <appender-ref ref="client_info_log"/>
     </logger>
 
-    <!--输出流量统计信息-->
-    <appender name="flowInfo" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %C-%m%n</pattern>
-        </encoder>
-        <file>flowInfo.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>flowInfo_%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
-            <maxFileSize>10MB</maxFileSize>
-            <maxHistory>5</maxHistory>
-        </rollingPolicy>
-    </appender>
-    <logger level="info" additivity="false" name="com.fys.cmd.handler.FlowManagerHandler">
-        <appender-ref ref="flowInfo"/>
-    </logger>
 
-    <!--输出除流量统计外的所有日志-->
     <appender name="client_debug_log" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <encoder>
             <pattern>${filePattern}</pattern>
@@ -54,6 +38,7 @@
             <maxHistory>5</maxHistory>
         </rollingPolicy>
     </appender>
+
     <root level="debug">
         <appender-ref ref="client_debug_log"/>
     </root>

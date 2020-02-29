@@ -38,7 +38,7 @@
             <maxHistory>5</maxHistory>
         </rollingPolicy>
     </appender>
-    <logger level="info" additivity="false" name="com.fys.cmd.handler.FlowManagerHandler">
+    <logger level="info" additivity="false" name="com.fys.handler.FlowManagerHandler">
         <appender-ref ref="flowInfo"/>
     </logger>
 

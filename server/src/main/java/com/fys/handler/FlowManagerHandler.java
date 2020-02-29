@@ -1,4 +1,4 @@
-package com.fys.cmd.handler;
+package com.fys.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFutureListener;
@@ -25,7 +25,6 @@ public class FlowManagerHandler extends MessageToMessageCodec<ByteBuf, ByteBuf> 
     private static final int[] ds = {0, 1024, 1024 * 1024, 1024 * 1024 * 1024};
     private static final String[] dw = {"B", "KB", "MB", "GB"};
     private static final DecimalFormat format = new DecimalFormat(".##");
-    public static FlowManagerHandler ClientFLowManager = new FlowManagerHandler("Client", "发送到本地端口的", "从本地端口接收的");
 
     private AtomicLong decodeFlow = new AtomicLong(0);
     private AtomicLong encodeFlow = new AtomicLong(0);
