@@ -26,8 +26,7 @@ public class DataConnectionClient {
     /*
      * 数据连接连接到服务器上时，如果不说明自己是数据连接，服务器是不会主动发数据的，所以这里改成自动读提高性能
      * */
-    public Promise<DataConnectionClient> start() {
-        Promise<DataConnectionClient> promise = new DefaultPromise<>(work.next());
+    public void start(Promise<DataConnectionClient> promise) {
         //连接到Local端口成功后，尝试连接到服务器
         createConnectionToLocal(msg.getLocalHost(), msg.getLocalPort()).addListener((ChannelFutureListener) localFuture -> {
             if (localFuture.isSuccess()) {
@@ -47,7 +46,6 @@ public class DataConnectionClient {
                 promise.setFailure(localFuture.cause());
             }
         });
-        return promise;
     }
 
     //通过数据连接向服务器发送数据，用于刚创建链接后向服务器发送信号标识自己是数据连接
@@ -66,7 +64,6 @@ public class DataConnectionClient {
                 .handler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
-                        ch.pipeline().addLast(FlowManagerHandler.ClientFLowManager);
                         ch.pipeline().addLast(new TimeOutHandler(0, 0, 180));
                         ch.pipeline().addLast(ExceptionHandler.NAME, ExceptionHandler.INSTANCE);
                     }

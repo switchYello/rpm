@@ -7,6 +7,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,15 +30,16 @@ public class DataConnectionHandler extends SimpleChannelInboundHandler<DataConne
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, DataConnectionCmd msg) {
         log.debug("收到服务端DataConnection,{} -> {}:{}", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
-        new DataConnectionClient(msg).start()
-                .addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
-                    if (future.isSuccess()) {
-                        log.debug("开启dataConnection{} -> {}:{}成功", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
-                        future.getNow().write(msg);
-                    } else {
-                        log.info("开启dataConnection失败", future.cause());
-                    }
-                });
+        Promise<DataConnectionClient> promise = ctx.executor().newPromise();
+        new DataConnectionClient(msg).start(promise);
+        promise.addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
+            if (future.isSuccess()) {
+                log.debug("开启dataConnection{} -> {}:{}成功", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
+                future.getNow().write(msg);
+            } else {
+                log.info("开启dataConnection失败", future.cause());
+            }
+        });
     }
 
 }
