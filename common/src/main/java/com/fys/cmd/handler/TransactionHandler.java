@@ -23,7 +23,7 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) {
         if (autoRead) {
-            out.writeAndFlush(msg);
+            out.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         } else {
             out.writeAndFlush(msg).addListener(new ChannelFutureListener() {
                 @Override
