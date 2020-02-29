@@ -72,6 +72,7 @@ public class DataConnectionClient {
     }
 
     //创建一个指向服务器端口的连接
+    //客户端连接服务器不加超时管理，因为服务器会判断超时主动断开
     private static ChannelFuture createConnectionToServer(String host, int port) {
         return newClientBootStrap(work)
                 .handler(new ChannelInitializer<Channel>() {

@@ -47,8 +47,8 @@ public class App {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
-                        //这是管理连接和数据连接使用的超时检测，一般用不到，时间十分钟
-                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 600));
+                        //控制超时，防止链接上来但不发送消息任何的连接
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 360));
                         ch.pipeline().addLast(new ServerCmdDecoder());
                     }
                 })

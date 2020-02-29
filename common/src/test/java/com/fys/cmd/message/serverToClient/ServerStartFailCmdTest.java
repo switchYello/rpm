@@ -17,7 +17,7 @@ public class ServerStartFailCmdTest {
     @Test
     public void encoderTo() {
         ByteBuf buffer = Unpooled.buffer();
-        ServerStartFailCmd src = new ServerStartFailCmd(80,"54.21.56.1",  70, UUID.randomUUID().toString());
+        ServerStartFailCmd src = new ServerStartFailCmd(80,"如果是中文会报错吗",  70, UUID.randomUUID().toString());
         src.encoderTo(buffer);
         assertEquals(Cmd.ServerToClient.serverStartFailCmd, buffer.readByte());
         ServerStartFailCmd dec = ServerStartFailCmd.decoderFrom(buffer);
