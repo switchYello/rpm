@@ -2,74 +2,55 @@ package com.fys.handler;
 
 import com.fys.cmd.message.clientToServer.Pong;
 import com.fys.cmd.message.serverToClient.Ping;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * 此类只有当server开启成功后才会被添加到pipline
  * hcy 2020/2/20
  * 处理管理连接 ping pong 的 handler
- * 逻辑是定时发送ping，如果长时间没收到pong 则主动断开连接
+ * 逻辑是长时间没读到数据则主动断开连接，长时间没写数据则写一个ping过去
  */
-public class PingPongHandler extends ChannelInboundHandlerAdapter {
+public class PingPongHandler extends IdleStateHandler {
 
     private static Logger log = LoggerFactory.getLogger(PingPongHandler.class);
-    //最后一次接收到pong的时间戳
-    private long lastPong;
-    //多长时间ping一次，秒
-    private int pingRate = 10;
-    //最大多久没有pong就断开，毫秒
-    private long maxPongDelay = pingRate * 1000 * 4;
+    private static int writeTimeOut = 10;
+    private static int readTimeout = writeTimeOut * 4 + 2;
 
-    @Override
-    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        ctx.executor().schedule(new SchedulePing(ctx), 2, TimeUnit.SECONDS);
-        lastPong = System.currentTimeMillis();
-        super.handlerAdded(ctx);
+    public PingPongHandler() {
+        super(readTimeout, writeTimeOut, 0);
     }
 
+    /*
+     * 长时间没写（写超时），则发送ping
+     * 长时间没读（读超时），则断开连接
+     * */
+    @Override
+    protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) {
+        if (evt.state() == IdleState.WRITER_IDLE) {
+            ctx.writeAndFlush(new Ping()).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+        } else {
+            log.debug("读超时断开连接：{}", evt);
+            ctx.flush().close();
+        }
+    }
+
+    /*
+     * 忽略所有pong,并发送空Buffer到父handler来刷新读超时时间
+     * */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof Pong) {
-            lastPong = System.currentTimeMillis();
-            log.debug("收到客户端pong");
-        } else {
-            super.channelRead(ctx, msg);
+            super.channelRead(ctx, Unpooled.EMPTY_BUFFER);
+            return;
         }
+        super.channelRead(ctx, msg);
     }
-
-    private class SchedulePing implements Runnable {
-
-        private ChannelHandlerContext ctx;
-
-        SchedulePing(ChannelHandlerContext ctx) {
-            this.ctx = ctx;
-        }
-
-        @Override
-        public void run() {
-            if (!ctx.channel().isActive()) {
-                return;
-            }
-            if (System.currentTimeMillis() - lastPong > maxPongDelay) {
-                log.error("超过最大Pong超时时间断开连接");
-                ctx.close();
-                return;
-            }
-            ctx.writeAndFlush(new Ping()).addListener((ChannelFutureListener) future -> {
-                if (future.isSuccess()) {
-                    ctx.executor().schedule(this, pingRate, TimeUnit.SECONDS);
-                } else {
-                    ctx.close();
-                }
-            });
-        }
-    }
-
 
 }
