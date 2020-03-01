@@ -67,6 +67,7 @@ public class AppClient {
                     future.channel().writeAndFlush(new WantManagerCmd(serverPort, localClient.getHostString(), localClient.getPort(), Config.auto_token))
                             .addListener(ErrorLogListener.INSTANCE);
                 }
+
             } else {
                 log.error("连接失败:{}", future.cause().toString());
             }

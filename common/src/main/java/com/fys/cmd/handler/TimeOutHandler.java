@@ -21,6 +21,6 @@ public class TimeOutHandler extends IdleStateHandler {
     @Override
     public final void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) throws Exception {
         log.debug("超时关闭连接:{},Event:{}", ctx, evt);
-        ctx.close();
+        ctx.flush().close();
     }
 }
