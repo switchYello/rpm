@@ -2,6 +2,7 @@ package com.fys.handler;
 
 import com.fys.DataConnectionClient;
 import com.fys.cmd.message.DataConnectionCmd;
+import com.fys.conf.ServerInfo;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -18,10 +19,10 @@ import org.slf4j.LoggerFactory;
 public class DataConnectionHandler extends SimpleChannelInboundHandler<DataConnectionCmd> {
 
     private Logger log = LoggerFactory.getLogger(DataConnectionHandler.class);
+    private ServerInfo serverInfo;
 
-    public static DataConnectionHandler INSTANCE = new DataConnectionHandler();
-
-    private DataConnectionHandler() {
+    public DataConnectionHandler(ServerInfo serverInfo) {
+        this.serverInfo = serverInfo;
     }
 
     /*
@@ -31,7 +32,7 @@ public class DataConnectionHandler extends SimpleChannelInboundHandler<DataConne
     protected void channelRead0(ChannelHandlerContext ctx, DataConnectionCmd msg) {
         log.debug("收到服务端DataConnection,{} -> {}:{}", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
         Promise<DataConnectionClient> promise = ctx.executor().newPromise();
-        new DataConnectionClient(msg).start(promise);
+        new DataConnectionClient(serverInfo, msg).start(promise);
         promise.addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
             if (future.isSuccess()) {
                 log.debug("开启dataConnection{} -> {}:{}成功", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());

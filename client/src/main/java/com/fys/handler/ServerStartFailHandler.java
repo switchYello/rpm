@@ -15,11 +15,6 @@ public class ServerStartFailHandler extends SimpleChannelInboundHandler<ServerSt
 
     private Logger log = LoggerFactory.getLogger(ServerStartFailHandler.class);
 
-    public static ServerStartFailHandler INSTANCE = new ServerStartFailHandler();
-
-    private ServerStartFailHandler() {
-    }
-
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ServerStartFailCmd msg) {
         log.error("端口映射{}->{}:{}开启失败因为:{}", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort(), msg.getFailMsg());

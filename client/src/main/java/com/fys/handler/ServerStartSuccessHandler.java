@@ -15,10 +15,6 @@ import org.slf4j.LoggerFactory;
 public class ServerStartSuccessHandler extends SimpleChannelInboundHandler<ServerStartSuccessCmd> {
 
     private Logger log = LoggerFactory.getLogger(ServerStartSuccessHandler.class);
-    public static ServerStartSuccessHandler INSTANCE = new ServerStartSuccessHandler();
-
-    private ServerStartSuccessHandler() {
-    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ServerStartSuccessCmd msg) {

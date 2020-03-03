@@ -1,12 +1,15 @@
 package com.fys;
 
-import com.fys.cmd.handler.*;
+import com.fys.cmd.handler.CmdEncoder;
+import com.fys.cmd.handler.ExceptionHandler;
+import com.fys.cmd.handler.TimeOutHandler;
+import com.fys.cmd.handler.TransactionHandler;
 import com.fys.cmd.listener.ErrorLogListener;
 import com.fys.cmd.message.DataConnectionCmd;
+import com.fys.conf.ServerInfo;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Promise;
 
 /**
@@ -15,12 +18,14 @@ import io.netty.util.concurrent.Promise;
  */
 public class DataConnectionClient {
 
-    private static EventLoopGroup work = AppClient.work;
+    private static EventLoopGroup work = GuiStart.work;
     private Channel channelToServer;
     private DataConnectionCmd msg;
+    private ServerInfo serverInfo;
 
-    public DataConnectionClient(DataConnectionCmd msg) {
+    public DataConnectionClient(ServerInfo serverInfo, DataConnectionCmd msg) {
         this.msg = msg;
+        this.serverInfo = serverInfo;
     }
 
     /*
@@ -31,7 +36,7 @@ public class DataConnectionClient {
         createConnectionToLocal(msg.getLocalHost(), msg.getLocalPort()).addListener((ChannelFutureListener) localFuture -> {
             if (localFuture.isSuccess()) {
                 final Channel channelToLocal = localFuture.channel();
-                createConnectionToServer(Config.serverHost, Config.serverPort).addListener((ChannelFutureListener) serverFuture -> {
+                createConnectionToServer(serverInfo.getServerIp(), serverInfo.getServerPort()).addListener((ChannelFutureListener) serverFuture -> {
                     if (serverFuture.isSuccess()) {
                         this.channelToServer = serverFuture.channel();
                         channelToServer.pipeline().addBefore(ExceptionHandler.NAME, "linkServer", new TransactionHandler(channelToLocal, true));
