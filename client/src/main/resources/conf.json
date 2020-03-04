@@ -1,0 +1,24 @@
+{
+  "server": {
+    "serverIp": "127.0.0.1",
+    "serverPort": 9050,
+    "autoToken": "hcy123456789"
+  },
+  "server_work": [
+    {
+      "serverPort": "9051",
+      "localHost": "0.0.0.0",
+      "localPort": "80"
+    },
+    {
+      "serverPort": "9052",
+      "localHost": "0.0.0.0",
+      "localPort": "81"
+    },
+    {
+      "serverPort": "9053",
+      "localHost": "0.0.0.0",
+      "localPort": "80"
+    }
+  ]
+}

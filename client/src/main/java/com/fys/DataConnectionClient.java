@@ -18,7 +18,7 @@ import io.netty.util.concurrent.Promise;
  */
 public class DataConnectionClient {
 
-    private static EventLoopGroup work = GuiStart.work;
+    private static EventLoopGroup work = AppClient.work;
     private Channel channelToServer;
     private DataConnectionCmd msg;
     private ServerInfo serverInfo;
