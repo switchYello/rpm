@@ -19,7 +19,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.10.3</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -31,7 +30,27 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-bulid</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <outputDirectory>
+                                ${project.build.directory}/
+                            </outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -43,10 +62,13 @@
                             <mainClass>com.fys.AppClient</mainClass>
                             <!--是否要把第三方jar放到manifest的classpath中-->
                             <addClasspath>false</addClasspath>
-                            <!--生成的manifest中classpath的前缀，如果要把第三方jar放到lib目录下，所以classpath的前缀是lib/-->
-                            <classpathPrefix>lib/</classpathPrefix>
                         </manifest>
                     </archive>
+                    <!--不打包这些文件到jar中-->
+                    <excludes>
+                        <exclude>conf.json</exclude>
+                        <exclude>logback-test.xml</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -56,6 +78,12 @@
                     <filters>
                         <filter>
                             <artifact>ch.qos.logback:logback-core</artifact>
+                            <includes>
+                                <include>**</include>
+                            </includes>
+                        </filter>
+                        <filter>
+                            <artifact>com.fasterxml.jackson.core:jackson-databind</artifact>
                             <includes>
                                 <include>**</include>
                             </includes>
