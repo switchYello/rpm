@@ -24,6 +24,7 @@ public class AppClient {
 
     private static Logger log = LoggerFactory.getLogger(AppClient.class);
     public static EventLoopGroup work = new NioEventLoopGroup(1);
+    private static AttributeKey<Config> key = AttributeKey.newInstance("conf");
 
     private Config config = Config.INSTANCE;
     //管理连接
@@ -36,7 +37,11 @@ public class AppClient {
                 return;
             }
             log.info("监测到连接断开，准备重连");
-            appClient.start();
+            try {
+                appClient.start();
+            } catch (Exception e) {
+                log.error("重连时报错", e);
+            }
         }, 0, 10, TimeUnit.SECONDS);
     }
 
@@ -73,7 +78,7 @@ public class AppClient {
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 4000)
                 .option(ChannelOption.TCP_NODELAY, true)
                 //将配置类存入channel
-                .attr(AttributeKey.newInstance("conf"), config)
+                .attr(key, config)
                 .handler(new ChannelInitializer<Channel>() {
                              @Override
                              protected void initChannel(Channel ch) {
