@@ -2,9 +2,9 @@ package com.fys.handler;
 
 import com.fys.cmd.message.clientToServer.Pong;
 import com.fys.cmd.message.serverToClient.Ping;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -27,6 +27,22 @@ public class PingPongHandler extends IdleStateHandler {
         super(readTimeout, writeTimeOut, 0);
     }
 
+    /**
+     * PingPongHandler这个类利用了IdleStateHandler定时发送ping
+     * 原理在channelIdle方法里面，
+     * 但是收到的pong会被继续向下传播，这里添加一个SimpleChannelInboundHandler<Pong> 来丢弃所有的pong
+     */
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        super.handlerAdded(ctx);
+        ctx.pipeline().addAfter(ctx.name(), null, new SimpleChannelInboundHandler<Pong>() {
+            @Override
+            protected void channelRead0(ChannelHandlerContext ctx, Pong msg) {
+                log.debug("收到Pong");
+            }
+        });
+    }
+
     /*
      * 长时间没写（写超时），则发送ping
      * 长时间没读（读超时），则断开连接
@@ -39,18 +55,6 @@ public class PingPongHandler extends IdleStateHandler {
             log.debug("读超时断开连接：{}", evt);
             ctx.flush().close();
         }
-    }
-
-    /*
-     * 忽略所有pong,并发送空Buffer到父handler来刷新读超时时间
-     * */
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg instanceof Pong) {
-            super.channelRead(ctx, Unpooled.EMPTY_BUFFER);
-            return;
-        }
-        super.channelRead(ctx, msg);
     }
 
 }
