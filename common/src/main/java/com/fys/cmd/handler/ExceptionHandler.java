@@ -22,6 +22,10 @@ public class ExceptionHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        if ("Connection reset by peer".equals(cause.getMessage())) {
+            log.error("收尾:Connection reset by peer");
+            return;
+        }
         log.error("收尾", cause);
     }
 }
