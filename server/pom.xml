@@ -17,6 +17,12 @@
             <artifactId>common</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.200</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -26,7 +32,27 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-bulid</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <outputDirectory>
+                                ${project.build.directory}/
+                            </outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources/</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -42,6 +68,10 @@
                             <classpathPrefix>lib/</classpathPrefix>
                         </manifest>
                     </archive>
+                    <excludes>
+                        <exclude>config.properties</exclude>
+                        <exclude>logback-test.xml</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>
