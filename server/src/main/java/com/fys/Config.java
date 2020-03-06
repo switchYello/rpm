@@ -29,10 +29,6 @@ public class Config {
             configPath = "config.properties";
             input = getResource(configPath);
         }
-        if (input == null) {
-            configPath = "config_system_default.properties";
-            input = getResource(configPath);
-        }
         try (InputStream in = input) {
             Properties prop = new Properties();
             prop.load(in);
