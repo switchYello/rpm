@@ -30,15 +30,49 @@ public class AppClient {
     //管理连接
     private volatile Channel managerChannel;
 
+    private static class Watch {
+
+        long lastStart = 0;
+        long lastStop = 0;
+        int stopCount = 0;
+        boolean start = false;
+
+        //保存最后启动时间
+        public void start() {
+            lastStart = System.currentTimeMillis();
+            start = true;
+        }
+
+        //保存最后停止时间和总停止次数
+        //如果当前是启动状态，则输出持续时间
+        public void stop() {
+            stopCount++;
+            lastStop = System.currentTimeMillis();
+            if (start) {
+                start = false;
+                log.info("上次坚持:{}分钟,共停止{}次", TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - lastStart), stopCount);
+            } else {
+                log.info("上次连接没成功,共停止{}次", stopCount);
+            }
+        }
+
+    }
+
     public static void main(String[] args) {
         AppClient appClient = new AppClient();
+        Watch watch = new Watch();
         work.scheduleWithFixedDelay(() -> {
             if (appClient.isActive()) {
                 return;
             }
-            log.info("监测到连接断开，准备重连");
             try {
-                appClient.start();
+                log.info("监测到连接断开，准备重连");
+                watch.stop();
+                appClient.start().addListener((ChannelFutureListener) future -> {
+                    if (future.isSuccess()) {
+                        watch.start();
+                    }
+                });
             } catch (Exception e) {
                 log.error("重连时报错", e);
             }
@@ -46,9 +80,9 @@ public class AppClient {
     }
 
 
-    private void start() {
+    private ChannelFuture start() {
         ServerInfo serverInfo = config.getServerInfo();
-        createManagerConnection()
+        return createManagerConnection()
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
                         log.info("连接成功{}:{}等待服务端验证", serverInfo.getServerIp(), serverInfo.getServerPort());
