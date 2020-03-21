@@ -56,7 +56,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
                 DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
                 log.debug("获取客户端连接:{}", cmd);
                 ctx.pipeline().remove(this);
-                ServerManager.addConnection(cmd.getToken(), ctx.channel());
+                ServerManager.addConnection(cmd, ctx.channel());
                 return;
             }
 

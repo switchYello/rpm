@@ -1,11 +1,11 @@
 package com.fys;
 
 import com.fys.cmd.handler.ExceptionHandler;
-import com.fys.handler.FlowManagerHandler;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.handler.TransactionHandler;
 import com.fys.cmd.listener.ErrorLogListener;
 import com.fys.cmd.message.clientToServer.WantManagerCmd;
+import com.fys.handler.FlowManagerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -54,7 +54,7 @@ public class Server {
         this.want = wantManagerCmd;
         this.managerChannel = managerChannel;
         this.id = "[SID " + want.getServerPort() + " -> " + want.getLocalHost() + ":" + want.getLocalPort() + "]";
-        this.flowManagerHandler = new FlowManagerHandler(id,"发送到使用者的","从使用者接收到的");
+        this.flowManagerHandler = new FlowManagerHandler(id, "发送到使用者的", "从使用者接收到的");
         //服务启动成功，为管理添加关闭事件，关闭连接时同时暂停Server
         managerChannel.closeFuture().addListener((ChannelFutureListener) managerFuture -> {
             pause();
@@ -169,6 +169,9 @@ public class Server {
         }
         this.status = Status.stop;
         ServerManager.stopServer(this);
+        if (managerChannel != null && managerChannel.isActive()) {
+            managerChannel.close();
+        }
         if (bind != null && bind.channel().isActive()) {
             bind.channel().close().addListener((ChannelFutureListener) future -> {
                 if (future.isSuccess()) {

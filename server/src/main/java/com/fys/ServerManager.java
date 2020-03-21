@@ -22,8 +22,9 @@ public class ServerManager {
     private static Logger log = LoggerFactory.getLogger(ServerManager.class);
 
     private static EventLoop managerEventLoop = App.work.next();
+
     //这些promise在等待连接的到来
-    private static Map<Long, Promise<Channel>> waitConnections = new HashMap<>();
+    private static Map<DataConnectionCmd, Promise<Channel>> waitConnections = new HashMap<>();
 
     private static Map<Integer, Server> pauses = new HashMap<>();
 
@@ -49,11 +50,11 @@ public class ServerManager {
 
 
     /*
-     * 为指定serverId的服务添加链接
+     * 接收到客户端连接，为指定serverId的服务添加链接
      * */
-    public static void addConnection(long token, Channel channel) {
+    public static void addConnection(DataConnectionCmd cmd, Channel channel) {
         execute(() -> {
-            Promise<Channel> promise = waitConnections.get(token);
+            Promise<Channel> promise = waitConnections.remove(cmd);
             if (promise == null) {
                 log.info("ServerManager.addConnection无法找到Promise，可能promise已被超时取消Channel:{}", channel);
                 channel.close();
@@ -65,16 +66,15 @@ public class ServerManager {
 
     public static Promise<Channel> getConnection(Server server) {
         Promise<Channel> promise = managerEventLoop.newPromise();
-        long token = System.nanoTime();
-        DataConnectionCmd needNewConn = new DataConnectionCmd(server.getServerPort(), server.getLocalHost(), server.getLocalPort(), token);
+        DataConnectionCmd message = new DataConnectionCmd(server.getServerPort(), server.getLocalHost(), server.getLocalPort(), System.nanoTime());
 
-        server.write(needNewConn).addListener(future -> {
+        server.write(message).addListener(future -> {
             if (future.isSuccess()) {
                 execute(() -> {
-                    waitConnections.put(token, promise);
+                    waitConnections.put(message, promise);
                     //设置定时任务，超时则设置promise为failure
                     schedule(() -> {
-                        waitConnections.remove(token);
+                        waitConnections.remove(message);
                         //说明result还没被设置值，说明还没成功
                         if (promise.isCancellable()) {
                             promise.setFailure(new TimeoutException("Promise超时无法获取连接"));
@@ -88,7 +88,11 @@ public class ServerManager {
         return promise;
     }
 
-    /*暂停服务*/
+    /*暂停服务
+     * 暂停的服务有两种结局
+     *   1. 调用stop，从map中移除
+     *   2. 调用restart，从map中移除
+     * */
     static void pauseServer(Server server) {
         execute(() -> {
             if (Server.Status.pause == server.getStatus()) {
@@ -97,16 +101,16 @@ public class ServerManager {
         });
     }
 
-    /*停止服务*/
+    /*停止服务
+     *
+     * */
     static void stopServer(Server server) {
         execute(() -> {
-            if (server == pauses.get(server.getServerPort())) {
-                pauses.remove(server.getServerPort());
-            }
+            pauses.remove(server.getServerPort());
         });
     }
 
-    static void execute(Runnable runnable) {
+    private static void execute(Runnable runnable) {
         if (managerEventLoop.inEventLoop()) {
             runnable.run();
         } else {

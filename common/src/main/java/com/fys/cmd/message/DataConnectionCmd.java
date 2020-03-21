@@ -2,12 +2,16 @@ package com.fys.cmd.message;
 
 import io.netty.buffer.ByteBuf;
 
+import java.util.Objects;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * hcy 2020/2/18
+ * 此类需要作为map的键，注意要写hashcode 和 equals方法
+ *
  */
-public class DataConnectionCmd implements Cmd {
+public final class DataConnectionCmd implements Cmd {
 
     private int serverPort;
     private String localHost;
@@ -68,4 +72,21 @@ public class DataConnectionCmd implements Cmd {
                 '}';
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DataConnectionCmd cmd = (DataConnectionCmd) o;
+        return serverPort == cmd.serverPort &&
+                localPort == cmd.localPort &&
+                token == cmd.token &&
+                Objects.equals(localHost, cmd.localHost);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(serverPort, localHost, localPort, token);
+    }
 }
