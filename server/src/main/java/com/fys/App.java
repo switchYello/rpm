@@ -68,10 +68,4 @@ public class App {
         work.shutdownGracefully();
     }
 
-    private static void assertTrue(boolean c, String message) {
-        if (!c) {
-            throw new RuntimeException(message);
-        }
-    }
-
 }
