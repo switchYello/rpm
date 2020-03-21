@@ -30,7 +30,7 @@ public class DataConnectionHandler extends SimpleChannelInboundHandler<DataConne
         Config config = conf.get();
         log.debug("收到服务端DataConnection,{} -> {}:{}", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
         Promise<DataConnectionClient> promise = ctx.executor().newPromise();
-        new DataConnectionClient(config.getServerInfo(), msg).start(promise);
+        //同时连接服务器和本地成功后，将消息重发给服务器，用于识别该连接
         promise.addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
             if (future.isSuccess()) {
                 log.debug("开启dataConnection{} -> {}:{}成功", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
@@ -39,6 +39,7 @@ public class DataConnectionHandler extends SimpleChannelInboundHandler<DataConne
                 log.info("开启dataConnection失败", future.cause());
             }
         });
+        new DataConnectionClient(config.getServerInfo(), msg).start(promise);
     }
 
 }
