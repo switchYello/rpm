@@ -19,6 +19,7 @@ public interface Cmd {
     interface ClientToServer {
         byte wantManagerCmd = 5;
         byte pong = 6;
+        byte login = 7;
     }
 
 
