@@ -2,10 +2,8 @@ package com.fys;
 
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ExceptionHandler;
-import com.fys.cmd.listener.ErrorLogListener;
-import com.fys.cmd.message.clientToServer.WantManagerCmd;
+import com.fys.cmd.message.clientToServer.LoginCmd;
 import com.fys.conf.ServerInfo;
-import com.fys.conf.ServerWorker;
 import com.fys.handler.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -86,11 +84,8 @@ public class AppClient {
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
                         log.info("连接成功{}:{}等待服务端验证", serverInfo.getServerIp(), serverInfo.getServerPort());
-                        //开启配置文件中的映射
-                        for (ServerWorker sw : config.getServerWorkers()) {
-                            future.channel().writeAndFlush(new WantManagerCmd(sw.getServerPort(), sw.getLocalHost(), sw.getLocalPort(), serverInfo.getAutoToken()))
-                                    .addListener(ErrorLogListener.INSTANCE);
-                        }
+                        //登录
+                        future.channel().writeAndFlush(new LoginCmd("hcy_home_pc", "123456"));
                         managerChannel = future.channel();
                     } else {
                         log.error("连接失败:{}", future.cause().toString());
