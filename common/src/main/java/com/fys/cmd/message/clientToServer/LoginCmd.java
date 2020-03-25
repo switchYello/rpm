@@ -4,7 +4,6 @@ import com.fys.cmd.exception.AuthenticationException;
 import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -18,11 +17,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class LoginCmd implements Cmd {
 
     private String clientName;
-    private String token;
+    private byte[] md5;
 
     public LoginCmd(String clientName, String token) {
         this.clientName = clientName;
-        this.token = token;
+        this.md5 = md5(clientName + token);
+    }
+
+    public LoginCmd(String clientName, byte[] md5) {
+        this.clientName = clientName;
+        this.md5 = md5;
     }
 
     // flag 长度 clientName md5
@@ -31,23 +35,32 @@ public class LoginCmd implements Cmd {
         buf.writeByte(ClientToServer.login);
         buf.writeInt(ByteBufUtil.utf8Bytes(clientName));
         buf.writeCharSequence(clientName, UTF_8);
-        buf.writeBytes(md5(clientName + token));
+        buf.writeBytes(md5);
     }
 
-    public static LoginCmd decoderFrom(ByteBuf in, String password) {
+    public static LoginCmd decoderFrom(ByteBuf in) {
         int clientNameLength = in.readInt();
         CharSequence clientName = in.readCharSequence(clientNameLength, UTF_8);
-        ByteBuf md5 = in.readBytes(16);
-
-        byte[] bytes = md5(clientName + password);
-        if (ByteBufUtil.equals(md5, Unpooled.wrappedBuffer(bytes))) {
-            return new LoginCmd(clientName.toString(), password);
-        }
-        throw AuthenticationException.INSTANCE;
+        byte[] md5 = new byte[16];
+        in.readBytes(md5);
+        return new LoginCmd(clientName.toString(), md5);
     }
 
     public String getClientName() {
         return clientName;
+    }
+
+    public void check(String token) {
+        if (md5 == null || md5.length != 16) {
+            throw AuthenticationException.INSTANCE;
+        }
+
+        byte[] bytes = md5(clientName + token);
+        for (int i = 0; i < bytes.length; i++) {
+            if (bytes[i] != md5[i]) {
+                throw AuthenticationException.INSTANCE;
+            }
+        }
     }
 
     @Override
