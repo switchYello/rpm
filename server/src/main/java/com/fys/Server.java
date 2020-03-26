@@ -6,6 +6,7 @@ import com.fys.cmd.handler.TransactionHandler;
 import com.fys.cmd.message.serverToClient.ServerStartFailCmd;
 import com.fys.cmd.message.serverToClient.ServerStartSuccessCmd;
 import com.fys.conf.ServerWorker;
+import com.fys.handler.FlowManagerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -31,6 +32,8 @@ public class Server {
 
     private ServerWorker serverWorker;
     private Channel managerChannel;
+    private FlowManagerHandler flowManagerHandler =
+            new FlowManagerHandler("server on " + serverWorker.getServerPort(), "发送到使用者的", "从使用者接收的");
 
     public Server(ServerWorker serverWorker, Channel managerChannel) {
         this.serverWorker = serverWorker;
@@ -52,6 +55,7 @@ public class Server {
                     @Override
                     protected void initChannel(Channel ch) {
                         ch.pipeline().addLast(new TimeOutHandler(0, 0, 180));
+                        ch.pipeline().addLast(flowManagerHandler);
                         ch.pipeline().addLast(new ServerHandler(Server.this));
                         ch.pipeline().addLast(ExceptionHandler.INSTANCE);
                     }
