@@ -1,0 +1,13 @@
+[
+  {
+    "clientName": "hcy_home_pc",
+    "token": "123456",
+    "serverWorkers": [
+      {
+        "serverPort": "9051",
+        "localHost": "0.0.0.0",
+        "localPort": "80"
+      }
+    ]
+  }
+]

@@ -11,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Iterator;
 
 public class App {
 
@@ -24,17 +22,7 @@ public class App {
      * -c config.properties
      * */
     public static void main(String[] args) throws IOException {
-        log.info(Arrays.toString(args));
-        String confPath = null;
-        Iterator<String> iterator = Arrays.asList(args).iterator();
-        while (iterator.hasNext()) {
-            if ("-c".equals(iterator.next().trim())) {
-                confPath = iterator.hasNext() ? iterator.next().trim() : null;
-                break;
-            }
-        }
-
-        Config.init(confPath);
+        Config.init("config.json");
         ServerBootstrap sb = new ServerBootstrap();
         sb.group(boss, work)
                 .channel(NioServerSocketChannel.class)

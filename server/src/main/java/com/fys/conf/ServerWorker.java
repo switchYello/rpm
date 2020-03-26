@@ -5,7 +5,6 @@ package com.fys.conf;
  */
 public class ServerWorker {
 
-    private Integer id;
     private Integer serverPort;
     private String localHost;
     private Integer localPort;
@@ -43,13 +42,6 @@ public class ServerWorker {
         this.localPort = localPort;
     }
 
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
 
     @Override
     public String toString() {
