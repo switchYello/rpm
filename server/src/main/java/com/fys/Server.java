@@ -32,12 +32,13 @@ public class Server {
 
     private ServerWorker serverWorker;
     private Channel managerChannel;
-    private FlowManagerHandler flowManagerHandler =
-            new FlowManagerHandler("server on " + serverWorker.getServerPort(), "发送到使用者的", "从使用者接收的");
+    private FlowManagerHandler flowManagerHandler;
 
     public Server(ServerWorker serverWorker, Channel managerChannel) {
         this.serverWorker = serverWorker;
         this.managerChannel = managerChannel;
+        flowManagerHandler =
+                new FlowManagerHandler("server on " + serverWorker.getServerPort(), "发送到使用者的", "从使用者接收的");
     }
 
 
