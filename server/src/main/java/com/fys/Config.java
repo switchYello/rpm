@@ -19,8 +19,8 @@ import java.util.List;
 public class Config {
 
     private static Logger log = LoggerFactory.getLogger(Config.class);
-    public static int bindPort = 9050;
     public static String bindHost = "0.0.0.0";
+    public static int bindPort;
     //等待客户端数据连接的超时时间
     public static int timeOut = 5;
 
@@ -28,16 +28,15 @@ public class Config {
 
     public static void init(String configPath) throws IOException {
         log.info("准备读取配置文件");
-
-        InputStream input = getResource(configPath);
-
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = mapper.readTree(input);
-        for (JsonNode node : jsonNode) {
+        InputStream input = getResource(configPath);
+        JsonNode config = mapper.readTree(input);
+        bindPort = config.at("/server/bindHost").intValue();
+
+        for (JsonNode node : config.get("clients")) {
             ServerInfo serverInfo = mapper.treeToValue(node, ServerInfo.class);
             serverInfos.add(serverInfo);
         }
-
     }
 
     public static ServerInfo getServerInfo(String clientName) {
@@ -48,7 +47,6 @@ public class Config {
         }
         return null;
     }
-
 
 
     private static InputStream getResource(String resourceName) {
