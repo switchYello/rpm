@@ -3,7 +3,6 @@ package com.fys;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ExceptionHandler;
 import com.fys.cmd.message.clientToServer.LoginCmd;
-import com.fys.conf.ServerInfo;
 import com.fys.handler.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -22,7 +21,7 @@ public class AppClient {
 
     private static Logger log = LoggerFactory.getLogger(AppClient.class);
     public static EventLoopGroup work = new NioEventLoopGroup(1);
-    private static AttributeKey<Config> key = AttributeKey.newInstance("conf");
+    private static AttributeKey<Config> key = AttributeKey.newInstance("config");
 
     private Config config = Config.INSTANCE;
     //管理连接
@@ -79,13 +78,12 @@ public class AppClient {
 
 
     private ChannelFuture start() {
-        ServerInfo serverInfo = config.getServerInfo();
         return createManagerConnection()
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
-                        log.info("连接成功{}:{}等待服务端验证", serverInfo.getServerIp(), serverInfo.getServerPort());
+                        log.info("连接成功{}:{}等待服务端验证", config.getServerIp(), config.getServerPort());
                         //登录
-                        future.channel().writeAndFlush(new LoginCmd("hcy_home_pc", "123456"));
+                        future.channel().writeAndFlush(new LoginCmd(config.getClientName(), config.getToken()));
                         managerChannel = future.channel();
                     } else {
                         log.error("连接失败:{}", future.cause().toString());
@@ -99,11 +97,10 @@ public class AppClient {
     }
 
     private ChannelFuture createManagerConnection() {
-        ServerInfo serverInfo = config.getServerInfo();
         Bootstrap b = new Bootstrap();
         return b.group(work)
                 .channel(NioSocketChannel.class)
-                .remoteAddress(serverInfo.getServerIp(), serverInfo.getServerPort())
+                .remoteAddress(config.getServerIp(), config.getServerPort())
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 4000)
                 .option(ChannelOption.TCP_NODELAY, true)
                 //将配置类存入channel

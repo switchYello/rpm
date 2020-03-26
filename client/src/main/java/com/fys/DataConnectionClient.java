@@ -6,11 +6,11 @@ import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.handler.TransactionHandler;
 import com.fys.cmd.listener.ErrorLogListener;
 import com.fys.cmd.message.DataConnectionCmd;
-import com.fys.conf.ServerInfo;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.concurrent.Promise;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * hcy 2020/2/17
@@ -18,49 +18,40 @@ import io.netty.util.concurrent.Promise;
  */
 public class DataConnectionClient {
 
+    private static Logger log = LoggerFactory.getLogger(DataConnectionClient.class);
     private static EventLoopGroup work = AppClient.work;
-    private Channel channelToServer;
+    private Config config;
     private DataConnectionCmd msg;
-    private ServerInfo serverInfo;
 
-    public DataConnectionClient(ServerInfo serverInfo, DataConnectionCmd msg) {
+    public DataConnectionClient(Config config, DataConnectionCmd msg) {
+        this.config = config;
         this.msg = msg;
-        this.serverInfo = serverInfo;
     }
 
     /*
      * 数据连接连接到服务器上时，如果不说明自己是数据连接，服务器是不会主动发数据的，所以这里改成自动读提高性能
      * */
-    public void start(Promise<DataConnectionClient> promise) {
+    public void start() {
         //连接到Local端口成功后，尝试连接到服务器
         createConnectionToLocal(msg.getLocalHost(), msg.getLocalPort()).addListener((ChannelFutureListener) localFuture -> {
             if (localFuture.isSuccess()) {
                 final Channel channelToLocal = localFuture.channel();
-                createConnectionToServer(serverInfo.getServerIp(), serverInfo.getServerPort()).addListener((ChannelFutureListener) serverFuture -> {
+                createConnectionToServer(config.getServerIp(), config.getServerPort()).addListener((ChannelFutureListener) serverFuture -> {
                     if (serverFuture.isSuccess()) {
-                        this.channelToServer = serverFuture.channel();
+                        Channel channelToServer = serverFuture.channel();
+                        //发送认证消息
+                        channelToServer.writeAndFlush(msg).addListeners(ErrorLogListener.INSTANCE, ChannelFutureListener.CLOSE_ON_FAILURE);
                         channelToServer.pipeline().addBefore(ExceptionHandler.NAME, "linkServer", new TransactionHandler(channelToLocal, true));
                         channelToLocal.pipeline().addBefore(ExceptionHandler.NAME, "linkLocal", new TransactionHandler(channelToServer, true));
-                        promise.setSuccess(DataConnectionClient.this);
                     } else {
+                        log.error("Client连接到Remote失败", serverFuture.cause());
                         channelToLocal.close();
-                        promise.setFailure(serverFuture.cause());
                     }
                 });
             } else {
-                promise.setFailure(localFuture.cause());
+                log.error("Client连接到Local失败", localFuture.cause());
             }
         });
-    }
-
-    //通过数据连接向服务器发送数据，用于刚创建链接后向服务器发送信号标识自己是数据连接
-    //调用此方法要保证client的连接是创建完成的
-    public void write(Object msg) {
-        if (channelToServer != null) {
-            channelToServer.writeAndFlush(msg).addListeners(ErrorLogListener.INSTANCE, ChannelFutureListener.CLOSE_ON_FAILURE);
-        } else {
-            throw new IllegalStateException("channelToServer尚未完成，不能发送信息");
-        }
     }
 
     //创建一个指向本地端口的连接

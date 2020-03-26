@@ -3,14 +3,10 @@ package com.fys.handler;
 import com.fys.Config;
 import com.fys.DataConnectionClient;
 import com.fys.cmd.message.DataConnectionCmd;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
-import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,20 +22,10 @@ public class DataConnectionHandler extends SimpleChannelInboundHandler<DataConne
      * */
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, DataConnectionCmd msg) {
-        Attribute<Config> conf = ctx.channel().attr(AttributeKey.valueOf("conf"));
+        Attribute<Config> conf = ctx.channel().attr(AttributeKey.valueOf("config"));
         Config config = conf.get();
         log.debug("收到服务端DataConnection,{} -> {}:{}", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
-        Promise<DataConnectionClient> promise = ctx.executor().newPromise();
-        //同时连接服务器和本地成功后，将消息重发给服务器，用于识别该连接
-        promise.addListener((GenericFutureListener<Future<DataConnectionClient>>) future -> {
-            if (future.isSuccess()) {
-                log.debug("开启dataConnection{} -> {}:{}成功", msg.getServerPort(), msg.getLocalHost(), msg.getLocalPort());
-                future.getNow().write(msg);
-            } else {
-                log.info("开启dataConnection失败", future.cause());
-            }
-        });
-        new DataConnectionClient(config.getServerInfo(), msg).start(promise);
+        new DataConnectionClient(config, msg).start();
     }
 
 }
