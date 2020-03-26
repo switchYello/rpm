@@ -23,7 +23,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
     private static Logger log = LoggerFactory.getLogger(ServerCmdDecoder.class);
 
-    //因为每个ManagerChannel能开启多个Server，但只需要添加一份Handler即可，所以设置这个标志位
+    //防止多次登录
     private boolean addHandler = false;
 
     @Override
@@ -59,7 +59,6 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         //无法识别的指令
         log.error("无法识别客户端发送的指令,指令:{}", flag);
         ctx.close();
-
 
     }
 

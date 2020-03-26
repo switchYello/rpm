@@ -60,11 +60,13 @@ public class Server {
         //添加服务开启成功失败事件
         bind.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
-                log.info("开启服务:{}->{}:{}成功", serverWorker.getServerPort(), serverWorker.getLocalHost(), serverWorker.getLocalPort());
-                managerChannel.writeAndFlush(new ServerStartSuccessCmd(serverWorker.getServerPort(), serverWorker.getLocalHost(), serverWorker.getLocalPort()));
+                ServerStartSuccessCmd msg = new ServerStartSuccessCmd(serverWorker.getServerPort(), serverWorker.getLocalHost(), serverWorker.getLocalPort());
+                log.info(msg.toString());
+                managerChannel.writeAndFlush(msg);
             } else {
-                log.error("在端口:" + serverWorker.getServerPort() + "开启监听失败", future.cause());
-                managerChannel.writeAndFlush(new ServerStartFailCmd(serverWorker.getServerPort(), serverWorker.getLocalHost(), serverWorker.getLocalPort(), future.cause().toString()));
+                ServerStartFailCmd msg = new ServerStartFailCmd(serverWorker.getServerPort(), serverWorker.getLocalHost(), serverWorker.getLocalPort(), future.cause().toString());
+                log.error(msg.toString());
+                managerChannel.writeAndFlush(msg);
             }
         });
         return this;
@@ -72,7 +74,7 @@ public class Server {
 
     public void stop() {
         if (bind != null && bind.channel().isActive()) {
-            bind.channel().close();
+            bind.channel().close().addListener(f -> log.info("Server在端口:{}关闭成功", serverWorker.getServerPort()));
         }
     }
 

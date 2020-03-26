@@ -36,8 +36,7 @@ public class ServerManager {
         for (ServerWorker sw : serverInfo.getServerWorkers()) {
             execute(() -> {
                 if (managerChannel.isActive()) {
-                    Server server = new Server(sw, managerChannel);
-                    server.start();
+                    Server server = new Server(sw, managerChannel).start();
                     managerChannel.closeFuture().addListener(future -> execute(server::stop));
                 }
             });
@@ -93,7 +92,7 @@ public class ServerManager {
         }
     }
 
-    static ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+    private static ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
         return managerEventLoop.schedule(command, delay, unit);
     }
 
