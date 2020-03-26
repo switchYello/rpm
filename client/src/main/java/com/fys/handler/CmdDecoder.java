@@ -21,23 +21,22 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
     private static Logger log = LoggerFactory.getLogger(CmdDecoder.class);
 
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         byte flag = in.readByte();
-
-        if (flag == Cmd.ServerToClient.serverStartSuccessCmd) {
-            out.add(ServerStartSuccessCmd.decoderFrom(in));
-            return;
-        }
-        if (flag == Cmd.ServerToClient.serverStartFailCmd) {
-            out.add(ServerStartFailCmd.decoderFrom(in));
-            return;
-        }
         if (flag == Cmd.ServerToClient.ping) {
             out.add(Ping.decoderFrom(in));
             return;
         }
         if (flag == Cmd.dataConnectionCmd) {
             out.add(DataConnectionCmd.decoderFrom(in));
+            return;
+        }
+        if (flag == Cmd.ServerToClient.serverStartSuccessCmd) {
+            out.add(ServerStartSuccessCmd.decoderFrom(in));
+            return;
+        }
+        if (flag == Cmd.ServerToClient.serverStartFailCmd) {
+            out.add(ServerStartFailCmd.decoderFrom(in));
             return;
         }
         log.error("无法识别服务端发送的指令,指令:{}", flag);
