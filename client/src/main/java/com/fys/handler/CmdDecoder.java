@@ -2,6 +2,7 @@ package com.fys.handler;
 
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.DataConnectionCmd;
+import com.fys.cmd.message.serverToClient.LoginFailCmd;
 import com.fys.cmd.message.serverToClient.Ping;
 import com.fys.cmd.message.serverToClient.ServerStartFailCmd;
 import com.fys.cmd.message.serverToClient.ServerStartSuccessCmd;
@@ -37,6 +38,10 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
         }
         if (flag == Cmd.ServerToClient.serverStartFailCmd) {
             out.add(ServerStartFailCmd.decoderFrom(in));
+            return;
+        }
+        if (flag == Cmd.ServerToClient.loginFail) {
+            out.add(LoginFailCmd.decoderFrom(in));
             return;
         }
         log.error("无法识别服务端发送的指令,指令:{}", flag);
