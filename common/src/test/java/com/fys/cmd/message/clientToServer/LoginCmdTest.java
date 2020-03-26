@@ -13,13 +13,14 @@ public class LoginCmdTest {
 
     @Test
     public void test() {
-        LoginCmd login = new LoginCmd("hakshdjkfsad", "21312365");
+        LoginCmd login = new LoginCmd("啦啦啦123abc", "啦啦啦aaa21312365");
         ByteBuf buffer = Unpooled.buffer();
         login.encoderTo(buffer);
 
         Assert.assertEquals(Cmd.ClientToServer.login, buffer.readByte());
         LoginCmd decode = LoginCmd.decoderFrom(buffer);
-        decode.check("21312365");
+        decode.check("啦啦啦aaa21312365");
+        System.out.println(decode);
     }
 
 }

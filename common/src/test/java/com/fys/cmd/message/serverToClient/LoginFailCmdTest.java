@@ -14,7 +14,7 @@ public class LoginFailCmdTest {
 
     @Test
     public void encoderTo() {
-        LoginFailCmd msg = new LoginFailCmd("clientname", "error msg");
+        LoginFailCmd msg = new LoginFailCmd("clientname拉拉", "error msg啦啦啦");
         ByteBuf buffer = Unpooled.buffer();
         msg.encoderTo(buffer);
         assertEquals(Cmd.ServerToClient.loginFail, buffer.readByte());

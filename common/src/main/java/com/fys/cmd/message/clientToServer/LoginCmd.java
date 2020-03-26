@@ -64,6 +64,13 @@ public class LoginCmd implements Cmd {
         }
     }
 
+    @Override
+    public String toString() {
+        return "LoginCmd{" +
+                "clientName='" + clientName + '\'' +
+                '}';
+    }
+
     /*
      * MD5算法摘要出的是128bit的数据，等于16Byte数据，转成16进制字符串为32个字符
      * */
