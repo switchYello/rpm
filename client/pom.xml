@@ -62,7 +62,7 @@
                     </archive>
                     <!--不打包这些文件到jar中-->
                     <excludes>
-                        <exclude>conf.json</exclude>
+                        <exclude>config.properties</exclude>
                         <exclude>logback-test.xml</exclude>
                     </excludes>
                 </configuration>
@@ -74,12 +74,6 @@
                     <filters>
                         <filter>
                             <artifact>ch.qos.logback:logback-core</artifact>
-                            <includes>
-                                <include>**</include>
-                            </includes>
-                        </filter>
-                        <filter>
-                            <artifact>com.fasterxml.jackson.core:jackson-databind</artifact>
                             <includes>
                                 <include>**</include>
                             </includes>
