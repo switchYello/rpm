@@ -112,9 +112,10 @@ public class AppClient {
 
                                  ch.pipeline().addLast(new CmdDecoder());
                                  ch.pipeline().addLast(new PingHandler());
+                                 ch.pipeline().addLast(new DataConnectionHandler());
                                  ch.pipeline().addLast(new ServerStartSuccessHandler());
                                  ch.pipeline().addLast(new ServerStartFailHandler());
-                                 ch.pipeline().addLast(new DataConnectionHandler());
+                                 ch.pipeline().addLast(new LoginFailHandler());
                                  ch.pipeline().addLast(ExceptionHandler.INSTANCE);
                              }
                          }

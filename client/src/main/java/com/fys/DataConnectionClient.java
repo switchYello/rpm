@@ -34,23 +34,24 @@ public class DataConnectionClient {
     public void start() {
         //连接到Local端口成功后，尝试连接到服务器
         createConnectionToLocal(msg.getLocalHost(), msg.getLocalPort()).addListener((ChannelFutureListener) localFuture -> {
-            if (localFuture.isSuccess()) {
-                final Channel channelToLocal = localFuture.channel();
-                createConnectionToServer(config.getServerIp(), config.getServerPort()).addListener((ChannelFutureListener) serverFuture -> {
-                    if (serverFuture.isSuccess()) {
-                        Channel channelToServer = serverFuture.channel();
-                        //发送认证消息
-                        channelToServer.writeAndFlush(msg).addListeners(ErrorLogListener.INSTANCE, ChannelFutureListener.CLOSE_ON_FAILURE);
-                        channelToServer.pipeline().addBefore(ExceptionHandler.NAME, "linkServer", new TransactionHandler(channelToLocal, true));
-                        channelToLocal.pipeline().addBefore(ExceptionHandler.NAME, "linkLocal", new TransactionHandler(channelToServer, true));
-                    } else {
-                        log.error("Client连接到Remote失败", serverFuture.cause());
-                        channelToLocal.close();
-                    }
-                });
-            } else {
+            if (!localFuture.isSuccess()) {
                 log.error("Client连接到Local失败", localFuture.cause());
+                return;
             }
+            final Channel channelToLocal = localFuture.channel();
+
+            createConnectionToServer(config.getServerIp(), config.getServerPort()).addListener((ChannelFutureListener) serverFuture -> {
+                if (serverFuture.isSuccess()) {
+                    Channel channelToServer = serverFuture.channel();
+                    channelToServer.pipeline().addBefore(ExceptionHandler.NAME, "linkServer", new TransactionHandler(channelToLocal, true));
+                    channelToLocal.pipeline().addBefore(ExceptionHandler.NAME, "linkLocal", new TransactionHandler(channelToServer, true));
+                    //发送认证消息
+                    channelToServer.writeAndFlush(msg).addListeners(ErrorLogListener.INSTANCE, ChannelFutureListener.CLOSE_ON_FAILURE);
+                } else {
+                    log.error("Client连接到Remote失败", serverFuture.cause());
+                    channelToLocal.close();
+                }
+            });
         });
     }
 
