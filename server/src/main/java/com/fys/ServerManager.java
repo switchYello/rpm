@@ -2,7 +2,6 @@ package com.fys;
 
 import com.fys.cmd.listener.ErrorLogListener;
 import com.fys.cmd.message.DataConnectionCmd;
-import com.fys.conf.ServerInfo;
 import com.fys.conf.ServerWorker;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoop;
@@ -32,15 +31,16 @@ public class ServerManager {
      * 当客户端登录成功后，遍历映射表，开启所有服务，并绑定到managerChannel的生命周期上
      * 开启关闭Server均使用单个eventLoop执行保证按顺序执行
      * */
-    public static void startServers(ServerInfo serverInfo, Channel managerChannel) {
-        for (ServerWorker sw : serverInfo.getServerWorkers()) {
-            execute(() -> {
-                if (managerChannel.isActive()) {
-                    Server server = new Server(sw, managerChannel).start();
-                    managerChannel.closeFuture().addListener(future -> execute(server::stop));
-                }
-            });
-        }
+    public static Promise<Server> startServers(ServerWorker sw, Channel managerChannel) {
+        Promise<Server> promise = managerEventLoop.newPromise();
+        execute(() -> {
+            if (managerChannel.isActive()) {
+                Server server = new Server(sw, managerChannel);
+                server.start(promise);
+                managerChannel.closeFuture().addListener(future -> execute(server::stop));
+            }
+        });
+        return promise;
     }
 
     /*

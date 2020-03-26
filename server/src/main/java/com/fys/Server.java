@@ -3,8 +3,6 @@ package com.fys;
 import com.fys.cmd.handler.ExceptionHandler;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.handler.TransactionHandler;
-import com.fys.cmd.message.serverToClient.ServerStartFailCmd;
-import com.fys.cmd.message.serverToClient.ServerStartSuccessCmd;
 import com.fys.conf.ServerWorker;
 import com.fys.handler.FlowManagerHandler;
 import io.netty.bootstrap.ServerBootstrap;
@@ -42,7 +40,7 @@ public class Server {
     }
 
 
-    public Server start() {
+    public void start(Promise<Server> promise) {
         ServerBootstrap sb = new ServerBootstrap();
         bind = sb.group(boss, work)
                 .channel(NioServerSocketChannel.class)
@@ -65,19 +63,17 @@ public class Server {
         //添加服务开启成功失败事件
         bind.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
-                ServerStartSuccessCmd msg = new ServerStartSuccessCmd(serverWorker.getServerPort(), serverWorker.getLocalHost(), serverWorker.getLocalPort());
-                log.info(msg.toString());
-                managerChannel.writeAndFlush(msg);
+                promise.setSuccess(this);
             } else {
-                ServerStartFailCmd msg = new ServerStartFailCmd(serverWorker.getServerPort(), serverWorker.getLocalHost(), serverWorker.getLocalPort(), future.cause().toString());
-                log.error(msg.toString());
-                managerChannel.writeAndFlush(msg);
+                promise.setFailure(future.cause());
             }
         });
-        return this;
     }
 
     public void stop() {
+        if (managerChannel != null && managerChannel.isActive()) {
+            managerChannel.close();
+        }
         if (bind != null && bind.channel().isActive()) {
             bind.channel().close().addListener(f -> log.info("Server在端口:{}关闭成功", serverWorker.getServerPort()));
         }

@@ -5,7 +5,10 @@ import com.fys.ServerManager;
 import com.fys.cmd.exception.AuthenticationException;
 import com.fys.cmd.message.clientToServer.LoginCmd;
 import com.fys.cmd.message.serverToClient.LoginFailCmd;
+import com.fys.cmd.message.serverToClient.ServerStartFailCmd;
+import com.fys.cmd.message.serverToClient.ServerStartSuccessCmd;
 import com.fys.conf.ServerInfo;
+import com.fys.conf.ServerWorker;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -39,8 +42,22 @@ public class LoginCmdHandler extends SimpleChannelInboundHandler<LoginCmd> {
             return;
         }
         log.info("{} 登录成功", serverInfo.getClientName());
-        //添加大serverManager,开启配置中的映射服务
-        ServerManager.startServers(serverInfo, ctx.channel());
+
+        //开启配置中的映射服务,并在成功或失败后发送消息
+        for (ServerWorker sw : serverInfo.getServerWorkers()) {
+            ServerManager.startServers(sw, ctx.channel()).addListener(f -> {
+                if (f.isSuccess()) {
+                    ServerStartSuccessCmd successCmd = new ServerStartSuccessCmd(sw.getServerPort(), sw.getLocalHost(), sw.getLocalPort());
+                    log.info(msg.toString());
+                    ctx.writeAndFlush(successCmd);
+                } else {
+                    ServerStartFailCmd failCmd = new ServerStartFailCmd(sw.getServerPort(), sw.getLocalHost(), sw.getLocalPort(), f.cause().toString());
+                    log.error(msg.toString());
+                    ctx.writeAndFlush(failCmd);
+                }
+            });
+        }
+
     }
 
 
