@@ -1,61 +1,58 @@
 package com.fys;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fys.conf.ServerInfo;
-import com.fys.conf.ServerWorker;
-
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Properties;
 
 /**
  * hcy 2020/2/18
  */
 public class Config {
 
-    private ServerInfo serverInfo;
-    private List<ServerWorker> serverWorkers = new ArrayList<>();
+    private String serverIp;
+    private int serverPort;
+    private String clientName;
+    private String token;
 
     public static Config INSTANCE = new Config();
 
     private Config() {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            InputStream in = ClassLoader.getSystemResourceAsStream("conf.json");
+            InputStream in = ClassLoader.getSystemResourceAsStream("config.properties");
             if (in == null) {
-                in = new FileInputStream("conf.json");
+                if (Files.notExists(Paths.get("config.properties"))) {
+                    throw new RuntimeException("找不到配置文件: config.properties");
+                }
+                in = new FileInputStream("config.properties");
             }
-            //读取json配置
-            JsonNode jsonNode = objectMapper.readTree(in);
-            //服务器信息
-            serverInfo = objectMapper.treeToValue(jsonNode.get("server"), ServerInfo.class);
 
-            //work信息
-            JsonNode server_work = jsonNode.get("server_work");
-            for (JsonNode node : server_work) {
-                ServerWorker serverWorker = objectMapper.treeToValue(node, ServerWorker.class);
-                serverWorkers.add(serverWorker);
-            }
+            Properties prop = new Properties();
+            prop.load(in);
+            serverIp = prop.getProperty("serverIp");
+            clientName = prop.getProperty("clientName");
+            token = prop.getProperty("token");
+            serverPort = Integer.parseInt(prop.getProperty("serverPort"));
+            in.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public ServerInfo getServerInfo() {
-        return serverInfo;
+    public String getServerIp() {
+        return serverIp;
     }
 
-    public List<ServerWorker> getServerWorkers() {
-        return serverWorkers;
+    public int getServerPort() {
+        return serverPort;
     }
-    
-    @Override
-    public String toString() {
-        return "Config{" +
-                "serverInfo=" + serverInfo +
-                ", serverWorkers=" + serverWorkers +
-                '}';
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public String getToken() {
+        return token;
     }
 }
