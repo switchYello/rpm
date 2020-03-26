@@ -15,13 +15,11 @@ public class ServerStartSuccessCmdTest {
     @Test
     public void encoderTo() {
         ByteBuf buffer = Unpooled.buffer();
-        ServerStartSuccessCmd src = new ServerStartSuccessCmd( 70, "127.0.5.7", 50);
+        ServerStartSuccessCmd src = new ServerStartSuccessCmd(70, "127.0.5.7", 50);
         src.encoderTo(buffer);
         assertEquals(Cmd.ServerToClient.serverStartSuccessCmd, buffer.readByte());
         ServerStartSuccessCmd dec = ServerStartSuccessCmd.decoderFrom(buffer);
-        assertEquals(src.getLocalPort(), dec.getLocalPort());
-        assertEquals(src.getServerPort(), dec.getServerPort());
-        assertEquals(src.getLocalPort(), dec.getLocalPort());
+        assertEquals(src, dec);
         buffer.release();
     }
 }

@@ -4,6 +4,8 @@ import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 
+import java.util.Objects;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -37,28 +39,25 @@ public class ServerStartSuccessCmd implements Cmd {
         int localPort = in.readUnsignedShort();
         return new ServerStartSuccessCmd(serverPort, localHost.toString(), localPort);
     }
-
+    
     @Override
-    public int getServerPort() {
-        return serverPort;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ServerStartSuccessCmd that = (ServerStartSuccessCmd) o;
+        return serverPort == that.serverPort &&
+                localPort == that.localPort &&
+                Objects.equals(localHost, that.localHost);
     }
 
     @Override
-    public int getLocalPort() {
-        return localPort;
-    }
+    public int hashCode() {
 
-    @Override
-    public String getLocalHost() {
-        return localHost;
+        return Objects.hash(serverPort, localHost, localPort);
     }
 
     @Override
     public String toString() {
-        return "ServerStartSuccessCmd{" +
-                "serverPort=" + serverPort +
-                ", localHost='" + localHost + '\'' +
-                ", localPort=" + localPort +
-                '}';
+        return "Server[" + serverPort + "->" + localHost + ":" + localPort + "]开启成功";
     }
 }

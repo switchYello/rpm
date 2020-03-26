@@ -19,21 +19,4 @@ public class Pong implements Cmd {
         return instance;
     }
 
-    @Override
-    public int getServerPort() {
-        return 0;
-    }
-
-    @Override
-    public int getLocalPort() {
-        return 0;
-    }
-
-    @Override
-    public String getLocalHost() {
-        return null;
-    }
-
-
-
 }

@@ -8,8 +8,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * hcy 2020/2/18
- * 此类需要作为map的键，注意要写hashcode 和 equals方法
- *
+ * 此类需要作为ServerManager里面map的键，注意要写hashcode 和 equals方法
  */
 public final class DataConnectionCmd implements Cmd {
 
@@ -43,17 +42,14 @@ public final class DataConnectionCmd implements Cmd {
         return new DataConnectionCmd(serverPort, localHost.toString(), localPort, token);
     }
 
-    @Override
     public int getServerPort() {
         return serverPort;
     }
 
-    @Override
     public int getLocalPort() {
         return localPort;
     }
 
-    @Override
     public String getLocalHost() {
         return localHost;
     }
@@ -86,7 +82,6 @@ public final class DataConnectionCmd implements Cmd {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(serverPort, localHost, localPort, token);
     }
 }

@@ -14,7 +14,7 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
     private boolean autoRead;
     private Channel out;
 
-    //输入管道，是否自动读取
+    //输出管道，是否自动读取
     public TransactionHandler(Channel out, boolean autoRead) {
         this.out = out;
         this.autoRead = autoRead;

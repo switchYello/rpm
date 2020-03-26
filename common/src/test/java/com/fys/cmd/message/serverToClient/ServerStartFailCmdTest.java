@@ -21,10 +21,7 @@ public class ServerStartFailCmdTest {
         src.encoderTo(buffer);
         assertEquals(Cmd.ServerToClient.serverStartFailCmd, buffer.readByte());
         ServerStartFailCmd dec = ServerStartFailCmd.decoderFrom(buffer);
-        assertEquals(src.getFailMsg(), dec.getFailMsg());
-        assertEquals(src.getLocalPort(), dec.getLocalPort());
-        assertEquals(src.getServerPort(), dec.getServerPort());
-        assertEquals(src.getLocalHost(), dec.getLocalHost());
+        assertEquals(src, dec);
         buffer.release();
     }
 }

@@ -4,6 +4,8 @@ import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 
+import java.util.Objects;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -43,28 +45,26 @@ public class ServerStartFailCmd implements Cmd {
         CharSequence charSequence = in.readCharSequence(msgLength, UTF_8);
         return new ServerStartFailCmd(serverPort, localHost.toString(), localPort, charSequence.toString());
     }
-
+    
     @Override
-    public int getServerPort() {
-        return serverPort;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ServerStartFailCmd that = (ServerStartFailCmd) o;
+        return serverPort == that.serverPort &&
+                localPort == that.localPort &&
+                Objects.equals(localHost, that.localHost) &&
+                Objects.equals(failMsg, that.failMsg);
     }
 
     @Override
-    public int getLocalPort() {
-        return localPort;
-    }
+    public int hashCode() {
 
-    @Override
-    public String getLocalHost() {
-        return localHost;
-    }
-
-    public String getFailMsg() {
-        return failMsg;
+        return Objects.hash(serverPort, localHost, localPort, failMsg);
     }
 
     @Override
     public String toString() {
-        return "Server [" + serverPort + " -> " + localPort + "]开启失败,因为" + failMsg;
+        return "Server[" + serverPort + "->" + localHost + ":" + localPort + "]开启失败，因为" + failMsg;
     }
 }

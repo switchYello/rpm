@@ -15,7 +15,7 @@ public class ErrorLogListener implements ChannelFutureListener {
     public static ErrorLogListener INSTANCE = new ErrorLogListener();
 
     @Override
-    public void operationComplete(ChannelFuture future) throws Exception {
+    public void operationComplete(ChannelFuture future) {
         if (!future.isSuccess()) {
             log.error("", future.cause());
         }

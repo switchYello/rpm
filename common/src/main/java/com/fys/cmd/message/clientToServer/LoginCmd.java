@@ -50,6 +50,7 @@ public class LoginCmd implements Cmd {
         return clientName;
     }
 
+
     public void check(String token) {
         if (md5 == null || md5.length != 16) {
             throw AuthenticationException.INSTANCE;
@@ -62,22 +63,6 @@ public class LoginCmd implements Cmd {
             }
         }
     }
-
-    @Override
-    public int getServerPort() {
-        return 0;
-    }
-
-    @Override
-    public String getLocalHost() {
-        return null;
-    }
-
-    @Override
-    public int getLocalPort() {
-        return 0;
-    }
-
 
     /*
      * MD5算法摘要出的是128bit的数据，等于16Byte数据，转成16进制字符串为32个字符
