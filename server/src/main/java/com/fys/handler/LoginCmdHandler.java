@@ -48,11 +48,11 @@ public class LoginCmdHandler extends SimpleChannelInboundHandler<LoginCmd> {
             ServerManager.startServers(sw, ctx.channel()).addListener(f -> {
                 if (f.isSuccess()) {
                     ServerStartSuccessCmd successCmd = new ServerStartSuccessCmd(sw.getServerPort(), sw.getLocalHost(), sw.getLocalPort());
-                    log.info(msg.toString());
+                    log.info(successCmd.toString());
                     ctx.writeAndFlush(successCmd).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 } else {
                     ServerStartFailCmd failCmd = new ServerStartFailCmd(sw.getServerPort(), sw.getLocalHost(), sw.getLocalPort(), f.cause().toString());
-                    log.error(msg.toString());
+                    log.error(failCmd.toString());
                     ctx.writeAndFlush(failCmd).addListener(ChannelFutureListener.CLOSE);
                 }
             });
