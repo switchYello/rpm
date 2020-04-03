@@ -32,16 +32,8 @@ public class LoginCmdHandler extends SimpleChannelInboundHandler<LoginCmd> {
             ctx.writeAndFlush(cmd).addListener(ChannelFutureListener.CLOSE);
             return;
         }
-        //确认此消息的token是正确的
-        try {
-            msg.check(serverInfo.getToken());
-        } catch (AuthenticationException e) {
-            LoginFailCmd cmd = new LoginFailCmd(msg.getClientName(), "token验证不通过");
-            log.info(cmd.toString());
-            ctx.writeAndFlush(cmd).addListener(ChannelFutureListener.CLOSE);
-            return;
-        }
-        log.info("{} 登录成功", serverInfo.getClientName());
+
+        log.info("{} 连接成功", serverInfo.getClientName());
 
         //开启配置中的映射服务,并在成功或失败后发送消息
         for (ServerWorker sw : serverInfo.getServerWorkers()) {

@@ -2,6 +2,7 @@ package com.fys;
 
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ExceptionHandler;
+import com.fys.cmd.handler.Rc4Md5Handler;
 import com.fys.cmd.message.clientToServer.LoginCmd;
 import com.fys.handler.*;
 import io.netty.bootstrap.Bootstrap;
@@ -21,7 +22,7 @@ public class AppClient {
 
     private static Logger log = LoggerFactory.getLogger(AppClient.class);
     public static EventLoopGroup work = new NioEventLoopGroup(1);
-    private static AttributeKey<Config> key = AttributeKey.newInstance("config");
+    public static AttributeKey<Config> key = AttributeKey.newInstance("config");
 
     private Config config = Config.INSTANCE;
 
@@ -39,7 +40,7 @@ public class AppClient {
                         //断开连接10s后会重试
                         future.channel().closeFuture().addListener(f -> work.schedule(this::start, 10, TimeUnit.SECONDS));
                         //登录
-                        future.channel().writeAndFlush(new LoginCmd(config.getClientName(), config.getToken()));
+                        future.channel().writeAndFlush(new LoginCmd(config.getClientName()));
                     } else {
                         log.error("连接失败,5秒后重试:{}", future.cause().toString());
                         work.schedule(this::start, 5, TimeUnit.SECONDS);
@@ -60,6 +61,7 @@ public class AppClient {
                 .handler(new ChannelInitializer<Channel>() {
                              @Override
                              protected void initChannel(Channel ch) {
+                                 ch.pipeline().addLast(new Rc4Md5Handler(config.getToken()));
                                  ch.pipeline().addLast(new CmdEncoder());
 
                                  ch.pipeline().addLast(new CmdDecoder());

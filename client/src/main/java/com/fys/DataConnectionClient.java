@@ -1,9 +1,6 @@
 package com.fys;
 
-import com.fys.cmd.handler.CmdEncoder;
-import com.fys.cmd.handler.ExceptionHandler;
-import com.fys.cmd.handler.TimeOutHandler;
-import com.fys.cmd.handler.TransactionHandler;
+import com.fys.cmd.handler.*;
 import com.fys.cmd.listener.ErrorLogListener;
 import com.fys.cmd.message.DataConnectionCmd;
 import io.netty.bootstrap.Bootstrap;
@@ -75,6 +72,7 @@ public class DataConnectionClient {
                 .handler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
+                        ch.pipeline().addLast(new Rc4Md5Handler("123456"));
                         ch.pipeline().addLast(new CmdEncoder());
                         ch.pipeline().addLast(ExceptionHandler.NAME, ExceptionHandler.INSTANCE);
                     }

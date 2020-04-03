@@ -8,7 +8,6 @@ import java.util.List;
 public class ServerInfo {
 
     private String clientName;
-    private String token;
     private List<ServerWorker> serverWorkers;
 
     public String getClientName() {
@@ -18,15 +17,7 @@ public class ServerInfo {
     public void setClientName(String clientName) {
         this.clientName = clientName;
     }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
+    
     public List<ServerWorker> getServerWorkers() {
         return serverWorkers;
     }

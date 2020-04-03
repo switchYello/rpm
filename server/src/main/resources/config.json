@@ -1,11 +1,11 @@
 {
   "server": {
-    "bindHost": 9050
+    "bindHost": 9050,
+    "token": "123456"
   },
   "clients": [
     {
       "clientName": "hcy_home_pc",
-      "token": "123456",
       "serverWorkers": [
         {
           "serverPort": "9051",

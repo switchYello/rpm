@@ -5,8 +5,7 @@ import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -17,16 +16,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class LoginCmd implements Cmd {
 
     private String clientName;
-    private byte[] md5;
 
-    public LoginCmd(String clientName, String token) {
+    public LoginCmd(String clientName) {
         this.clientName = clientName;
-        this.md5 = md5(clientName + token);
-    }
-
-    public LoginCmd(String clientName, byte[] md5) {
-        this.clientName = clientName;
-        this.md5 = md5;
     }
 
     // flag 长度 clientName md5
@@ -35,33 +27,33 @@ public class LoginCmd implements Cmd {
         buf.writeByte(ClientToServer.login);
         buf.writeInt(ByteBufUtil.utf8Bytes(clientName));
         buf.writeCharSequence(clientName, UTF_8);
-        buf.writeBytes(md5);
     }
 
     public static LoginCmd decoderFrom(ByteBuf in) {
         int clientNameLength = in.readInt();
+        if (clientNameLength > 50) {
+            throw new AuthenticationException();
+        }
         CharSequence clientName = in.readCharSequence(clientNameLength, UTF_8);
-        byte[] md5 = new byte[16];
-        in.readBytes(md5);
-        return new LoginCmd(clientName.toString(), md5);
+        return new LoginCmd(clientName.toString());
     }
 
     public String getClientName() {
         return clientName;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LoginCmd loginCmd = (LoginCmd) o;
+        return Objects.equals(clientName, loginCmd.clientName);
+    }
 
-    public void check(String token) {
-        if (md5 == null || md5.length != 16) {
-            throw AuthenticationException.INSTANCE;
-        }
+    @Override
+    public int hashCode() {
 
-        byte[] bytes = md5(clientName + token);
-        for (int i = 0; i < bytes.length; i++) {
-            if (bytes[i] != md5[i]) {
-                throw AuthenticationException.INSTANCE;
-            }
-        }
+        return Objects.hash(clientName);
     }
 
     @Override
@@ -69,19 +61,6 @@ public class LoginCmd implements Cmd {
         return "LoginCmd{" +
                 "clientName='" + clientName + '\'' +
                 '}';
-    }
-
-    /*
-     * MD5算法摘要出的是128bit的数据，等于16Byte数据，转成16进制字符串为32个字符
-     * */
-    private static byte[] md5(String src) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("md5");
-            return md.digest(src.getBytes(UTF_8));
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return new byte[16];
     }
 
 }

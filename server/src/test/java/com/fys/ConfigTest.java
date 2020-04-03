@@ -19,7 +19,6 @@ public class ConfigTest {
         Assert.assertEquals(9050, Config.bindPort);
         ServerInfo hcy_home_pc = Config.getServerInfo("hcy_home_pc");
         System.out.println(hcy_home_pc.getClientName());
-        System.out.println(hcy_home_pc.getToken());
         for (ServerWorker serverWorker : hcy_home_pc.getServerWorkers()) {
             System.out.println("------");
             System.out.println(serverWorker.getServerPort());

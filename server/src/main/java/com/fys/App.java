@@ -1,6 +1,7 @@
 package com.fys;
 
 import com.fys.cmd.handler.CmdEncoder;
+import com.fys.cmd.handler.Rc4Md5Handler;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.handler.ServerCmdDecoder;
 import io.netty.bootstrap.ServerBootstrap;
@@ -34,6 +35,7 @@ public class App {
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
+                        ch.pipeline().addLast(new Rc4Md5Handler(Config.token));
                         ch.pipeline().addLast(new CmdEncoder());
                         //控制超时，防止链接上来但不发送消息任何的连接
                         ch.pipeline().addLast(new TimeOutHandler(0, 0, 360));

@@ -21,6 +21,7 @@ public class Config {
     private static Logger log = LoggerFactory.getLogger(Config.class);
     public static String bindHost = "0.0.0.0";
     public static int bindPort;
+    public static String token;
     //等待客户端数据连接的超时时间
     public static int timeOut = 5;
 
@@ -32,6 +33,7 @@ public class Config {
         InputStream input = getResource(configPath);
         JsonNode config = mapper.readTree(input);
         bindPort = config.at("/server/bindHost").intValue();
+        token = config.at("/server/token").textValue();
 
         for (JsonNode node : config.get("clients")) {
             ServerInfo serverInfo = mapper.treeToValue(node, ServerInfo.class);
