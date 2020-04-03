@@ -56,8 +56,10 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
             out.add(login);
             return;
         }
+
         //无法识别的指令
-        log.error("无法识别客户端:{} 发送的指令,指令:{}",ctx.channel().remoteAddress(), flag);
+        log.error("无法识别客户端:{} 发送的指令,指令:{}", ctx.channel().remoteAddress(), flag);
+        in.skipBytes(in.readableBytes());
         ctx.close();
 
     }
