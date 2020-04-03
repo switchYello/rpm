@@ -33,7 +33,7 @@ public class LoginCmdHandler extends SimpleChannelInboundHandler<LoginCmd> {
             return;
         }
 
-        log.info("{} 连接成功", serverInfo.getClientName());
+        log.info("{} 连接上来了", serverInfo.getClientName());
 
         //开启配置中的映射服务,并在成功或失败后发送消息
         for (ServerWorker sw : serverInfo.getServerWorkers()) {
