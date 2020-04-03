@@ -67,12 +67,12 @@ public class DataConnectionClient {
 
     //创建一个指向服务器端口的连接
     //客户端连接服务器不加超时管理，因为服务器会判断超时主动断开
-    private static ChannelFuture createConnectionToServer(String host, int port) {
+    private ChannelFuture createConnectionToServer(String host, int port) {
         return newClientBootStrap(work)
                 .handler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
-                        ch.pipeline().addLast(new Rc4Md5Handler("123456"));
+                        ch.pipeline().addLast(new Rc4Md5Handler(config.getToken()));
                         ch.pipeline().addLast(new CmdEncoder());
                         ch.pipeline().addLast(ExceptionHandler.NAME, ExceptionHandler.INSTANCE);
                     }
