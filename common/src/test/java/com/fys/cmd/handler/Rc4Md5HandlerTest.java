@@ -18,7 +18,7 @@ public class Rc4Md5HandlerTest {
         EmbeddedChannel eb = new EmbeddedChannel(new Rc4Md5Handler("123456"));
         //出站将数据加密
         ByteBuf src = Unpooled.wrappedBuffer("abcdefghijklmn".getBytes());
-        Assert.assertTrue(eb.writeOutbound(src));
+        Assert.assertTrue(eb.writeOutbound(src.retainedSlice()));
         //出站rc4加密后的数据
         Object o = eb.readOutbound();
 
