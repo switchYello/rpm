@@ -38,6 +38,8 @@ public class ServerManager {
                 Server server = new Server(sw, managerChannel);
                 server.start(promise);
                 managerChannel.closeFuture().addListener(future -> execute(server::stop));
+            } else {
+                promise.setFailure(new RuntimeException("尚未创建server，但已经断连了"));
             }
         });
         return promise;
