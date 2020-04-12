@@ -1,5 +1,6 @@
 package com.fys.cmd.handler;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -22,10 +23,11 @@ public class ExceptionHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        Channel channel = ctx.channel();
         if ("Connection reset by peer".equals(cause.getMessage())) {
-            log.error("收尾:Connection reset by peer");
+            log.error("收尾:Connection reset by peer local:{},remote:{}", channel.localAddress(), channel.remoteAddress());
             return;
         }
-        log.error("收尾", cause);
+        log.error("收尾local:" + channel.localAddress() + " remote:{}" + channel.remoteAddress(), cause);
     }
 }
