@@ -8,6 +8,7 @@ import io.netty.handler.codec.ByteToMessageCodec;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.List;
 
@@ -44,7 +45,17 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
             firstEncode = false;
             out.writeBytes(iv);
         }
-        out.writeBytes(encoderCipher.update(readByte(msg, msg.readableBytes())));
+        //将要加密的数据铭文
+        ByteBuffer data = msg.nioBuffer();
+        //存储密文
+        ByteBuffer outData = data.duplicate();
+        //加密操作
+        int updateLength = encoderCipher.update(data, outData);
+        //忽略处理过的数据
+        msg.skipBytes(updateLength);
+        //写密文
+        outData.flip();
+        out.writeBytes(outData);
     }
 
 
@@ -60,7 +71,18 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
             decoderCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(realPassWord, "RC4"));
             firstDecode = false;
         }
-        out.add(Unpooled.wrappedBuffer(decoderCipher.update(readByte(in, in.readableBytes()))));
+        //获取到的密文
+        ByteBuffer data = in.nioBuffer();
+        //存储铭文
+        ByteBuffer outData = data.duplicate();
+        //解密操作
+        int updateLength = decoderCipher.update(data, outData);
+        //忽略处理过的数据
+        in.skipBytes(updateLength);
+        //反转明文buffer
+        outData.flip();
+        //输出明文
+        out.add(Unpooled.wrappedBuffer(outData));
     }
 
 
