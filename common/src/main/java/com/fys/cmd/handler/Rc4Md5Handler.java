@@ -45,7 +45,7 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
             firstEncode = false;
             out.writeBytes(iv);
         }
-        //将要加密的数据铭文
+        //将要加密的数据明文
         ByteBuffer data = msg.nioBuffer();
         //存储密文
         ByteBuffer outData = data.duplicate();
@@ -65,6 +65,9 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         if (firstDecode) {
+            if (in.readableBytes() < 16) {
+                return;
+            }
             byte[] iv = readByte(in, 16);
             decoderCipher = Cipher.getInstance("RC4");
             byte[] realPassWord = md5(md5(password.getBytes(UTF_8)), iv);
