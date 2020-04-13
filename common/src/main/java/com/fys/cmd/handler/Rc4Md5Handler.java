@@ -2,13 +2,12 @@ package com.fys.cmd.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
+import io.netty.util.ReferenceCountUtil;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.List;
 
@@ -48,17 +47,19 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
         if (msg.readableBytes() <= 0) {
             return;
         }
-        //将要加密的数据明文
-        ByteBuffer data = msg.nioBuffer();
-        int dataLength = data.remaining();
-        //存储密文的缓存
-        ByteBuffer outData = ctx.alloc().ioBuffer(dataLength).nioBuffer(0, dataLength);
+        //需要加密的明文长度
+        int dataLength = msg.readableBytes();
+        int outputSize = encoderCipher.getOutputSize(dataLength);
+        //存储密文的buff
+        ByteBuf outPut = ctx.alloc().ioBuffer(outputSize);
+
         //加密操作,返回处理数据的长度
-        int updateLength = encoderCipher.update(data, outData);
+        int updateLength = encoderCipher.update(msg.nioBuffer(), outPut.nioBuffer(0, outputSize));
         //忽略处理过的数据
         msg.skipBytes(updateLength);
-        outData.flip();
-        out.writeBytes(outData);
+        outPut.writerIndex(updateLength);
+        out.writeBytes(outPut);
+        ReferenceCountUtil.release(outPut);
     }
 
 
@@ -80,19 +81,16 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
         if (in.readableBytes() <= 0) {
             return;
         }
-        //获取到的密文
-        ByteBuffer data = in.nioBuffer();
-        int dataLength = data.remaining();
-        //存储明文
-        ByteBuffer outData = ctx.alloc().ioBuffer(dataLength).nioBuffer(0, dataLength);
-        //解密操作
-        int updateLength = decoderCipher.update(data, outData);
-        //忽略处理过的数据
+        //密文长度 和 明文长度
+        int dataLength = in.readableBytes();
+        int outputSize = decoderCipher.getOutputSize(dataLength);
+        //创建buf，将明文解析到此buf
+        ByteBuf outPut = in.alloc().ioBuffer(outputSize);
+        int updateLength = decoderCipher.update(in.nioBuffer(), outPut.nioBuffer(0, outputSize));
+        //跳过数据，设置write索引
         in.skipBytes(updateLength);
-        //反转明文buffer
-        outData.flip();
-        //输出明文
-        out.add(Unpooled.wrappedBuffer(outData));
+        outPut.writerIndex(updateLength);
+        out.add(outPut);
     }
 
 
