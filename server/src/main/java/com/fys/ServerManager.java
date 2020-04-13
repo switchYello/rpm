@@ -37,7 +37,10 @@ public class ServerManager {
             if (managerChannel.isActive()) {
                 Server server = new Server(sw, managerChannel);
                 server.start(promise);
-                managerChannel.closeFuture().addListener(future -> execute(server::stop));
+                managerChannel.closeFuture().addListener(future -> {
+                    log.error("managerChannel断开了,准备关闭Server", future.cause());
+                    execute(server::stop);
+                });
             } else {
                 promise.setFailure(new RuntimeException("尚未创建server，但已经断连了"));
             }
