@@ -1,6 +1,7 @@
 package com.fys.cmd.handler;
 
 import io.netty.channel.*;
+import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,20 +23,27 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, Object msg) {
-        if (autoRead) {
-            out.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-        } else {
-            out.writeAndFlush(msg).addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) {
-                    if (future.isSuccess()) {
-                        ctx.read();
-                    } else {
-                        log.error("透传handler写入失败in:" + ctx + ",to:" + out, future.cause());
-                        ctx.close();
-                    }
+        boolean autoRelease = true;
+        try {
+            if (out.isActive()) {
+                ChannelFuture f = out.writeAndFlush(msg);
+                f.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+                //非自动读则手动读取一次
+                if (!autoRead) {
+                    f.addListener(future -> {
+                        if (future.isSuccess()) {
+                            ctx.read();
+                        } else {
+                            log.error("透传handler写入失败in:" + ctx + ",to:" + out, future.cause());
+                            ctx.close();
+                        }
+                    });
                 }
-            });
+                autoRelease = false;
+            }
+        } finally {
+            if (autoRelease)
+                ReferenceCountUtil.release(msg);
         }
     }
 
