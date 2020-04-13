@@ -45,15 +45,18 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
             firstEncode = false;
             out.writeBytes(iv);
         }
+        if (msg.readableBytes() <= 0) {
+            return;
+        }
         //将要加密的数据明文
         ByteBuffer data = msg.nioBuffer();
-        //存储密文
-        ByteBuffer outData = data.duplicate();
-        //加密操作
+        int dataLength = data.remaining();
+        //存储密文的缓存
+        ByteBuffer outData = ctx.alloc().ioBuffer(dataLength).nioBuffer(0, dataLength);
+        //加密操作,返回处理数据的长度
         int updateLength = encoderCipher.update(data, outData);
         //忽略处理过的数据
         msg.skipBytes(updateLength);
-        //写密文
         outData.flip();
         out.writeBytes(outData);
     }
@@ -74,10 +77,14 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
             decoderCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(realPassWord, "RC4"));
             firstDecode = false;
         }
+        if (in.readableBytes() <= 0) {
+            return;
+        }
         //获取到的密文
         ByteBuffer data = in.nioBuffer();
-        //存储铭文
-        ByteBuffer outData = data.duplicate();
+        int dataLength = data.remaining();
+        //存储明文
+        ByteBuffer outData = ctx.alloc().ioBuffer(dataLength).nioBuffer(0, dataLength);
         //解密操作
         int updateLength = decoderCipher.update(data, outData);
         //忽略处理过的数据
@@ -99,4 +106,14 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
         return random.generateSeed(16);
     }
 
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        if (encoderCipher != null) {
+            encoderCipher.doFinal();
+        }
+        if (decoderCipher != null) {
+            decoderCipher.doFinal();
+        }
+        super.channelInactive(ctx);
+    }
 }
