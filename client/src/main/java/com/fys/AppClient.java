@@ -31,14 +31,17 @@ public class AppClient {
         appClient.start();
     }
 
-    
+
     private void start() {
         createManagerConnection()
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
                         log.info("连接成功{}:{}等待服务端验证", config.getServerIp(), config.getServerPort());
                         //断开连接10s后会重试
-                        future.channel().closeFuture().addListener(f -> work.schedule(this::start, 10, TimeUnit.SECONDS));
+                        future.channel().closeFuture().addListener(f -> {
+                            log.info("检测到连接断开了10后重连:{}", f.cause());
+                            work.schedule(this::start, 10, TimeUnit.SECONDS);
+                        });
                         //登录
                         future.channel().writeAndFlush(new LoginCmd(config.getClientName()));
                     } else {

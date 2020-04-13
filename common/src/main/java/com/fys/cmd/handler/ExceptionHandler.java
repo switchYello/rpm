@@ -28,6 +28,6 @@ public class ExceptionHandler extends ChannelInboundHandlerAdapter {
             log.error("收尾:Connection reset by peer local:{},remote:{}", channel.localAddress(), channel.remoteAddress());
             return;
         }
-        log.error("收尾local:" + channel.localAddress() + " remote:{}" + channel.remoteAddress(), cause);
+        log.error("收尾local:" + channel.localAddress() + " remote" + channel.remoteAddress(), cause);
     }
 }

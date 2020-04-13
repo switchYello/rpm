@@ -8,6 +8,7 @@ import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.clientToServer.LoginCmd;
 import com.fys.cmd.message.clientToServer.Pong;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
 import org.slf4j.Logger;
@@ -51,8 +52,8 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         if (flag == Cmd.ClientToServer.login) {
             LoginCmd login = LoginCmd.decoderFrom(in);
             if (!addHandler) {
-                ctx.pipeline().addLast(new LoginCmdHandler());
                 ctx.pipeline().addLast(new PingPongHandler());
+                ctx.pipeline().addLast(new LoginCmdHandler());
                 ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
                 addHandler = !addHandler;
             }
@@ -62,9 +63,18 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
         //无法识别的指令
         log.error("无法识别客户端:{} 发送的指令,指令:{}", ctx.channel().remoteAddress(), flag);
-        in.skipBytes(in.readableBytes());
+        in.skipBytes(actualReadableBytes());
         ctx.close();
 
     }
 
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        Channel channel = ctx.channel();
+        if ("Connection reset by peer".equals(cause.getMessage())) {
+            log.error("Connection reset by peer local:{},remote:{}", channel.localAddress(), channel.remoteAddress());
+            return;
+        }
+        log.error("ServerCmdDecoder:" + channel.localAddress() + " remote" + channel.remoteAddress(), cause);
+    }
 }

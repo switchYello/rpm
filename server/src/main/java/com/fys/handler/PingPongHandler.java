@@ -50,9 +50,10 @@ public class PingPongHandler extends IdleStateHandler {
     @Override
     protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) {
         if (evt.state() == IdleState.WRITER_IDLE) {
+            log.debug("发送ping");
             ctx.writeAndFlush(new Ping()).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         } else {
-            log.debug("读超时断开连接：{}", evt);
+            log.info("读超时断开连接：{}", ctx.channel().remoteAddress());
             ctx.flush().close();
         }
     }

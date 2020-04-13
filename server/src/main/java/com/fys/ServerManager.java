@@ -38,7 +38,7 @@ public class ServerManager {
                 Server server = new Server(sw, managerChannel);
                 server.start(promise);
                 managerChannel.closeFuture().addListener(future -> {
-                    log.error("managerChannel断开了,准备关闭Server", future.cause());
+                    log.error("managerChannel断开了,准备关闭Server:" + sw.getServerPort(), future.cause());
                     execute(server::stop);
                 });
             } else {
