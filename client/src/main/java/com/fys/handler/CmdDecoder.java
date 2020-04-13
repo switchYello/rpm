@@ -45,7 +45,7 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
             return;
         }
         log.error("无法识别服务端发送的指令,指令:{}", flag);
-        in.skipBytes(in.readableBytes());
+        in.skipBytes(actualReadableBytes());
         ctx.close();
     }
 
