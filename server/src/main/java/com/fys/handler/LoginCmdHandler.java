@@ -2,7 +2,6 @@ package com.fys.handler;
 
 import com.fys.Config;
 import com.fys.ServerManager;
-import com.fys.cmd.exception.AuthenticationException;
 import com.fys.cmd.message.clientToServer.LoginCmd;
 import com.fys.cmd.message.serverToClient.LoginFailCmd;
 import com.fys.cmd.message.serverToClient.ServerStartFailCmd;
@@ -45,7 +44,9 @@ public class LoginCmdHandler extends SimpleChannelInboundHandler<LoginCmd> {
                 } else {
                     ServerStartFailCmd failCmd = new ServerStartFailCmd(sw.getServerPort(), sw.getLocalHost(), sw.getLocalPort(), f.cause().toString());
                     log.error(failCmd.toString());
-                    ctx.writeAndFlush(failCmd).addListener(ChannelFutureListener.CLOSE);
+                    if (ctx.channel().isActive()) {
+                        ctx.writeAndFlush(failCmd).addListener(ChannelFutureListener.CLOSE);
+                    }
                 }
             });
         }
