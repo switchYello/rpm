@@ -4,7 +4,8 @@ import com.fys.cmd.listener.ErrorLogListener;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.conf.ServerWorker;
 import io.netty.channel.Channel;
-import io.netty.channel.EventLoop;
+import io.netty.util.concurrent.DefaultEventExecutor;
+import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Promise;
 import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
@@ -22,7 +23,7 @@ public class ServerManager {
 
     private static Logger log = LoggerFactory.getLogger(ServerManager.class);
 
-    private static EventLoop managerEventLoop = App.work.next();
+    private static EventExecutor managerEventLoop = new DefaultEventExecutor();
 
     //这些promise在等待连接的到来
     private static Map<DataConnectionCmd, Promise<Channel>> waitConnections = new HashMap<>();
