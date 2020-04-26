@@ -39,7 +39,7 @@ public class AppClient {
                         log.info("连接成功{}:{}等待服务端验证", config.getServerIp(), config.getServerPort());
                         //断开连接10s后会重试
                         future.channel().closeFuture().addListener(f -> {
-                            log.info("检测到连接断开了10后重连:{}", f.cause());
+                            log.info("检测到连接断开了10后重连", f.cause());
                             work.schedule(this::start, 10, TimeUnit.SECONDS);
                         });
                         //登录
