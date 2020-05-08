@@ -29,7 +29,7 @@ public class DataConnectionClient {
      * 数据连接连接到服务器上时，如果不说明自己是数据连接，服务器是不会主动发数据的，所以这里改成自动读提高性能
      * */
     public void start() {
-        //连接到Local端口成功后，尝试连接到服务器
+        //连接到Local端口成功后，再尝试连接到服务器
         createConnectionToLocal(msg.getLocalHost(), msg.getLocalPort()).addListener((ChannelFutureListener) localFuture -> {
             if (!localFuture.isSuccess()) {
                 log.error("Client连接到Local失败", localFuture.cause());
@@ -77,6 +77,7 @@ public class DataConnectionClient {
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new Rc4Md5Handler(config.getToken()));
                         ch.pipeline().addLast(new CmdEncoder());
+
                         ch.pipeline().addLast(ExceptionHandler.NAME, ExceptionHandler.INSTANCE);
                     }
                 })

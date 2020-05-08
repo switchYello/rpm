@@ -44,22 +44,25 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
             firstEncode = false;
             out.writeBytes(iv);
         }
-        if (msg.readableBytes() <= 0) {
+        if (!msg.isReadable()) {
             return;
         }
+
         //需要加密的明文长度
         int dataLength = msg.readableBytes();
         int outputSize = encoderCipher.getOutputSize(dataLength);
-        //存储密文的buff
-        ByteBuf outPut = ctx.alloc().ioBuffer(outputSize);
 
-        //加密操作,返回处理数据的长度
-        int updateLength = encoderCipher.update(msg.nioBuffer(), outPut.nioBuffer(0, outputSize));
-        //忽略处理过的数据
-        msg.skipBytes(updateLength);
-        outPut.writerIndex(updateLength);
-        out.writeBytes(outPut);
-        ReferenceCountUtil.release(outPut);
+        //分配存储密文的buff
+        ByteBuf outPut = ctx.alloc().ioBuffer(outputSize);
+        try {
+            int updateLength = encoderCipher.update(msg.nioBuffer(), outPut.nioBuffer(0, outputSize));
+            //忽略处理过的数据
+            msg.skipBytes(updateLength);
+            outPut.writerIndex(updateLength);
+            out.writeBytes(outPut);
+        } finally {
+            ReferenceCountUtil.release(outPut);
+        }
     }
 
 
@@ -78,7 +81,7 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
             decoderCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(realPassWord, "RC4"));
             firstDecode = false;
         }
-        if (in.readableBytes() <= 0) {
+        if (!in.isReadable()) {
             return;
         }
         //密文长度 和 明文长度
@@ -86,11 +89,16 @@ public class Rc4Md5Handler extends ByteToMessageCodec<ByteBuf> {
         int outputSize = decoderCipher.getOutputSize(dataLength);
         //创建buf，将明文解析到此buf
         ByteBuf outPut = in.alloc().ioBuffer(outputSize);
-        int updateLength = decoderCipher.update(in.nioBuffer(), outPut.nioBuffer(0, outputSize));
-        //跳过数据，设置write索引
-        in.skipBytes(updateLength);
-        outPut.writerIndex(updateLength);
-        out.add(outPut);
+        try {
+            int updateLength = decoderCipher.update(in.nioBuffer(), outPut.nioBuffer(0, outputSize));
+            in.skipBytes(updateLength);
+            outPut.writerIndex(updateLength);
+            //这里增加一次索引，因为finally里面会释放一次
+            outPut.retain();
+            out.add(outPut);
+        } finally {
+            ReferenceCountUtil.release(outPut);
+        }
     }
 
 

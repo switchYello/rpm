@@ -1,5 +1,0 @@
-刚开始监听9050端口，每个连接到9050端口的连接都有ServerManagerHandler
-在ServerManagerHandler内会对连接进行识别
-    如果是管理连接，则添加一些Handler来处理后续与管理连接的交互
-    如果是数据连接，则添加到对应的server中，且移除ServerManagerHandler
-    如果是无法识别的连接，则直接断开

@@ -1,4 +1,0 @@
-客户端一共有三种连接
-1.客户端连接服务器管理端口，连接成功发送WantManagerCmd消息，表明想要监听的服务器端口，和想要映射的本地端口
-2.服务器收到WantManagerCmd消息验证token，返回ServerStartSuccessCmd 或者 ServerStartFailCmd
-3.客户端保持着managerChannel，等待接受服务器发送的DataConnectionCmd，收到DataConnectionCmd后，创建本地连接和服务器连接，并沟通两者之间的数据
