@@ -2,11 +2,13 @@ package com.fys.handler;
 
 import com.fys.ServerManager;
 import com.fys.cmd.handler.ExceptionHandler;
+import com.fys.cmd.handler.PingPongHandler;
 import com.fys.cmd.handler.Rc4Md5Handler;
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.clientToServer.LoginCmd;
-import com.fys.cmd.message.clientToServer.Pong;
+import com.fys.cmd.message.Pong;
+import com.fys.cmd.message.Ping;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -32,7 +34,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         byte flag = in.readByte();
         //新建数据连接
-        //数据连接除了第一条认证消息外不加密
+        //数据连接，除了第一条认证消息外不加密
         if (flag == Cmd.dataConnectionCmd) {
             DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
             log.debug("获取客户端连接:{}", cmd);
@@ -43,8 +45,13 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         }
 
         //收到客户端pong,只有管理连接才能收到pong，数据连接不会发送Ping也就不会收到Pong
-        if (flag == Cmd.ClientToServer.pong) {
+        if (flag == Cmd.pong) {
             out.add(Pong.decoderFrom(in));
+            return;
+        }
+        //收到客户端的ping
+        if (flag == Cmd.ping) {
+            out.add(Ping.decoderFrom(in));
             return;
         }
 
