@@ -2,8 +2,9 @@ package com.fys.handler;
 
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.DataConnectionCmd;
+import com.fys.cmd.message.Pong;
 import com.fys.cmd.message.serverToClient.LoginFailCmd;
-import com.fys.cmd.message.serverToClient.Ping;
+import com.fys.cmd.message.Ping;
 import com.fys.cmd.message.serverToClient.ServerStartFailCmd;
 import com.fys.cmd.message.serverToClient.ServerStartSuccessCmd;
 import io.netty.buffer.ByteBuf;
@@ -24,8 +25,12 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         byte flag = in.readByte();
-        if (flag == Cmd.ServerToClient.ping) {
+        if (flag == Cmd.ping) {
             out.add(Ping.decoderFrom(in));
+            return;
+        }
+        if (flag == Cmd.pong) {
+            out.add(Pong.decoderFrom(in));
             return;
         }
         if (flag == Cmd.dataConnectionCmd) {

@@ -2,6 +2,7 @@ package com.fys;
 
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ExceptionHandler;
+import com.fys.cmd.handler.PingPongHandler;
 import com.fys.cmd.handler.Rc4Md5Handler;
 import com.fys.cmd.message.clientToServer.LoginCmd;
 import com.fys.handler.*;
@@ -31,7 +32,6 @@ public class AppClient {
         appClient.start();
     }
 
-
     private void start() {
         createManagerConnection()
                 .addListener((ChannelFutureListener) future -> {
@@ -42,8 +42,6 @@ public class AppClient {
                             log.info("检测到连接断开了10后重连", f.cause());
                             work.schedule(this::start, 10, TimeUnit.SECONDS);
                         });
-                        //登录
-                        future.channel().writeAndFlush(new LoginCmd(config.getClientName()));
                     } else {
                         log.error("连接失败,5秒后重试:{}", future.cause().toString());
                         work.schedule(this::start, 5, TimeUnit.SECONDS);
@@ -68,7 +66,8 @@ public class AppClient {
                                  ch.pipeline().addLast(new CmdEncoder());
 
                                  ch.pipeline().addLast(new CmdDecoder());
-                                 ch.pipeline().addLast(new PingHandler());
+                                 ch.pipeline().addLast(new PingPongHandler());
+                                 ch.pipeline().addLast(new LoginHandler());
                                  ch.pipeline().addLast(new DataConnectionHandler());
                                  ch.pipeline().addLast(new ServerStartSuccessHandler());
                                  ch.pipeline().addLast(new ServerStartFailHandler());

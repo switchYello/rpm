@@ -1,6 +1,5 @@
-package com.fys.cmd.message.serverToClient;
+package com.fys.cmd.message;
 
-import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -12,7 +11,7 @@ public class Ping implements Cmd {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeByte(ServerToClient.ping);
+        buf.writeByte(Cmd.ping);
     }
 
     public static Ping decoderFrom(ByteBuf in) {

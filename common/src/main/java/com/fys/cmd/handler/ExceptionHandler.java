@@ -29,5 +29,6 @@ public class ExceptionHandler extends ChannelInboundHandlerAdapter {
             return;
         }
         log.error("收尾local:" + channel.localAddress() + " remote" + channel.remoteAddress(), cause);
+        ctx.close();
     }
 }

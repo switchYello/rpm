@@ -1,7 +1,7 @@
-package com.fys.handler;
+package com.fys.cmd.handler;
 
-import com.fys.cmd.message.clientToServer.Pong;
-import com.fys.cmd.message.serverToClient.Ping;
+import com.fys.cmd.message.Ping;
+import com.fys.cmd.message.Pong;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -11,16 +11,13 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * 此类只有当server开启成功后才会被添加到pipline
- * hcy 2020/2/20
- * 处理管理连接 ping pong 的 handler
- * 逻辑是长时间没读到数据则主动断开连接，长时间没写数据则写一个ping过去
- */
+
 public class PingPongHandler extends IdleStateHandler {
 
     private static Logger log = LoggerFactory.getLogger(PingPongHandler.class);
+    //读超时时间
     private static int writeTimeOut = 10;
+    //写超时时间
     private static int readTimeout = writeTimeOut * 4 + 2;
 
     public PingPongHandler() {
@@ -28,9 +25,9 @@ public class PingPongHandler extends IdleStateHandler {
     }
 
     /**
-     * PingPongHandler这个类利用了IdleStateHandler定时发送ping
-     * 原理在channelIdle方法里面，
-     * 但是收到的pong会被继续向下传播，这里添加一个SimpleChannelInboundHandler<Pong> 来丢弃所有的pong
+     * 此处添加连个handler来处理ping 和 pong消息
+     * 对于pong消息，直接丢弃
+     * 对于ping消息，需要回复pong
      */
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
@@ -41,16 +38,23 @@ public class PingPongHandler extends IdleStateHandler {
                 log.debug("收到Pong");
             }
         });
+        ctx.pipeline().addAfter(ctx.name(), null, new SimpleChannelInboundHandler<Ping>() {
+            @Override
+            protected void channelRead0(ChannelHandlerContext ctx, Ping msg) {
+                log.debug("收到Ping");
+                ctx.writeAndFlush(new Pong()).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+            }
+        });
     }
 
     /*
-     * 长时间没写（写超时），则发送ping
+     * 长时间没写（写超时），则发送Ping
      * 长时间没读（读超时），则断开连接
      * */
     @Override
     protected void channelIdle(ChannelHandlerContext ctx, IdleStateEvent evt) {
         if (evt.state() == IdleState.WRITER_IDLE) {
-            log.debug("发送ping");
+            log.debug("发送Ping");
             ctx.writeAndFlush(new Ping()).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         } else {
             log.info("读超时断开连接：{}", ctx.channel().remoteAddress());
