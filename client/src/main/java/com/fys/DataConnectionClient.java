@@ -45,8 +45,7 @@ public class DataConnectionClient {
                     //发送认证消息,并将Rc4Md5handler移除，因为数据传输阶段不需要加密
                     channelToServer.writeAndFlush(msg)
                             .addListener(ErrorLogListener.INSTANCE)
-                            .addListener(ChannelFutureListener.CLOSE_ON_FAILURE)
-                            .addListener(future -> channelToServer.pipeline().remove(Rc4Md5Handler.class));
+                            .addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 } else {
                     log.error("Client连接到Remote失败", serverFuture.cause());
                     channelToLocal.close();

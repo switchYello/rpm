@@ -33,12 +33,11 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         byte flag = in.readByte();
+
         //新建数据连接
-        //数据连接，除了第一条认证消息外不加密
         if (flag == Cmd.dataConnectionCmd) {
             DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
             log.debug("获取客户端连接:{}", cmd);
-            ctx.pipeline().remove(Rc4Md5Handler.class);
             ctx.pipeline().remove(this);
             ServerManager.addConnection(cmd, ctx.channel());
             return;
