@@ -1,28 +1,17 @@
 {
-  "server": {
-    "bindHost": 9050,
+  "serverInfo": {
+    "bindHost": "0.0.0.0",
+    "bindPort": 9050,
     "token": "123456"
   },
-  "clients": [
+  "clientInfos": [
+
     {
+      "serverHost": "0.0.0.0",
+      "serverPort": 9052,
       "clientName": "hcy_home_pc",
-      "serverWorkers": [
-        {
-          "serverPort": "9051",
-          "localHost": "0.0.0.0",
-          "localPort": "81"
-        },
-        {
-          "serverPort": "9052",
-          "localHost": "0.0.0.0",
-          "localPort": "81"
-        },
-        {
-          "serverPort": "9053",
-          "localHost": "0.0.0.0",
-          "localPort": "82"
-        }
-      ]
+      "localHost": "127.0.0.1",
+      "localPort": 8880
     }
   ]
 }

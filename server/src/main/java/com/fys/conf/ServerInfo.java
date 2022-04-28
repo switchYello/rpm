@@ -1,28 +1,35 @@
 package com.fys.conf;
 
-import java.util.List;
-
 /**
  * hcy 2020/3/26
  */
 public class ServerInfo {
 
-    private String clientName;
-    private List<ServerWorker> serverWorkers;
+    private String bindHost;
+    private int bindPort;
+    private String token;
 
-    public String getClientName() {
-        return clientName;
+    public String getBindHost() {
+        return bindHost;
     }
 
-    public void setClientName(String clientName) {
-        this.clientName = clientName;
-    }
-    
-    public List<ServerWorker> getServerWorkers() {
-        return serverWorkers;
+    public void setBindHost(String bindHost) {
+        this.bindHost = bindHost;
     }
 
-    public void setServerWorkers(List<ServerWorker> serverWorkers) {
-        this.serverWorkers = serverWorkers;
+    public int getBindPort() {
+        return bindPort;
+    }
+
+    public void setBindPort(int bindPort) {
+        this.bindPort = bindPort;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

@@ -1,6 +1,10 @@
 package com.fys.cmd.handler;
 
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +19,10 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
     private boolean autoRead;
     private Channel out;
 
-    //输出管道，是否自动读取
+    /**
+     * @param out      输出渠道
+     * @param autoRead 当前渠道是否自动读取
+     */
     public TransactionHandler(Channel out, boolean autoRead) {
         this.out = out;
         this.autoRead = autoRead;
@@ -51,10 +58,10 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         if (out.isActive()) {
-            log.debug("[{}]被关闭了，所以同步关闭另一侧", ctx.name());
+            log.debug("[{} -> {}]被关闭了，所以同步关闭另一侧", ctx.channel().localAddress(), ctx.channel().remoteAddress());
             out.flush().close();
         } else {
-            log.debug("[{}]被关闭了，另一侧已经被关闭了，不处理", ctx.name());
+            log.debug("[{} -> {}]被关闭了，另一侧已被关闭", ctx.channel().localAddress(), ctx.channel().remoteAddress());
         }
         super.channelInactive(ctx);
     }

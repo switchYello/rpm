@@ -18,9 +18,6 @@ public class ExceptionHandler extends ChannelInboundHandlerAdapter {
 
     public static final String NAME = "ExceptionHandler";
 
-    private ExceptionHandler() {
-    }
-
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         Channel channel = ctx.channel();

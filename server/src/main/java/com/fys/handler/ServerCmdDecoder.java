@@ -1,14 +1,10 @@
 package com.fys.handler;
 
-import com.fys.ServerManager;
-import com.fys.cmd.handler.ExceptionHandler;
-import com.fys.cmd.handler.PingPongHandler;
-import com.fys.cmd.handler.Rc4Md5Handler;
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.DataConnectionCmd;
-import com.fys.cmd.message.clientToServer.LoginCmd;
-import com.fys.cmd.message.Pong;
 import com.fys.cmd.message.Ping;
+import com.fys.cmd.message.Pong;
+import com.fys.cmd.message.clientToServer.LoginCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -38,8 +34,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         if (flag == Cmd.dataConnectionCmd) {
             DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
             log.debug("获取客户端连接:{}", cmd);
-            ctx.pipeline().remove(this);
-            ServerManager.addConnection(cmd, ctx.channel());
+            out.add(cmd);
             return;
         }
 
@@ -57,12 +52,12 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         //登录
         if (flag == Cmd.ClientToServer.login) {
             LoginCmd login = LoginCmd.decoderFrom(in);
-            if (!addHandler) {
-                ctx.pipeline().addLast(new PingPongHandler());
-                ctx.pipeline().addLast(new LoginCmdHandler());
-                ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
-                addHandler = !addHandler;
-            }
+//            if (!addHandler) {
+//                ctx.pipeline().addLast(new PingPongHandler());
+//                ctx.pipeline().addLast(new LoginCmdHandler());
+//                ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
+//                addHandler = !addHandler;
+//            }
             out.add(login);
             return;
         }
@@ -71,16 +66,6 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         log.error("无法识别客户端:{} 发送的指令,指令:{}", ctx.channel().remoteAddress(), flag);
         in.skipBytes(actualReadableBytes());
         ctx.close();
-
     }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        Channel channel = ctx.channel();
-        if ("Connection reset by peer".equals(cause.getMessage())) {
-            log.error("Connection reset by peer local:{},remote:{}", channel.localAddress(), channel.remoteAddress());
-            return;
-        }
-        log.error("ServerCmdDecoder:" + channel.localAddress() + " remote" + channel.remoteAddress(), cause);
-    }
 }
