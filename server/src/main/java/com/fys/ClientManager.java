@@ -37,6 +37,7 @@ public class ClientManager {
      * @param client
      */
     public void registerManagerConnection(String clientId, ManagerConnection client) {
+        client.nativeChannel().channel().closeFuture().addListener((ChannelFutureListener) future -> clients.remove(clientId));
         ManagerConnection old = clients.put(clientId, client);
         if (old != null) {
             old.close();
@@ -99,7 +100,6 @@ public class ClientManager {
         }, ChannelFutureListener.CLOSE_ON_FAILURE);
         return promise;
     }
-
 
     /**
      * 根据clientId查询客户端

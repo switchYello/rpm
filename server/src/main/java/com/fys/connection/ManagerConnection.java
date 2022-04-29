@@ -23,4 +23,8 @@ public class ManagerConnection {
         ctx.close();
     }
 
+    public ChannelHandlerContext nativeChannel() {
+        return ctx;
+    }
+
 }

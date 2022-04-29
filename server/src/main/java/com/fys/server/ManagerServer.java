@@ -2,9 +2,13 @@ package com.fys.server;
 
 import com.fys.ClientManager;
 import com.fys.cmd.handler.CmdEncoder;
-import com.fys.cmd.message.Cmd;
+import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.message.DataConnectionCmd;
-import com.fys.cmd.message.clientToServer.LoginCmd;
+import com.fys.cmd.message.LoginAuthInfo;
+import com.fys.cmd.message.Ping;
+import com.fys.cmd.message.Pong;
+import com.fys.cmd.message.serverToClient.LoginFailCmd;
+import com.fys.cmd.util.CodeUtil;
 import com.fys.conf.ServerInfo;
 import com.fys.connection.DataConnection;
 import com.fys.connection.ManagerConnection;
@@ -18,8 +22,13 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author hcy
@@ -51,8 +60,9 @@ public class ManagerServer {
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
                         //控制超时，防止链接上来但不发送消息任何的连接
-//                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 360));
-                        ch.pipeline().addLast(new ServerCmdDecoder(serverInfo));
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 300));
+                        ch.pipeline().addLast(new LoggingHandler());
+                        ch.pipeline().addLast(new ServerCmdDecoder());
                         ch.pipeline().addLast(new ManagerHandler());
 
                     }
@@ -68,15 +78,19 @@ public class ManagerServer {
                 });
     }
 
-    private class ManagerHandler extends SimpleChannelInboundHandler<Cmd> {
+    private class ManagerHandler extends SimpleChannelInboundHandler<Object> {
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, Cmd msg) {
+        protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
             //登录
-            if (msg instanceof LoginCmd) {
-                log.debug("收到client登录请求:{}", ((LoginCmd) msg).getClientName());
-                handlerLogin(ctx, (LoginCmd) msg);
+            if (msg instanceof LoginAuthInfo) {
+                log.debug("收到client登录请求:{}", ((LoginAuthInfo) msg).getClientName());
+                handlerLogin(ctx, (LoginAuthInfo) msg);
                 return;
+            }
+            //收到Ping
+            if (msg instanceof Ping) {
+                handlerPing(ctx);
             }
             //数据连接
             if (msg instanceof DataConnectionCmd) {
@@ -84,17 +98,29 @@ public class ManagerServer {
                 handlerDataConnection(ctx, (DataConnectionCmd) msg);
                 return;
             }
-
             throw new RuntimeException("消息不能识别" + msg);
         }
 
-        private void handlerLogin(ChannelHandlerContext ctx, LoginCmd msg) {
+        /**
+         * 验证登录信息，如已登录则忽略，如验证失败则发送响应后关闭连接
+         *
+         * @param ctx
+         * @param msg
+         */
+        private void handlerLogin(ChannelHandlerContext ctx, LoginAuthInfo msg) {
             ManagerConnection client = clientManager.getClient(msg.getClientName());
             if (client != null) {
-                log.warn("不允许重复登录:{}", msg);
+                log.warn("忽略重复登录:{}", msg);
                 return;
             }
-            clientManager.registerManagerConnection(msg.getClientName(), new ManagerConnection(ctx));
+            byte[] md5 = CodeUtil.md5((msg.getClientName() + msg.getTimeStamp() + serverInfo.getToken()).getBytes(UTF_8));
+            if (Arrays.equals(msg.getReadMd5(), md5)) {
+                clientManager.registerManagerConnection(msg.getClientName(), new ManagerConnection(ctx));
+                log.info("客户端登录成功 [{} -> {}]", ctx.channel().localAddress(), ctx.channel().remoteAddress());
+                return;
+            }
+            log.info("客户端验证失败:{}", msg);
+            ctx.writeAndFlush(new LoginFailCmd(msg.getClientName(), "验证失败")).addListener(ChannelFutureListener.CLOSE);
         }
 
         private void handlerDataConnection(ChannelHandlerContext ctx, DataConnectionCmd msg) {
@@ -102,6 +128,11 @@ public class ManagerServer {
             ctx.pipeline().remove(ServerCmdDecoder.class);
             ctx.pipeline().remove(ManagerHandler.class);
             clientManager.registerDataConnection(msg.getSessionId(), new DataConnection(ctx));
+        }
+
+
+        private void handlerPing(ChannelHandlerContext ctx) {
+            ctx.writeAndFlush(new Pong()).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
         }
 
         @Override

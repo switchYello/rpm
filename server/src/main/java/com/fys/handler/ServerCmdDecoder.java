@@ -5,7 +5,6 @@ import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.Ping;
 import com.fys.cmd.message.Pong;
 import com.fys.cmd.message.clientToServer.LoginCmd;
-import com.fys.conf.ServerInfo;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -23,22 +22,9 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
     private static Logger log = LoggerFactory.getLogger(ServerCmdDecoder.class);
 
-    private ServerInfo serverInfo;
-
-    public ServerCmdDecoder(ServerInfo serverInfo) {
-        this.serverInfo = serverInfo;
-    }
-
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         int flag = in.readInt();
-
-        //新建数据连接
-        if (flag == Cmd.dataConnectionCmd) {
-            DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
-            out.add(cmd);
-            return;
-        }
 
         //收到客户端pong,只有管理连接才能收到pong，数据连接不会发送Ping也就不会收到Pong
         if (flag == Cmd.pong) {
@@ -51,10 +37,16 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
             return;
         }
 
-        //登录
+        //新建数据连接
+        if (flag == Cmd.dataConnectionCmd) {
+            DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
+            out.add(cmd);
+            return;
+        }
+
+        //收到登录
         if (flag == Cmd.ClientToServer.login) {
-            LoginCmd login = LoginCmd.decoderFrom(in, serverInfo.getToken());
-            out.add(login);
+            out.add(LoginCmd.decoderFrom(in));
             return;
         }
 

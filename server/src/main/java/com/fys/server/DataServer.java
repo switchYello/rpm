@@ -2,6 +2,7 @@ package com.fys.server;
 
 import com.fys.ClientManager;
 import com.fys.cmd.handler.CmdEncoder;
+import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.handler.TransactionHandler;
 import com.fys.conf.ClientInfo;
 import io.netty.bootstrap.ServerBootstrap;
@@ -50,7 +51,7 @@ public class DataServer {
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
                         //控制超时，防止链接上来但不发送消息任何的连接
-//                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 360));
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 300));
                         ch.pipeline().addLast(new DataHandler());
                     }
                 })
