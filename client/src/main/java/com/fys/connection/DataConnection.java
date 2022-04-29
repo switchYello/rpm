@@ -39,11 +39,14 @@ public class DataConnection {
     }
 
     public void startConnection() {
+        //创建本地连接
         ChannelFuture channelToLocal = InnerConnectionFactory.createChannel(localHost, localPort, true);
+        //创建服务器连接，不自动读
         ChannelFuture channelToService = InnerConnectionFactory.createChannel(serverHost, serverPort, false);
         ProgressivePromise<Void> promise = InnerConnectionFactory.createProgressivePromise();
         promise.addListener(new GenericProgressiveFutureListener<ProgressiveFuture<Void>>() {
 
+            //任意一个失败时，两边都关闭。重复关闭也是没问题的
             @Override
             public void operationComplete(ProgressiveFuture<Void> future) {
                 if (!future.isSuccess()) {
@@ -54,6 +57,7 @@ public class DataConnection {
                 }
             }
 
+            //等两个均成功后，开始关联两方Channel
             @Override
             public void operationProgressed(ProgressiveFuture<Void> future, long progress, long total) {
                 if (progress == total) {
@@ -89,7 +93,7 @@ public class DataConnection {
                     promise.tryProgress(successCount.incrementAndGet(), 2);
                 } else {
                     log.error("连接到Local失败", future.cause());
-                    promise.setFailure(future.cause());
+                    promise.cancel(false);
                 }
             }
         });
@@ -100,53 +104,10 @@ public class DataConnection {
                     promise.tryProgress(successCount.incrementAndGet(), 2);
                 } else {
                     log.error("连接到Remote失败", future.cause());
-                    promise.setFailure(future.cause());
+                    promise.cancel(false);
                 }
             }
         });
-
-
-/*        InnerConnectionFactory.createChannel(localHost, localPort, true).addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture localFuture) {
-                if (!localFuture.isSuccess()) {
-                    log.error("连接到Local失败", localFuture.cause());
-                    return;
-                }
-
-                final Channel channelToLocal = localFuture.channel();
-                log.debug("连接到Local成功 [{} -> {}]", channelToLocal.localAddress(), channelToLocal.remoteAddress());
-
-                InnerConnectionFactory.createChannel(serverHost, serverPort, true).addListener(new ChannelFutureListener() {
-                    @Override
-                    public void operationComplete(ChannelFuture serverFuture) {
-                        if (!serverFuture.isSuccess()) {
-                            log.error("连接到Remote失败", serverFuture.cause());
-                            channelToLocal.close();
-                        }
-
-                        Channel channelToServer = serverFuture.channel();
-                        log.debug("连接到Server成功 [{} -> {}]", channelToLocal.localAddress(), channelToLocal.remoteAddress());
-
-                        //local -> server
-                        channelToLocal.pipeline().addLast(new TransactionHandler(channelToServer, true));
-
-                        //server -> local
-                        channelToServer.pipeline().addLast(new CmdEncoder());
-                        channelToServer.pipeline().addLast(new TransactionHandler(channelToLocal, true));
-
-                        //发送认证消息
-                        channelToServer.writeAndFlush(msg)
-                                .addListeners((ChannelFutureListener) future -> {
-                                    if (!future.isSuccess()) {
-                                        log.error("数据连接认证失败", future.cause());
-                                    }
-                                }, CLOSE_ON_FAILURE);
-
-                    }
-                });
-            }
-        });*/
     }
 
 
