@@ -91,6 +91,7 @@ public class ManagerServer {
             //收到Ping
             if (msg instanceof Ping) {
                 handlerPing(ctx);
+                return;
             }
             //数据连接
             if (msg instanceof DataConnectionCmd) {
