@@ -4,8 +4,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * hcy 2020/4/3
@@ -20,16 +20,16 @@ public class Rc4Md5HandlerTest {
         ByteBuf origin = Unpooled.wrappedBuffer("abcdefghijklmn".getBytes());
         //将副本写出channel
         ByteBuf src = origin.copy();
-        Assert.assertTrue(eb.writeOutbound(src));
+        Assertions.assertTrue(eb.writeOutbound(src));
         //出站rc4加密后的数据
         Object o = eb.readOutbound();
 
         //进站，解密数据
-        Assert.assertTrue(eb.writeInbound(o));
+        Assertions.assertTrue(eb.writeInbound(o));
         //读取解密后的数据
         ByteBuf buff = eb.readInbound();
-        Assert.assertTrue(ByteBufUtil.equals(origin, buff));
-        Assert.assertFalse(eb.finish());
+        Assertions.assertTrue(ByteBufUtil.equals(origin, buff));
+        Assertions.assertFalse(eb.finish());
         eb.close();
     }
 }

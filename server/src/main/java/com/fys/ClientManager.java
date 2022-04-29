@@ -23,7 +23,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class ClientManager {
 
-    private static Logger log = LoggerFactory.getLogger(ClientManager.class);
+    private static final Logger log = LoggerFactory.getLogger(ClientManager.class);
 
     //存储客户端 managerConnection
     private Map<String, ManagerConnection> clients = new ConcurrentHashMap<>();
@@ -33,8 +33,8 @@ public class ClientManager {
     /**
      * 注册控制连接
      *
-     * @param clientId
-     * @param client
+     * @param clientId 客户端name
+     * @param client 客户端
      */
     public void registerManagerConnection(String clientId, ManagerConnection client) {
         client.nativeChannel().channel().closeFuture().addListener((ChannelFutureListener) future -> clients.remove(clientId));
@@ -47,8 +47,8 @@ public class ClientManager {
     /**
      * 注册数据连接
      *
-     * @param token
-     * @param dataConnection
+     * @param token 请求token
+     * @param dataConnection 数据连接
      */
     public void registerDataConnection(long token, DataConnection dataConnection) {
         Promise<Channel> promise = needDataConnection.remove(token);
@@ -57,7 +57,7 @@ public class ClientManager {
             dataConnection.close();
             return;
         }
-        boolean success = promise.trySuccess(dataConnection.channel());
+        boolean success = promise.trySuccess(dataConnection.nativeChannel());
         if (!success) {
             promise.cancel(false);
             dataConnection.close();
@@ -69,9 +69,8 @@ public class ClientManager {
     /**
      * 获取客户端目标连接
      *
-     * @param clientInfo
-     * @param executor
-     * @return
+     * @param clientInfo 客户端信息
+     * @param executor 执行器
      */
     public Promise<Channel> getTargetChannel(ClientInfo clientInfo, EventExecutor executor) {
         Promise<Channel> promise = executor.newPromise();
@@ -104,8 +103,7 @@ public class ClientManager {
     /**
      * 根据clientId查询客户端
      *
-     * @param clientId
-     * @return
+     * @param clientId 客户端名
      */
     public ManagerConnection getClient(String clientId) {
         return clients.get(clientId);

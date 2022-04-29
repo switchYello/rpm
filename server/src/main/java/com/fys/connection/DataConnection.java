@@ -16,7 +16,7 @@ public class DataConnection {
         this.ctx = ctx;
     }
 
-    public Channel channel() {
+    public Channel nativeChannel() {
         return ctx.channel();
     }
 

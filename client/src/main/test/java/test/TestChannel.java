@@ -4,7 +4,7 @@ import com.fys.InnerConnectionFactory;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author hcy

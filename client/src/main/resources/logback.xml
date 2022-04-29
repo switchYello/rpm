@@ -16,31 +16,15 @@
         </encoder>
         <file>client_info_log.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>client_info_log_%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
-            <maxFileSize>10MB</maxFileSize>
-            <maxHistory>5</maxHistory>
-        </rollingPolicy>
-    </appender>
-    <logger name="com" level="debug" additivity="true">
-        <appender-ref ref="STDOUT"/>
-        <appender-ref ref="client_info_log"/>
-    </logger>
-
-
-    <appender name="client_debug_log" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <encoder>
-            <pattern>${filePattern}</pattern>
-        </encoder>
-        <file>client_debug_log.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>client_debug_log_%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <fileNamePattern>client_info_log_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>10MB</maxFileSize>
             <maxHistory>5</maxHistory>
         </rollingPolicy>
     </appender>
 
     <root level="debug">
-        <appender-ref ref="client_debug_log"/>
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="client_info_log"/>
     </root>
 
 </configuration>

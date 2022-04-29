@@ -4,9 +4,9 @@ import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.LoginFailCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
 
 /**
  * hcy 2020/3/26
@@ -18,8 +18,8 @@ public class LoginFailCmdTest {
         LoginFailCmd msg = new LoginFailCmd("clientname拉拉", "error msg啦啦啦");
         ByteBuf buffer = Unpooled.buffer();
         msg.encoderTo(buffer);
-        assertEquals(Cmd.ServerToClient.loginFail, buffer.readByte());
-        assertEquals(msg, LoginFailCmd.decoderFrom(buffer));
+        Assertions.assertEquals(Cmd.ServerToClient.loginFail, buffer.readByte());
+        Assertions.assertEquals(msg, LoginFailCmd.decoderFrom(buffer));
 
     }
 }

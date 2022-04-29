@@ -5,3 +5,7 @@ target
 .idea
 *.log
 *dependency-reduced-pom.xml
+/.flattened-pom.xml
+/client/.flattened-pom.xml
+/server/.flattened-pom.xml
+/common/.flattened-pom.xml
