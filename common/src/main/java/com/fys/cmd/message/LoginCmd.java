@@ -1,4 +1,4 @@
-package com.fys.cmd.message.clientToServer;
+package com.fys.cmd.message;
 
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.LoginAuthInfo;
@@ -22,7 +22,6 @@ public class LoginCmd implements Cmd {
         this.serverToken = serverToken;
     }
 
-    // flag 长度 clientName md5
     @Override
     public void encoderTo(ByteBuf buf) {
         long timeStamp = System.currentTimeMillis();
@@ -41,7 +40,6 @@ public class LoginCmd implements Cmd {
         long timeStamp = in.readLong();
         byte[] readMd5 = new byte[16];
         in.readBytes(readMd5);
-
         return new LoginAuthInfo(clientName, timeStamp, readMd5);
     }
 

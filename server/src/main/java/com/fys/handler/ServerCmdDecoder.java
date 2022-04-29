@@ -4,7 +4,7 @@ import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.Ping;
 import com.fys.cmd.message.Pong;
-import com.fys.cmd.message.clientToServer.LoginCmd;
+import com.fys.cmd.message.LoginCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;

@@ -1,6 +1,5 @@
-package com.fys.cmd.message.serverToClient;
+package com.fys.cmd.message;
 
-import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 

@@ -7,7 +7,7 @@ import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.LoginAuthInfo;
 import com.fys.cmd.message.Ping;
 import com.fys.cmd.message.Pong;
-import com.fys.cmd.message.serverToClient.LoginFailCmd;
+import com.fys.cmd.message.LoginFailCmd;
 import com.fys.cmd.util.CodeUtil;
 import com.fys.conf.ServerInfo;
 import com.fys.connection.DataConnection;

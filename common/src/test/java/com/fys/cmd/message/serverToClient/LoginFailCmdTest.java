@@ -1,6 +1,7 @@
 package com.fys.cmd.message.serverToClient;
 
 import com.fys.cmd.message.Cmd;
+import com.fys.cmd.message.LoginFailCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;
