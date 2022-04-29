@@ -9,7 +9,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.DefaultProgressivePromise;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.ProgressivePromise;
@@ -48,17 +47,10 @@ public class InnerConnectionFactory {
                 .handler(new ChannelInitializer<Channel>() {
                              @Override
                              protected void initChannel(Channel ch) {
-                                 ch.pipeline().addLast(new LoggingHandler());
 //                                 ch.pipeline().addLast(new Rc4Md5Handler(config.getToken()));
 //                                 ch.pipeline().addLast(new CmdEncoder());
 //                                 ch.pipeline().addLast(new CmdDecoder());
-//                                 ch.pipeline().addLast(new PingPongHandler());
-//                                 ch.pipeline().addLast(new LoginHandler());
-//                                 ch.pipeline().addLast(new DataConnectionHandler());
-//                                 ch.pipeline().addLast(new ServerStartSuccessHandler());
-//                                 ch.pipeline().addLast(new ServerStartFailHandler());
-//                                 ch.pipeline().addLast(new LoginFailHandler());
-//                                 ch.pipeline().addLast(new ExceptionHandler());
+
                              }
                          }
                 )

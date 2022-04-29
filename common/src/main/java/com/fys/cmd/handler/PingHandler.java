@@ -11,40 +11,27 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+public class PingHandler extends IdleStateHandler {
 
-public class PingPongHandler extends IdleStateHandler {
-
-    private static Logger log = LoggerFactory.getLogger(PingPongHandler.class);
-    //读超时时间
-    private static int writeTimeOut = 10;
+    private static Logger log = LoggerFactory.getLogger(PingHandler.class);
     //写超时时间
+    private static int writeTimeOut = 10;
+    //读超时时间  = 4 * 写时间 + 2
     private static int readTimeout = writeTimeOut * 4 + 2;
 
-    public PingPongHandler() {
+    public PingHandler() {
         super(readTimeout, writeTimeOut, 0);
     }
 
-    /**
-     * 此处添加连个handler来处理ping 和 pong消息
-     * 对于pong消息，直接丢弃
-     * 对于ping消息，需要回复pong
-     */
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        super.handlerAdded(ctx);
         ctx.pipeline().addAfter(ctx.name(), null, new SimpleChannelInboundHandler<Pong>() {
             @Override
             protected void channelRead0(ChannelHandlerContext ctx, Pong msg) {
                 log.debug("收到Pong");
             }
         });
-        ctx.pipeline().addAfter(ctx.name(), null, new SimpleChannelInboundHandler<Ping>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext ctx, Ping msg) {
-                log.debug("收到Ping");
-                ctx.writeAndFlush(new Pong()).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-            }
-        });
+        super.handlerAdded(ctx);
     }
 
     /*
@@ -57,7 +44,7 @@ public class PingPongHandler extends IdleStateHandler {
             log.debug("发送Ping");
             ctx.writeAndFlush(new Ping()).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         } else {
-            log.info("读超时断开连接：{}", ctx.channel().remoteAddress());
+            log.info("PingPong读超时,断开连接：{}", ctx.channel().remoteAddress());
             ctx.flush().close();
         }
     }

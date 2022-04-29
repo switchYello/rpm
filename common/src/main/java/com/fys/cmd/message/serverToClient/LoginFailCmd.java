@@ -4,8 +4,6 @@ import com.fys.cmd.message.Cmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 
-import java.util.Objects;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -36,21 +34,7 @@ public class LoginFailCmd implements Cmd {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        LoginFailCmd that = (LoginFailCmd) o;
-        return Objects.equals(clientName, that.clientName) &&
-                Objects.equals(failMsg, that.failMsg);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(clientName, failMsg);
-    }
-
-    @Override
     public String toString() {
-        return "登录失败:[clientName:+" + clientName + ",+FailMsg:" + failMsg + "]";
+        return "[clientName:+" + clientName + ",+FailMsg:" + failMsg + "]";
     }
 }

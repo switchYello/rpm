@@ -33,6 +33,7 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
         }
         if (flag == Cmd.ServerToClient.loginFail) {
             out.add(LoginFailCmd.decoderFrom(in));
+            return;
         }
         if (flag == Cmd.dataConnectionCmd) {
             out.add(DataConnectionCmd.decoderFrom(in));

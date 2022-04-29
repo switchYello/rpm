@@ -2,10 +2,12 @@ package com.fys.connection;
 
 import com.fys.InnerConnectionFactory;
 import com.fys.cmd.handler.CmdEncoder;
+import com.fys.cmd.handler.PingHandler;
 import com.fys.cmd.listener.ErrorLogListener;
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.clientToServer.LoginCmd;
+import com.fys.cmd.message.serverToClient.LoginFailCmd;
 import com.fys.handler.CmdDecoder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -13,6 +15,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,9 +56,11 @@ public class ManagerConnection {
         ChannelFuture future = InnerConnectionFactory.createChannel(serverHost, serverPort, true);
         future.addListener((ChannelFutureListener) f -> {
             ChannelPipeline pipeline = f.channel().pipeline();
+            pipeline.addLast(new LoggingHandler());
             pipeline.addLast(new CmdEncoder());
 
             pipeline.addLast(new CmdDecoder());
+            pipeline.addLast(new PingHandler()); //定时发ping
             pipeline.addLast(new ManagerHandler());
         });
     }
@@ -79,6 +84,11 @@ public class ManagerConnection {
                 DataConnectionCmd cmd = (DataConnectionCmd) msg;
                 DataConnection dataConnection = new DataConnection(cmd.getLocalHost(), cmd.getLocalPort(), serverHost, serverPort, cmd);
                 dataConnection.startConnection();
+                return;
+            }
+            if (msg instanceof LoginFailCmd) {
+                LoginFailCmd cmd = (LoginFailCmd) msg;
+                log.error("登录认证失败:{}", cmd);
                 return;
             }
             log.info("收到未识别的消息:{}", msg);
