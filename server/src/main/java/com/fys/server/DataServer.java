@@ -83,7 +83,7 @@ public class DataServer {
             //当获取成功后，关联两条数据流。如获取失败，关闭客户端流
             targetPromise.addListener(new GenericFutureListener<Future<Channel>>() {
                 @Override
-                public void operationComplete(Future<Channel> future) throws Exception {
+                public void operationComplete(Future<Channel> future) {
                     if (future.isSuccess()) {
                         Channel channelToClient = future.getNow();
                         channelToClient.pipeline().addLast(new TransactionHandler(channelToUser, true));

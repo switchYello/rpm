@@ -25,19 +25,19 @@ public class ManagerConnection {
     private static final Logger log = LoggerFactory.getLogger(ManagerConnection.class);
 
     private String clientName;
-    private String serverIp;
+    private String serverHost;
     private int serverPort;
 
     /**
      * 创建控制连接
      *
      * @param clientName
-     * @param serverIp
+     * @param serverHost
      * @param serverPort
      */
-    public ManagerConnection(String clientName, String serverIp, int serverPort) {
+    public ManagerConnection(String clientName, String serverHost, int serverPort) {
         this.clientName = clientName;
-        this.serverIp = serverIp;
+        this.serverHost = serverHost;
         this.serverPort = serverPort;
     }
 
@@ -47,7 +47,7 @@ public class ManagerConnection {
      * 而放在监听器中能保证触发，因为监听器的回调在active回调之前执行
      */
     public void start() {
-        ChannelFuture future = InnerConnectionFactory.createChannel(serverIp, serverPort, true);
+        ChannelFuture future = InnerConnectionFactory.createChannel(serverHost, serverPort, true);
         future.addListener((ChannelFutureListener) f -> {
             ChannelPipeline pipeline = f.channel().pipeline();
             pipeline.addLast(new CmdEncoder());
@@ -74,7 +74,7 @@ public class ManagerConnection {
         protected void channelRead0(ChannelHandlerContext ctx, Cmd msg) {
             if (msg instanceof DataConnectionCmd) {
                 DataConnectionCmd cmd = (DataConnectionCmd) msg;
-                DataConnection dataConnection = new DataConnection(cmd.getLocalHost(), cmd.getLocalPort(), serverIp, serverPort, cmd);
+                DataConnection dataConnection = new DataConnection(cmd.getLocalHost(), cmd.getLocalPort(), serverHost, serverPort, cmd);
                 dataConnection.startConnection();
                 return;
             }

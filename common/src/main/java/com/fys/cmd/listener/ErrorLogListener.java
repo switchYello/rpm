@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ErrorLogListener implements ChannelFutureListener {
 
-    private static Logger log = LoggerFactory.getLogger(ErrorLogListener.class);
+    private static final Logger log = LoggerFactory.getLogger(ErrorLogListener.class);
 
     public static ErrorLogListener INSTANCE = new ErrorLogListener();
 

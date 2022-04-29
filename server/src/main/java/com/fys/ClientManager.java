@@ -79,8 +79,8 @@ public class ClientManager {
             promise.setFailure(new RuntimeException("未找到客户端:" + clientInfo.getClientName()));
             return promise;
         }
-        DataConnectionCmd msg = new DataConnectionCmd(0, clientInfo.getLocalHost(), clientInfo.getLocalPort(), System.nanoTime());
-        needDataConnection.put(msg.getToken(), promise);
+        DataConnectionCmd msg = new DataConnectionCmd(clientInfo.getLocalHost(), clientInfo.getLocalPort(), System.nanoTime());
+        needDataConnection.put(msg.getSessionId(), promise);
         client.writeMessage(msg).addListeners(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) {
@@ -90,7 +90,7 @@ public class ClientManager {
                     log.debug("发送数据连接请求失败");
                 }
                 executor.schedule(() -> {
-                    Promise<Channel> p = needDataConnection.remove(msg.getToken());
+                    Promise<Channel> p = needDataConnection.remove(msg.getSessionId());
                     if (p != null) {
                         p.tryFailure(new TimeoutException("timeout1"));
                     }

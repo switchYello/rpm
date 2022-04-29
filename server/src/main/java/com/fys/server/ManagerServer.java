@@ -96,7 +96,7 @@ public class ManagerServer {
             //移除多余handler
             ctx.pipeline().remove(ServerCmdDecoder.class);
             ctx.pipeline().remove(ManagerHandler.class);
-            clientManager.registerDataConnection(msg.getToken(), new DataConnection(ctx));
+            clientManager.registerDataConnection(msg.getSessionId(), new DataConnection(ctx));
         }
 
         @Override
