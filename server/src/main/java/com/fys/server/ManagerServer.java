@@ -52,7 +52,7 @@ public class ManagerServer {
                         ch.pipeline().addLast(new CmdEncoder());
                         //控制超时，防止链接上来但不发送消息任何的连接
 //                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 360));
-                        ch.pipeline().addLast(new ServerCmdDecoder());
+                        ch.pipeline().addLast(new ServerCmdDecoder(serverInfo));
                         ch.pipeline().addLast(new ManagerHandler());
 
                     }
@@ -89,6 +89,11 @@ public class ManagerServer {
         }
 
         private void handlerLogin(ChannelHandlerContext ctx, LoginCmd msg) {
+            ManagerConnection client = clientManager.getClient(msg.getClientName());
+            if (client != null) {
+                log.warn("不允许重复登录:{}", msg);
+                return;
+            }
             clientManager.registerManagerConnection(msg.getClientName(), new ManagerConnection(ctx));
         }
 

@@ -25,8 +25,10 @@ public class ManagerConnection {
     private static final Logger log = LoggerFactory.getLogger(ManagerConnection.class);
 
     private String clientName;
+    private String serverToken;
     private String serverHost;
     private int serverPort;
+
 
     /**
      * 创建控制连接
@@ -35,8 +37,9 @@ public class ManagerConnection {
      * @param serverHost
      * @param serverPort
      */
-    public ManagerConnection(String clientName, String serverHost, int serverPort) {
+    public ManagerConnection(String clientName, String serverToken, String serverHost, int serverPort) {
         this.clientName = clientName;
+        this.serverToken = serverToken;
         this.serverHost = serverHost;
         this.serverPort = serverPort;
     }
@@ -64,7 +67,7 @@ public class ManagerConnection {
          */
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
-            ctx.writeAndFlush(new LoginCmd(clientName)).addListener(ErrorLogListener.INSTANCE);
+            ctx.writeAndFlush(new LoginCmd(clientName, serverToken)).addListener(ErrorLogListener.INSTANCE);
         }
 
         /**

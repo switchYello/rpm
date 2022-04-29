@@ -107,7 +107,7 @@ public class ClientManager {
      * @param clientId
      * @return
      */
-    private ManagerConnection getClient(String clientId) {
+    public ManagerConnection getClient(String clientId) {
         return clients.get(clientId);
     }
 

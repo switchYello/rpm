@@ -5,8 +5,8 @@ import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.Ping;
 import com.fys.cmd.message.Pong;
 import com.fys.cmd.message.clientToServer.LoginCmd;
+import com.fys.conf.ServerInfo;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
 import org.slf4j.Logger;
@@ -23,8 +23,11 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
     private static Logger log = LoggerFactory.getLogger(ServerCmdDecoder.class);
 
-    //防止多次登录
-    private boolean addHandler = false;
+    private ServerInfo serverInfo;
+
+    public ServerCmdDecoder(ServerInfo serverInfo) {
+        this.serverInfo = serverInfo;
+    }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
@@ -33,7 +36,6 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
         //新建数据连接
         if (flag == Cmd.dataConnectionCmd) {
             DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
-            log.debug("获取客户端连接:{}", cmd);
             out.add(cmd);
             return;
         }
@@ -51,13 +53,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
         //登录
         if (flag == Cmd.ClientToServer.login) {
-            LoginCmd login = LoginCmd.decoderFrom(in);
-//            if (!addHandler) {
-//                ctx.pipeline().addLast(new PingPongHandler());
-//                ctx.pipeline().addLast(new LoginCmdHandler());
-//                ctx.pipeline().addLast(ExceptionHandler.INSTANCE);
-//                addHandler = !addHandler;
-//            }
+            LoginCmd login = LoginCmd.decoderFrom(in, serverInfo.getToken());
             out.add(login);
             return;
         }

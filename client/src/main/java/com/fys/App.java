@@ -13,7 +13,7 @@ public class App {
     }
 
     private void start() {
-        ManagerConnection connection = new ManagerConnection("hcy_home_pc", "0.0.0.0", 9050);
+        ManagerConnection connection = new ManagerConnection("hcy_home_pc", "123456", "0.0.0.0", 9050);
         connection.start();
     }
 

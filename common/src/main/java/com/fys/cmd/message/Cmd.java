@@ -14,7 +14,6 @@ public interface Cmd {
     int ping = prefix | (byte) 2;
     int pong = prefix | (byte) 3;
 
-
     interface ServerToClient {
         int serverStartSuccessCmd = prefix | (byte) 4;
         int serverStartFailCmd = prefix | (byte) 5;
