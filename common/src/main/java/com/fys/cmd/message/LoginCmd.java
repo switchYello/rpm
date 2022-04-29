@@ -1,7 +1,5 @@
 package com.fys.cmd.message;
 
-import com.fys.cmd.message.Cmd;
-import com.fys.cmd.message.LoginAuthInfo;
 import com.fys.cmd.util.CodeUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;

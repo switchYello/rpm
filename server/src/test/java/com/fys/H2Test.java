@@ -1,7 +1,6 @@
 package com.fys;
 
 import org.h2.jdbcx.JdbcConnectionPool;
-import org.h2.tools.Server;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

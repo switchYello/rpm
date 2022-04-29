@@ -5,7 +5,6 @@
     "token": "123456"
   },
   "clientInfos": [
-
     {
       "serverHost": "0.0.0.0",
       "serverPort": 9052,

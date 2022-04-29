@@ -16,7 +16,7 @@ public class TestChannel {
     @Test
     public void testChannel() throws InterruptedException {
 
-        byte [] bytes = new byte[1024 * 150];
+        byte[] bytes = new byte[1024 * 150];
 
         ChannelFuture future = InnerConnectionFactory.createChannel("127.0.0.1", 80, true);
         Channel channel = future.channel();
