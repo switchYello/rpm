@@ -27,7 +27,7 @@ public class ServerStartFailCmd implements Cmd {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeByte(ServerToClient.serverStartFailCmd);
+        buf.writeInt(ServerToClient.serverStartFailCmd);
         buf.writeShort(serverPort);
         buf.writeShort(ByteBufUtil.utf8Bytes(localHost));
         buf.writeCharSequence(localHost, UTF_8);
@@ -45,7 +45,7 @@ public class ServerStartFailCmd implements Cmd {
         CharSequence charSequence = in.readCharSequence(msgLength, UTF_8);
         return new ServerStartFailCmd(serverPort, localHost.toString(), localPort, charSequence.toString());
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -24,7 +24,7 @@ public class LoginCmd implements Cmd {
     // flag 长度 clientName md5
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeByte(ClientToServer.login);
+        buf.writeInt(ClientToServer.login);
         buf.writeInt(ByteBufUtil.utf8Bytes(clientName));
         buf.writeCharSequence(clientName, UTF_8);
     }

@@ -28,7 +28,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
-        byte flag = in.readByte();
+        int flag = in.readInt();
 
         //新建数据连接
         if (flag == Cmd.dataConnectionCmd) {

@@ -13,7 +13,11 @@ public final class DataConnectionCmd implements Cmd {
     private int localPort;
     private long sessionId;
 
-    public DataConnectionCmd(String localHost, int localPort, long sessionId) {
+    public DataConnectionCmd(String localHost, int localPort) {
+        this(localHost, localPort, System.nanoTime());
+    }
+
+    private DataConnectionCmd(String localHost, int localPort, long sessionId) {
         this.localHost = localHost;
         this.localPort = localPort;
         this.sessionId = sessionId;
@@ -21,7 +25,7 @@ public final class DataConnectionCmd implements Cmd {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeByte(Cmd.dataConnectionCmd);  //flag
+        buf.writeInt(Cmd.dataConnectionCmd);  //flag
         buf.writeShort(localHost.length());
         buf.writeCharSequence(localHost, UTF_8);
         buf.writeShort(localPort);

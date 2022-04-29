@@ -22,7 +22,7 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
-        byte flag = in.readByte();
+        int flag = in.readInt();
         if (flag == Cmd.ping) {
             out.add(Ping.decoderFrom(in));
             return;

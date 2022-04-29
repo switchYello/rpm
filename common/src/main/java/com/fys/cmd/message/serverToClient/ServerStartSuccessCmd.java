@@ -25,7 +25,7 @@ public class ServerStartSuccessCmd implements Cmd {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeByte(ServerToClient.serverStartSuccessCmd);
+        buf.writeInt(ServerToClient.serverStartSuccessCmd);
         buf.writeShort(serverPort);
         buf.writeShort(ByteBufUtil.utf8Bytes(localHost));
         buf.writeCharSequence(localHost, UTF_8);
@@ -39,7 +39,7 @@ public class ServerStartSuccessCmd implements Cmd {
         int localPort = in.readUnsignedShort();
         return new ServerStartSuccessCmd(serverPort, localHost.toString(), localPort);
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

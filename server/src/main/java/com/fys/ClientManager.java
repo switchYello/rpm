@@ -79,7 +79,7 @@ public class ClientManager {
             promise.setFailure(new RuntimeException("未找到客户端:" + clientInfo.getClientName()));
             return promise;
         }
-        DataConnectionCmd msg = new DataConnectionCmd(clientInfo.getLocalHost(), clientInfo.getLocalPort(), System.nanoTime());
+        DataConnectionCmd msg = new DataConnectionCmd(clientInfo.getLocalHost(), clientInfo.getLocalPort());
         needDataConnection.put(msg.getSessionId(), promise);
         client.writeMessage(msg).addListeners(new ChannelFutureListener() {
             @Override

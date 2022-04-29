@@ -11,7 +11,7 @@ public class Ping implements Cmd {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeByte(Cmd.ping);
+        buf.writeInt(Cmd.ping);
     }
 
     public static Ping decoderFrom(ByteBuf in) {

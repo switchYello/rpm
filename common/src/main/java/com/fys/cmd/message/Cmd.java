@@ -8,21 +8,22 @@ import io.netty.buffer.ByteBuf;
  */
 public interface Cmd {
 
-    byte dataConnectionCmd = 0;
-    byte ping = 4;
-    byte pong = 6;
+    int prefix = 'R' << 24 | 'P' << 16 | 'M' << 8;
+
+    int dataConnectionCmd = prefix | (byte) 1;
+    int ping = prefix | (byte) 2;
+    int pong = prefix | (byte) 3;
 
 
     interface ServerToClient {
-        byte serverStartSuccessCmd = 2;
-        byte serverStartFailCmd = 3;
-        byte loginFail = 7;
+        int serverStartSuccessCmd = prefix | (byte) 4;
+        int serverStartFailCmd = prefix | (byte) 5;
+        int loginFail = prefix | (byte) 6;
     }
 
     interface ClientToServer {
-        byte login = 5;
+        int login = prefix | (byte) 7;
     }
-
 
     /*
      * 将当前对象序列化到Bytebuf中
