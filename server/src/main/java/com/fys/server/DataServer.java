@@ -88,7 +88,7 @@ public class DataServer {
                     if (future.isSuccess()) {
                         Channel channelToClient = future.getNow();
                         channelToClient.pipeline().addLast(new TransactionHandler(channelToUser, true));
-                        channelToUser.pipeline().addLast(new TransactionHandler(channelToClient, false));
+                        channelToUser.pipeline().addLast(new TransactionHandler(channelToClient, true));
                         channelToUser.config().setAutoRead(true);
                     } else {
                         log.error("获取客户端连接失败", future.cause());
