@@ -1,4 +1,4 @@
-package com.fys.conf;
+package com.fys.cmd.util;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;

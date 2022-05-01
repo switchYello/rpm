@@ -3,7 +3,7 @@ package com.fys;
 import com.fys.cmd.listener.Listeners;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.conf.ClientInfo;
-import com.fys.conf.EventLoops;
+import com.fys.cmd.util.EventLoops;
 import com.fys.connection.DataConnection;
 import com.fys.connection.ManagerConnection;
 import io.netty.channel.ChannelFutureListener;

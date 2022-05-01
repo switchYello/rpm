@@ -56,10 +56,14 @@ public class InnerConnectionFactory {
                 )
                 .connect()
                 .addListener((ChannelFutureListener) future -> {
-                    Channel channel = future.channel();
-                    InetSocketAddress local = (InetSocketAddress) channel.localAddress();
-                    SocketAddress remote = channel.remoteAddress();
-                    log.debug("连接创建完成[{} -> {}]", local, remote);
+                    if (future.isSuccess()) {
+                        Channel channel = future.channel();
+                        InetSocketAddress local = (InetSocketAddress) channel.localAddress();
+                        SocketAddress remote = channel.remoteAddress();
+                        log.debug("连接创建完成[{} -> {}]", local, remote);
+                    } else {
+                        log.debug("连接创建失败 to [{}:{}]", host, port,future.cause());
+                    }
                 });
     }
 

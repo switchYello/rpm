@@ -6,7 +6,7 @@ import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.LoginAuthInfo;
 import com.fys.cmd.message.Ping;
-import com.fys.conf.EventLoops;
+import com.fys.cmd.util.EventLoops;
 import com.fys.conf.ServerInfo;
 import com.fys.connection.DataConnection;
 import com.fys.connection.ManagerConnection;

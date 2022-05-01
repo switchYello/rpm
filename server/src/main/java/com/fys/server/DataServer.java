@@ -3,7 +3,7 @@ package com.fys.server;
 import com.fys.ClientManager;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.conf.ClientInfo;
-import com.fys.conf.EventLoops;
+import com.fys.cmd.util.EventLoops;
 import com.fys.connection.DataConnection;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;

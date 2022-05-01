@@ -52,7 +52,7 @@ public class ManagerConnection {
      * 注:添加handler要在监听器中添加，否则handler的active可能在连接前就触发过了，channelActive方法不一定能触发
      * 而放在监听器中能保证触发，因为监听器的回调在active回调之前执行
      */
-    public void start() {
+    public ChannelFuture start() {
         ChannelFuture future = InnerConnectionFactory.createChannel(serverHost, serverPort, true);
         future.addListener((ChannelFutureListener) f -> {
             ChannelPipeline pipeline = f.channel().pipeline();
@@ -64,6 +64,7 @@ public class ManagerConnection {
             pipeline.addLast(new PingHandler()); //定时发ping
             pipeline.addLast(new ManagerHandler());
         });
+        return future;
     }
 
     private class ManagerHandler extends SimpleChannelInboundHandler<Cmd> {
