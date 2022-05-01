@@ -2,14 +2,14 @@ package com.fys.connection;
 
 import com.fys.InnerConnectionFactory;
 import com.fys.cmd.handler.CmdEncoder;
+import com.fys.cmd.handler.ErrorLogHandler;
 import com.fys.cmd.handler.PingHandler;
-import com.fys.cmd.listener.ErrorLogListener;
+import com.fys.cmd.listener.Listeners;
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.LoginCmd;
 import com.fys.cmd.message.LoginFailCmd;
 import com.fys.handler.CmdDecoder;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -59,6 +59,7 @@ public class ManagerConnection {
             pipeline.addLast(new LoggingHandler());
             pipeline.addLast(new CmdEncoder());
 
+            pipeline.addLast(new ErrorLogHandler());
             pipeline.addLast(new CmdDecoder());
             pipeline.addLast(new PingHandler()); //定时发ping
             pipeline.addLast(new ManagerHandler());
@@ -72,7 +73,7 @@ public class ManagerConnection {
          */
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
-            ctx.writeAndFlush(new LoginCmd(clientName, serverToken)).addListener(ErrorLogListener.INSTANCE);
+            ctx.writeAndFlush(new LoginCmd(clientName, serverToken)).addListener(Listeners.ERROR_LOG);
         }
 
         /**
@@ -95,11 +96,6 @@ public class ManagerConnection {
             ctx.close();
         }
 
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            log.error("连接报错", cause);
-            ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        }
     }
 
 

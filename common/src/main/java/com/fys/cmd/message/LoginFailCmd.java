@@ -34,6 +34,6 @@ public class LoginFailCmd implements Cmd {
 
     @Override
     public String toString() {
-        return "[clientName:+" + clientName + ",+FailMsg:" + failMsg + "]";
+        return "[clientName:" + clientName + ", FailMsg:" + failMsg + "]";
     }
 }

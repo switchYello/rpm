@@ -5,10 +5,8 @@ import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.LoginAuthInfo;
-import com.fys.cmd.message.LoginFailCmd;
 import com.fys.cmd.message.Ping;
-import com.fys.cmd.message.Pong;
-import com.fys.cmd.util.CodeUtil;
+import com.fys.conf.EventLoops;
 import com.fys.conf.ServerInfo;
 import com.fys.connection.DataConnection;
 import com.fys.connection.ManagerConnection;
@@ -19,16 +17,12 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author hcy
@@ -40,17 +34,15 @@ public class ManagerServer {
 
     ClientManager clientManager;
     ServerInfo serverInfo;
-    EventLoopGroup boss;
 
-    public ManagerServer(EventLoopGroup boss, ClientManager clientManager, ServerInfo serverInfo) {
+    public ManagerServer(ClientManager clientManager, ServerInfo serverInfo) {
         this.clientManager = clientManager;
         this.serverInfo = serverInfo;
-        this.boss = boss;
     }
 
     public void start() {
         ServerBootstrap sb = new ServerBootstrap();
-        sb.group(boss, boss)
+        sb.group(EventLoops.BOSS, EventLoops.WORKER)
                 .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
                 .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
@@ -64,7 +56,6 @@ public class ManagerServer {
                         ch.pipeline().addLast(new LoggingHandler());
                         ch.pipeline().addLast(new ServerCmdDecoder());
                         ch.pipeline().addLast(new ManagerHandler());
-
                     }
                 })
                 .bind(serverInfo.getBindHost(), serverInfo.getBindPort())
@@ -73,67 +64,46 @@ public class ManagerServer {
                         log.info("控制端在端口:{}启动成功", serverInfo.getBindPort());
                     } else {
                         log.error("控制端在端口:" + serverInfo.getBindPort() + "启动失败", future.cause());
-                        boss.shutdownGracefully();
                     }
                 });
     }
 
     private class ManagerHandler extends SimpleChannelInboundHandler<Object> {
 
+        AttributeKey<ManagerConnection> managerConnectionKey = AttributeKey.valueOf("ManagerConnection");
+
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
-            //登录
+            //登录,创建ManagerConnection 处理登录消息
             if (msg instanceof LoginAuthInfo) {
                 log.debug("收到client登录请求:{}", ((LoginAuthInfo) msg).getClientName());
-                handlerLogin(ctx, (LoginAuthInfo) msg);
+                ManagerConnection managerConnection = ctx.channel().attr(managerConnectionKey).get();
+                if (managerConnection == null) {
+                    managerConnection = new ManagerConnection(ctx, clientManager, serverInfo);
+                    ctx.channel().attr(managerConnectionKey).set(managerConnection);
+                }
+                managerConnection.handlerLogin((LoginAuthInfo) msg);
                 return;
             }
             //收到Ping
             if (msg instanceof Ping) {
-                handlerPing(ctx);
+                ManagerConnection managerConnection = ctx.channel().attr(managerConnectionKey).get();
+                if (managerConnection != null) {
+                    managerConnection.handlerPing();
+                }
                 return;
             }
             //数据连接
             if (msg instanceof DataConnectionCmd) {
                 log.debug("收到client数据连接请求:{}", msg);
-                handlerDataConnection(ctx, (DataConnectionCmd) msg);
+                DataConnectionCmd cmd = (DataConnectionCmd) msg;
+                //移除多余handler
+                ctx.pipeline().remove(ServerCmdDecoder.class);
+                ctx.pipeline().remove(ManagerHandler.class);
+                clientManager.registerDataConnection(cmd.getSessionId(), new DataConnection(ctx));
                 return;
             }
             throw new RuntimeException("消息不能识别" + msg);
-        }
-
-        /**
-         * 验证登录信息，如已登录则忽略，如验证失败则发送响应后关闭连接
-         *
-         * @param ctx
-         * @param msg
-         */
-        private void handlerLogin(ChannelHandlerContext ctx, LoginAuthInfo msg) {
-            ManagerConnection client = clientManager.getClient(msg.getClientName());
-            if (client != null) {
-                log.warn("忽略重复登录:{}", msg);
-                return;
-            }
-            byte[] md5 = CodeUtil.md5((msg.getClientName() + msg.getTimeStamp() + serverInfo.getToken()).getBytes(UTF_8));
-            if (Arrays.equals(msg.getReadMd5(), md5)) {
-                clientManager.registerManagerConnection(msg.getClientName(), new ManagerConnection(ctx));
-                log.info("客户端登录成功 [{} -> {}]", ctx.channel().localAddress(), ctx.channel().remoteAddress());
-                return;
-            }
-            log.info("客户端验证失败:{}", msg);
-            ctx.writeAndFlush(new LoginFailCmd(msg.getClientName(), "验证失败")).addListener(ChannelFutureListener.CLOSE);
-        }
-
-        private void handlerDataConnection(ChannelHandlerContext ctx, DataConnectionCmd msg) {
-            //移除多余handler
-            ctx.pipeline().remove(ServerCmdDecoder.class);
-            ctx.pipeline().remove(ManagerHandler.class);
-            clientManager.registerDataConnection(msg.getSessionId(), new DataConnection(ctx));
-        }
-
-
-        private void handlerPing(ChannelHandlerContext ctx) {
-            ctx.writeAndFlush(new Pong()).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
         }
 
         @Override

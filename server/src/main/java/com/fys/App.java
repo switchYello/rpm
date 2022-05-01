@@ -15,8 +15,6 @@ import java.util.List;
 public class App {
 
     private static final Logger log = LoggerFactory.getLogger(App.class);
-    public static EventLoopGroup boss = new NioEventLoopGroup(1);
-    public static EventLoopGroup work = new NioEventLoopGroup(1);
 
     /*
      * -c config.properties
@@ -27,12 +25,12 @@ public class App {
 
         //创建控制端口监听
         ServerInfo serverInfo = config.getServerInfo();
-        new ManagerServer(boss, clientManager, serverInfo).start();
+        new ManagerServer(clientManager, serverInfo).start();
 
         //创建用户端口监听
         List<ClientInfo> clientInfoList = config.getClientInfos();
         for (ClientInfo clientInfo : clientInfoList) {
-            new DataServer(boss, clientManager, clientInfo).start();
+            new DataServer(clientManager, clientInfo).start();
         }
     }
 

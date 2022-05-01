@@ -1,10 +1,10 @@
 package com.fys.server;
 
 import com.fys.ClientManager;
-import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.TimeOutHandler;
-import com.fys.cmd.handler.TransactionHandler;
 import com.fys.conf.ClientInfo;
+import com.fys.conf.EventLoops;
+import com.fys.connection.DataConnection;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -12,7 +12,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -28,19 +27,17 @@ public class DataServer {
 
     private static final Logger log = LoggerFactory.getLogger(DataServer.class);
 
-    EventLoopGroup boss;
-    ClientManager clientManager;
-    ClientInfo clientInfo;
+    private ClientManager clientManager;
+    private ClientInfo clientInfo;
 
-    public DataServer(EventLoopGroup boss, ClientManager clientManager, ClientInfo clientInfo) {
-        this.boss = boss;
+    public DataServer(ClientManager clientManager, ClientInfo clientInfo) {
         this.clientManager = clientManager;
         this.clientInfo = clientInfo;
     }
 
     public void start() {
         ServerBootstrap sb = new ServerBootstrap();
-        sb.group(boss, boss)
+        sb.group(EventLoops.BOSS, EventLoops.WORKER)
                 .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
                 .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 6000)
@@ -49,7 +46,6 @@ public class DataServer {
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
-                        ch.pipeline().addLast(new CmdEncoder());
                         //控制超时，防止链接上来但不发送消息任何的连接
                         ch.pipeline().addLast(new TimeOutHandler(0, 0, 300));
                         ch.pipeline().addLast(new DataHandler());
@@ -58,15 +54,17 @@ public class DataServer {
                 .bind(clientInfo.getServerHost(), clientInfo.getServerPort())
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
-                        log.info("服务端在端口:{}启动成功", clientInfo.getServerPort());
+                        log.info("数据端在端口:{}启动成功", clientInfo.getServerPort());
                     } else {
-                        log.error("服务端在端口:" + clientInfo.getServerPort() + "启动失败", future.cause());
-                        boss.shutdownGracefully();
+                        log.error("数据端在端口:" + clientInfo.getServerPort() + "启动失败", future.cause());
                     }
                 });
     }
 
     private class DataHandler extends ChannelInboundHandlerAdapter {
+
+        private DataConnection target;
+
         /**
          * 用户连接创建后，开始与本地连接沟通
          *
@@ -77,18 +75,17 @@ public class DataServer {
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             log.debug("收到客户请求，准备获取客户端连接");
             //获取本地连接
-            Promise<Channel> targetPromise = clientManager.getTargetChannel(clientInfo, ctx.executor());
-            //获取过程中，如果用户端关闭，则取消获取
+            Promise<DataConnection> targetPromise = clientManager.getTargetChannel(clientInfo);
+
             Channel channelToUser = ctx.channel();
+            //获取过程中，如果用户端关闭，则取消获取
             channelToUser.closeFuture().addListener((ChannelFutureListener) future -> targetPromise.cancel(false));
-            //当获取成功后，关联两条数据流。如获取失败，关闭客户端流
-            targetPromise.addListener(new GenericFutureListener<Future<Channel>>() {
+            targetPromise.addListener(new GenericFutureListener<Future<DataConnection>>() {
                 @Override
-                public void operationComplete(Future<Channel> future) {
+                public void operationComplete(Future<DataConnection> future) {
                     if (future.isSuccess()) {
-                        Channel channelToClient = future.getNow();
-                        channelToClient.pipeline().addLast(new TransactionHandler(channelToUser, true));
-                        channelToUser.pipeline().addLast(new TransactionHandler(channelToClient, true));
+                        target = future.getNow();
+                        target.bindToChannel(channelToUser);
                         channelToUser.config().setAutoRead(true);
                     } else {
                         log.error("获取客户端连接失败", future.cause());
@@ -97,6 +94,19 @@ public class DataServer {
                 }
             });
             super.channelActive(ctx);
+        }
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            target.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            if (target != null) {
+                target.close();
+            }
+            super.channelInactive(ctx);
         }
     }
 

@@ -10,16 +10,18 @@ public interface Cmd {
 
     int prefix = 'R' << 24 | 'P' << 16 | 'M' << 8;
 
+    //请求数据连接
     int dataConnectionCmd = prefix | (byte) 1;
+    //ping pong
     int ping = prefix | (byte) 2;
     int pong = prefix | (byte) 3;
 
+    //登陆失败
     interface ServerToClient {
-        int serverStartSuccessCmd = prefix | (byte) 4;
-        int serverStartFailCmd = prefix | (byte) 5;
         int loginFail = prefix | (byte) 6;
     }
 
+    //发起登录
     interface ClientToServer {
         int login = prefix | (byte) 7;
     }
