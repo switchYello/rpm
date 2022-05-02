@@ -18,10 +18,10 @@ public class ErrorLogHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         Channel channel = ctx.channel();
         if ("Connection reset by peer".equals(cause.getMessage())) {
-            log.error("Connection reset by peer local:{},remote:{}", channel.localAddress(), channel.remoteAddress());
+            log.error("Connection reset by peer - {}", channel);
             return;
         }
-        log.error("ServerCmdDecoder:" + channel.localAddress() + " remote" + channel.remoteAddress(), cause);
+        log.error("连接报错 - {}", channel, cause);
         channel.close();
     }
 }

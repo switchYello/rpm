@@ -59,10 +59,10 @@ public class ManagerConnection {
             pipeline.addLast(new LoggingHandler());
             pipeline.addLast(new CmdEncoder());
 
-            pipeline.addLast(new ErrorLogHandler());
             pipeline.addLast(new CmdDecoder());
             pipeline.addLast(new PingHandler()); //定时发ping
             pipeline.addLast(new ManagerHandler());
+            pipeline.addLast(new ErrorLogHandler());
         });
         return future;
     }

@@ -16,5 +16,4 @@ public class CmdEncoder extends MessageToByteEncoder<Cmd> {
         msg.encoderTo(out);
     }
 
-
 }

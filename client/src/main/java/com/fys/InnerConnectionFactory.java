@@ -16,9 +16,6 @@ import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-
 /**
  * @author hcy
  * @since 2022/4/24 0:44
@@ -50,7 +47,6 @@ public class InnerConnectionFactory {
 //                                 ch.pipeline().addLast(new Rc4Md5Handler(config.getToken()));
 //                                 ch.pipeline().addLast(new CmdEncoder());
 //                                 ch.pipeline().addLast(new CmdDecoder());
-
                              }
                          }
                 )
@@ -58,11 +54,9 @@ public class InnerConnectionFactory {
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
                         Channel channel = future.channel();
-                        InetSocketAddress local = (InetSocketAddress) channel.localAddress();
-                        SocketAddress remote = channel.remoteAddress();
-                        log.debug("连接创建完成[{} -> {}]", local, remote);
+                        log.debug("连接创建完成-{}", channel);
                     } else {
-                        log.debug("连接创建失败 to [{}:{}]", host, port,future.cause());
+                        log.debug("连接创建失败 to [{}:{}]", host, port, future.cause());
                     }
                 });
     }

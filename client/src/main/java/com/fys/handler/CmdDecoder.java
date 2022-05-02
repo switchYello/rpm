@@ -44,5 +44,4 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
         ctx.close();
     }
 
-
 }
