@@ -17,14 +17,14 @@ public class Config {
     private ServerInfo serverInfo;
     private List<ClientInfo> clientInfos;
 
-
     public static Config read(String configPath) {
-        ObjectMapper mapper = new ObjectMapper();
         InputStream input = getResource(configPath);
+        if (input == null) {
+            throw new IllegalArgumentException("配置文件不存在:" + configPath);
+        }
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            Config config = mapper.readValue(input, Config.class);
-            config.checkConfig();
-            return config;
+            return mapper.readValue(input, Config.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -34,36 +34,23 @@ public class Config {
         return serverInfo;
     }
 
-    public void setServerInfo(ServerInfo serverInfo) {
-        this.serverInfo = serverInfo;
-    }
-
     public List<ClientInfo> getClientInfos() {
         return clientInfos;
     }
 
-    public void setClientInfos(List<ClientInfo> clientInfos) {
-        this.clientInfos = clientInfos;
-    }
-
-    private void checkConfig() {
-
-
-    }
-
-    private static InputStream getResource(String resourceName) {
-        if (resourceName == null) {
+    private static InputStream getResource(String resourcePath) {
+        if (resourcePath == null) {
             return null;
         }
-        InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream(resourceName);
+        try {
+            return new FileInputStream(resourcePath);
+        } catch (FileNotFoundException ignored) {
+        }
+        InputStream input = ClassLoader.getSystemClassLoader().getResourceAsStream(resourcePath);
         if (input != null) {
             return input;
         }
-        try {
-            return new FileInputStream(resourceName);
-        } catch (FileNotFoundException e) {
-            return null;
-        }
+        return null;
     }
 
 }
