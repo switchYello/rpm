@@ -2,6 +2,7 @@ package com.fys.server;
 
 import com.fys.ClientManager;
 import com.fys.cmd.handler.CmdEncoder;
+import com.fys.cmd.handler.ErrorLogHandler;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.LoginAuthInfo;
@@ -15,12 +16,13 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.AttributeKey;
+import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,10 +54,11 @@ public class ManagerServer {
                     protected void initChannel(Channel ch) throws Exception {
                         ch.pipeline().addLast(new CmdEncoder());
                         //控制超时，防止链接上来但不发送消息任何的连接
-                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 300));
                         ch.pipeline().addLast(new LoggingHandler());
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 300));
                         ch.pipeline().addLast(new ServerCmdDecoder());
                         ch.pipeline().addLast(new ManagerHandler());
+                        ch.pipeline().addLast(new ErrorLogHandler());
                     }
                 })
                 .bind(serverInfo.getBindHost(), serverInfo.getBindPort())
@@ -68,12 +71,12 @@ public class ManagerServer {
                 });
     }
 
-    private class ManagerHandler extends SimpleChannelInboundHandler<Object> {
+    private class ManagerHandler extends ChannelInboundHandlerAdapter {
 
         AttributeKey<ManagerConnection> managerConnectionKey = AttributeKey.valueOf("ManagerConnection");
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
             //登录,创建ManagerConnection 处理登录消息
             if (msg instanceof LoginAuthInfo) {
                 log.debug("收到client登录请求:{}", ((LoginAuthInfo) msg).getClientName());
@@ -100,20 +103,12 @@ public class ManagerServer {
                 //移除多余handler
                 ctx.pipeline().remove(ServerCmdDecoder.class);
                 ctx.pipeline().remove(ManagerHandler.class);
+                ctx.pipeline().remove(ErrorLogHandler.class);
                 clientManager.registerDataConnection(cmd.getSessionId(), new DataConnection(ctx));
                 return;
             }
+            ReferenceCountUtil.release(msg);
             throw new RuntimeException("消息不能识别" + msg);
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            Channel channel = ctx.channel();
-            if ("Connection reset by peer".equals(cause.getMessage())) {
-                log.error("Connection reset by peer local:{},remote:{}", channel.localAddress(), channel.remoteAddress());
-                return;
-            }
-            log.error("ServerCmdDecoder:" + channel.localAddress() + " remote" + channel.remoteAddress(), cause);
         }
     }
 

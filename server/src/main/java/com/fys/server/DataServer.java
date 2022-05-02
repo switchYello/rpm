@@ -1,9 +1,10 @@
 package com.fys.server;
 
 import com.fys.ClientManager;
+import com.fys.cmd.handler.ErrorLogHandler;
 import com.fys.cmd.handler.TimeOutHandler;
-import com.fys.conf.ClientInfo;
 import com.fys.cmd.util.EventLoops;
+import com.fys.conf.ClientInfo;
 import com.fys.connection.DataConnection;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -49,12 +50,13 @@ public class DataServer {
                         //控制超时，防止链接上来但不发送消息任何的连接
                         ch.pipeline().addLast(new TimeOutHandler(0, 0, 300));
                         ch.pipeline().addLast(new DataHandler());
+                        ch.pipeline().addLast(new ErrorLogHandler());
                     }
                 })
                 .bind(clientInfo.getServerHost(), clientInfo.getServerPort())
                 .addListener((ChannelFutureListener) future -> {
                     if (future.isSuccess()) {
-                        log.info("数据端在端口:{}启动成功", clientInfo.getServerPort());
+                        log.info("数据端在端口:{} 启动成功", clientInfo.getServerPort());
                     } else {
                         log.error("数据端在端口:" + clientInfo.getServerPort() + "启动失败", future.cause());
                     }
@@ -67,9 +69,6 @@ public class DataServer {
 
         /**
          * 用户连接创建后，开始与本地连接沟通
-         *
-         * @param ctx
-         * @throws Exception
          */
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {

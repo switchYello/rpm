@@ -1,5 +1,6 @@
 package com.fys.connection;
 
+import com.fys.cmd.handler.ErrorLogHandler;
 import com.fys.cmd.handler.TransactionHandler;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -24,6 +25,7 @@ public class DataConnection {
     //从该channel读到的数据，写入target中
     public void bindToChannel(Channel target) {
         ctx.pipeline().addLast(new TransactionHandler(target, true));
+        ctx.pipeline().addLast(new ErrorLogHandler());
     }
 
     public void close() {

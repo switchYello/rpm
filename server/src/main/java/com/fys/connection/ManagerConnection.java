@@ -66,7 +66,7 @@ public class ManagerConnection {
         }
         this.clientName = msg.getClientName();
         clientManager.registerManagerConnection(this);
-        log.info("客户端登录成功 [{} -> {}]", ctx.channel().localAddress(), ctx.channel().remoteAddress());
+        log.info("客户端登录成功 - {}", ctx.channel());
     }
 
     public void handlerPing() {
