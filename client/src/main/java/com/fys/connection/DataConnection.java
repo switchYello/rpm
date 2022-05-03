@@ -122,7 +122,6 @@ public class DataConnection {
 
     }
 
-
     private class ConnectionToService {
 
         private ChannelFuture channelToService;

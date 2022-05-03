@@ -4,7 +4,6 @@ import com.fys.InnerConnectionFactory;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ErrorLogHandler;
 import com.fys.cmd.handler.PingHandler;
-import com.fys.cmd.listener.Listeners;
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.LoginCmd;
 import com.fys.cmd.message.LoginFailCmd;
@@ -74,7 +73,7 @@ public class ManagerConnection {
          */
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
-            ctx.writeAndFlush(new LoginCmd(clientName, serverToken)).addListener(Listeners.ERROR_LOG);
+            ctx.writeAndFlush(new LoginCmd(clientName, serverToken)).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         }
 
         /**
@@ -91,6 +90,7 @@ public class ManagerConnection {
             if (msg instanceof LoginFailCmd) {
                 LoginFailCmd cmd = (LoginFailCmd) msg;
                 log.error("登录认证失败:{}", cmd);
+                ctx.close();
                 return;
             }
             log.info("收到未识别的消息:{}", msg);

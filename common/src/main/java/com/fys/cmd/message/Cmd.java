@@ -12,27 +12,27 @@ public interface Cmd {
     //int prefix = 0;
 
     //raw数据
-    int rawData = prefix | 'a';
+    int rawData = prefix | 1;
 
     //ping pong
-    int ping = prefix | 'p';
-    int pong = prefix | 'd';
+    int ping = prefix | 2;
+    int pong = prefix | 3;
 
     //登陆失败
     interface ServerToClient {
         //登录认证失败
-        int loginFail = prefix | 'f';
+        int loginFail = prefix | 4;
         //获取新连接
-        int needDataConnectionCmd = prefix | 'd';
+        int needDataConnectionCmd = prefix | 5;
         //开始数据传输
-        int startTransactionCmd = prefix | 't';
+        int startTransactionCmd = prefix | 6;
     }
 
     //发起登录
     interface ClientToServer {
-        int login = prefix | (byte) 'l';
+        int login = prefix | 7;
         //新连接
-        int newDataConnectionCmd = prefix | 'n';
+        int newDataConnectionCmd = prefix | 8;
     }
 
     /*
