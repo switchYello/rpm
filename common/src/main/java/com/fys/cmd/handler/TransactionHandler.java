@@ -58,10 +58,10 @@ public class TransactionHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         if (out.isActive()) {
-            log.debug("连接 {} 被关闭了，所以同步关闭另一侧", ctx.channel());
+            log.debug("连接{}被关闭了，同步关闭{}", ctx.channel(), out);
             out.flush().close();
         } else {
-            log.debug("连接 {} 被关闭了，另一侧已被关闭", ctx.channel());
+            log.debug("连接{}被关闭了，另一侧{}已被关闭", ctx.channel(), out);
         }
         super.channelInactive(ctx);
     }
