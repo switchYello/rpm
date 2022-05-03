@@ -43,12 +43,6 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
             return;
         }
 
-        //收到客户端pong。服务端不会向客户端发送ping，所以不会受到pong，所以这里逻辑不会走到
-        if (flag == Cmd.pong) {
-            out.add(Pong.decoderFrom(in));
-            return;
-        }
-
         //收到登录
         if (flag == Cmd.ClientToServer.login) {
             out.add(LoginCmd.decoderFrom(in));
