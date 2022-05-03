@@ -3,6 +3,7 @@ package com.fys.connection;
 import com.fys.InnerConnectionFactory;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ErrorLogHandler;
+import com.fys.cmd.handler.PingHandler;
 import com.fys.cmd.listener.Listeners;
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.LoginCmd;
@@ -59,7 +60,7 @@ public class ManagerConnection {
             pipeline.addLast(new CmdEncoder());
 
             pipeline.addLast(new CmdDecoder());
-            //pipeline.addLast(new PingHandler()); //定时发ping
+            pipeline.addLast(new PingHandler()); //定时发ping
             pipeline.addLast(new ManagerHandler());
             pipeline.addLast(new ErrorLogHandler());
         });
