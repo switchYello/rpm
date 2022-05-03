@@ -1,10 +1,12 @@
 package com.fys.handler;
 
 import com.fys.cmd.message.Cmd;
-import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.LoginFailCmd;
+import com.fys.cmd.message.NeedDataConnectionCmd;
 import com.fys.cmd.message.Ping;
 import com.fys.cmd.message.Pong;
+import com.fys.cmd.message.RawDataCmd;
+import com.fys.cmd.message.StartTransactionCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -35,8 +37,16 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
             out.add(LoginFailCmd.decoderFrom(in));
             return;
         }
-        if (flag == Cmd.dataConnectionCmd) {
-            out.add(DataConnectionCmd.decoderFrom(in));
+        if (flag == Cmd.rawData) {
+            out.add(RawDataCmd.decoderFrom(in));
+            return;
+        }
+        if (flag == Cmd.ServerToClient.needDataConnectionCmd) {
+            out.add(NeedDataConnectionCmd.decoderFrom(in));
+            return;
+        }
+        if (flag == Cmd.ServerToClient.startTransactionCmd) {
+            out.add(StartTransactionCmd.decoderFrom(in));
             return;
         }
         log.error("无法识别服务端发送的指令,指令:{}", flag);

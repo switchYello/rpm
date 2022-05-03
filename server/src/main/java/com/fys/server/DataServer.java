@@ -7,13 +7,15 @@ import com.fys.cmd.util.EventLoops;
 import com.fys.conf.ClientInfo;
 import com.fys.connection.DataConnection;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
@@ -63,7 +65,7 @@ public class DataServer {
                 });
     }
 
-    private class DataHandler extends ChannelInboundHandlerAdapter {
+    private class DataHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
         private DataConnection target;
 
@@ -85,6 +87,7 @@ public class DataServer {
                     if (future.isSuccess()) {
                         target = future.getNow();
                         target.bindToChannel(channelToUser);
+                        target.startTransaction();
                         channelToUser.config().setAutoRead(true);
                     } else {
                         log.error("获取客户端连接失败", future.cause());
@@ -96,7 +99,7 @@ public class DataServer {
         }
 
         @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
             target.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         }
 

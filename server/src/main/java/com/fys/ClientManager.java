@@ -1,9 +1,9 @@
 package com.fys;
 
 import com.fys.cmd.listener.Listeners;
-import com.fys.cmd.message.DataConnectionCmd;
-import com.fys.conf.ClientInfo;
+import com.fys.cmd.message.NeedDataConnectionCmd;
 import com.fys.cmd.util.EventLoops;
+import com.fys.conf.ClientInfo;
 import com.fys.connection.DataConnection;
 import com.fys.connection.ManagerConnection;
 import io.netty.channel.ChannelFutureListener;
@@ -76,7 +76,7 @@ public class ClientManager {
             promise.setFailure(new RuntimeException("未找到客户端:" + clientInfo.getClientName()));
             return promise;
         }
-        DataConnectionCmd msg = new DataConnectionCmd(clientInfo.getLocalHost(), clientInfo.getLocalPort());
+        NeedDataConnectionCmd msg = new NeedDataConnectionCmd(clientInfo.getLocalHost(), clientInfo.getLocalPort());
         needDataConnection.put(msg.getSessionId(), promise);
         manager.writeMessage(msg).addListeners(Listeners.ERROR_LOG, ChannelFutureListener.CLOSE_ON_FAILURE);
         EventLoops.schedule(() -> {

@@ -4,8 +4,8 @@ import com.fys.ClientManager;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ErrorLogHandler;
 import com.fys.cmd.handler.TimeOutHandler;
-import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.LoginAuthInfo;
+import com.fys.cmd.message.NewDataConnectionCmd;
 import com.fys.cmd.message.Ping;
 import com.fys.cmd.util.EventLoops;
 import com.fys.conf.ServerInfo;
@@ -52,9 +52,8 @@ public class ManagerServer {
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
-                        ch.pipeline().addLast(new CmdEncoder());
-                        //控制超时，防止链接上来但不发送消息任何的连接
                         ch.pipeline().addLast(new LoggingHandler());
+                        ch.pipeline().addLast(new CmdEncoder());
                         ch.pipeline().addLast(new TimeOutHandler(0, 0, 300));
                         ch.pipeline().addLast(new ServerCmdDecoder());
                         ch.pipeline().addLast(new ManagerHandler());
@@ -96,15 +95,14 @@ public class ManagerServer {
                 }
                 return;
             }
-            //数据连接
-            if (msg instanceof DataConnectionCmd) {
+            //新的数据连接
+            if (msg instanceof NewDataConnectionCmd) {
                 log.debug("收到client数据连接请求:{}", msg);
-                DataConnectionCmd cmd = (DataConnectionCmd) msg;
+                NewDataConnectionCmd cmd = (NewDataConnectionCmd) msg;
                 //移除多余handler
-                ctx.pipeline().remove(ServerCmdDecoder.class);
                 ctx.pipeline().remove(ManagerHandler.class);
                 ctx.pipeline().remove(ErrorLogHandler.class);
-                clientManager.registerDataConnection(cmd.getSessionId(), new DataConnection(ctx));
+                clientManager.registerDataConnection(cmd.getSessionId(), new DataConnection(cmd, ctx));
                 return;
             }
             ReferenceCountUtil.release(msg);

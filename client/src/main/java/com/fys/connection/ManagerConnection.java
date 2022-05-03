@@ -3,12 +3,11 @@ package com.fys.connection;
 import com.fys.InnerConnectionFactory;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ErrorLogHandler;
-import com.fys.cmd.handler.PingHandler;
 import com.fys.cmd.listener.Listeners;
 import com.fys.cmd.message.Cmd;
-import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.LoginCmd;
 import com.fys.cmd.message.LoginFailCmd;
+import com.fys.cmd.message.NeedDataConnectionCmd;
 import com.fys.handler.CmdDecoder;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -60,7 +59,7 @@ public class ManagerConnection {
             pipeline.addLast(new CmdEncoder());
 
             pipeline.addLast(new CmdDecoder());
-            pipeline.addLast(new PingHandler()); //定时发ping
+            //pipeline.addLast(new PingHandler()); //定时发ping
             pipeline.addLast(new ManagerHandler());
             pipeline.addLast(new ErrorLogHandler());
         });
@@ -82,8 +81,8 @@ public class ManagerConnection {
          */
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Cmd msg) {
-            if (msg instanceof DataConnectionCmd) {
-                DataConnectionCmd cmd = (DataConnectionCmd) msg;
+            if (msg instanceof NeedDataConnectionCmd) {
+                NeedDataConnectionCmd cmd = (NeedDataConnectionCmd) msg;
                 DataConnection dataConnection = new DataConnection(cmd.getLocalHost(), cmd.getLocalPort(), serverHost, serverPort, cmd);
                 dataConnection.startConnection();
                 return;

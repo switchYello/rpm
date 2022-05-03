@@ -1,10 +1,11 @@
 package com.fys.handler;
 
 import com.fys.cmd.message.Cmd;
-import com.fys.cmd.message.DataConnectionCmd;
 import com.fys.cmd.message.LoginCmd;
+import com.fys.cmd.message.NewDataConnectionCmd;
 import com.fys.cmd.message.Ping;
 import com.fys.cmd.message.Pong;
+import com.fys.cmd.message.RawDataCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -26,21 +27,25 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         int flag = in.readInt();
 
-        //收到客户端pong,只有管理连接才能收到pong，数据连接不会发送Ping也就不会收到Pong
-        if (flag == Cmd.pong) {
-            out.add(Pong.decoderFrom(in));
+        if (flag == Cmd.rawData) {
+            out.add(RawDataCmd.decoderFrom(in));
             return;
         }
+
+        if (flag == Cmd.ClientToServer.newDataConnectionCmd) {
+            out.add(NewDataConnectionCmd.decoderFrom(in));
+            return;
+        }
+
         //收到客户端的ping
         if (flag == Cmd.ping) {
             out.add(Ping.decoderFrom(in));
             return;
         }
 
-        //新建数据连接
-        if (flag == Cmd.dataConnectionCmd) {
-            DataConnectionCmd cmd = DataConnectionCmd.decoderFrom(in);
-            out.add(cmd);
+        //收到客户端pong。服务端不会向客户端发送ping，所以不会受到pong，所以这里逻辑不会走到
+        if (flag == Cmd.pong) {
+            out.add(Pong.decoderFrom(in));
             return;
         }
 
