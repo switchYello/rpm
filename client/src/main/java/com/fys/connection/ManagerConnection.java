@@ -83,7 +83,7 @@ public class ManagerConnection {
         protected void channelRead0(ChannelHandlerContext ctx, Cmd msg) {
             if (msg instanceof NeedDataConnectionCmd) {
                 NeedDataConnectionCmd cmd = (NeedDataConnectionCmd) msg;
-                DataConnection dataConnection = new DataConnection(cmd.getLocalHost(), cmd.getLocalPort(), serverHost, serverPort, cmd);
+                DataConnection dataConnection = new DataConnection(serverHost, serverPort, cmd.getLocalHost(), cmd.getLocalPort(), cmd);
                 dataConnection.startConnection();
                 return;
             }

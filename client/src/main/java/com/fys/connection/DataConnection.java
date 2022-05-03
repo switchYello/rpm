@@ -31,20 +31,19 @@ public class DataConnection {
     private final int serverPort;
     private final NeedDataConnectionCmd msg;
 
-    public DataConnection(String localHost, int localPort, String serverHost, int serverPort, NeedDataConnectionCmd msg) {
-        this.localHost = localHost;
-        this.localPort = localPort;
+    public DataConnection(String serverHost, int serverPort, String localHost, int localPort, NeedDataConnectionCmd msg) {
         this.serverHost = serverHost;
         this.serverPort = serverPort;
+        this.localHost = localHost;
+        this.localPort = localPort;
         this.msg = msg;
     }
 
-    ConnectionToLocal localConnection;
-    ConnectionToService serviceConnection;
+    private ConnectionToService serviceConnection;
 
     //1.连接客户端和服务端
     public void startConnection() {
-        localConnection = new ConnectionToLocal();
+        ConnectionToLocal localConnection = new ConnectionToLocal();
         serviceConnection = new ConnectionToService();
         localConnection.bindToService(serviceConnection);
     }
@@ -113,9 +112,12 @@ public class DataConnection {
             return channel.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         }
 
-        public ChannelFuture close() {
-            channelToLocal.cancel(false);
-            return channel.close();
+        public void close() {
+            if (channel.isOpen()) {
+                log.info("主动关闭Local - {}", channel);
+                channelToLocal.cancel(false);
+                channel.close();
+            }
         }
 
     }
@@ -159,11 +161,13 @@ public class DataConnection {
             return channel.writeAndFlush(data).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         }
 
-        public ChannelFuture close() {
-            channelToService.cancel(false);
-            return channel.close();
+        public void close() {
+            if (channel.isOpen()) {
+                log.info("主动关闭服务端 - {}", channel);
+                channelToService.cancel(false);
+                channel.close();
+            }
         }
-
     }
 
 }
