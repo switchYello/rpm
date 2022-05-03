@@ -2,11 +2,9 @@ package com.fys.server;
 
 import com.fys.ClientManager;
 import com.fys.cmd.handler.CmdEncoder;
-import com.fys.cmd.handler.ErrorLogHandler;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.message.LoginAuthInfo;
 import com.fys.cmd.message.NewDataConnectionCmd;
-import com.fys.cmd.message.Ping;
 import com.fys.cmd.util.EventLoops;
 import com.fys.conf.ServerInfo;
 import com.fys.connection.DataConnection;
@@ -21,7 +19,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +31,8 @@ public class ManagerServer {
 
     private static final Logger log = LoggerFactory.getLogger(ManagerServer.class);
 
-    ClientManager clientManager;
-    ServerInfo serverInfo;
+    private ClientManager clientManager;
+    private ServerInfo serverInfo;
 
     public ManagerServer(ClientManager clientManager, ServerInfo serverInfo) {
         this.clientManager = clientManager;
@@ -51,13 +48,12 @@ public class ManagerServer {
                 .childOption(ChannelOption.TCP_NODELAY, true)
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
-                    protected void initChannel(Channel ch) throws Exception {
+                    protected void initChannel(Channel ch) {
                         ch.pipeline().addLast(new LoggingHandler());
+                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 600));
                         ch.pipeline().addLast(new CmdEncoder());
-                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 300));
                         ch.pipeline().addLast(new ServerCmdDecoder());
                         ch.pipeline().addLast(new ManagerHandler());
-                        ch.pipeline().addLast(new ErrorLogHandler());
                     }
                 })
                 .bind(serverInfo.getBindHost(), serverInfo.getBindPort())
@@ -70,43 +66,31 @@ public class ManagerServer {
                 });
     }
 
-    private class ManagerHandler extends ChannelInboundHandlerAdapter {
 
-        AttributeKey<ManagerConnection> managerConnectionKey = AttributeKey.valueOf("ManagerConnection");
+    private class ManagerHandler extends ChannelInboundHandlerAdapter {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
             //登录,创建ManagerConnection 处理登录消息
             if (msg instanceof LoginAuthInfo) {
                 log.debug("收到client登录请求:{}", ((LoginAuthInfo) msg).getClientName());
-                ManagerConnection managerConnection = ctx.channel().attr(managerConnectionKey).get();
-                if (managerConnection == null) {
-                    managerConnection = new ManagerConnection(ctx, clientManager, serverInfo);
-                    ctx.channel().attr(managerConnectionKey).set(managerConnection);
-                }
-                managerConnection.handlerLogin((LoginAuthInfo) msg);
-                return;
-            }
-            //收到Ping
-            if (msg instanceof Ping) {
-                ManagerConnection managerConnection = ctx.channel().attr(managerConnectionKey).get();
-                if (managerConnection != null) {
-                    managerConnection.handlerPing();
-                }
-                return;
+                ManagerConnection manager = new ManagerConnection(ctx, clientManager, serverInfo);
+                manager.handlerLogin((LoginAuthInfo) msg);
             }
             //新的数据连接
-            if (msg instanceof NewDataConnectionCmd) {
+            else if (msg instanceof NewDataConnectionCmd) {
                 log.debug("收到client数据连接请求:{}", msg);
                 NewDataConnectionCmd cmd = (NewDataConnectionCmd) msg;
-                //移除多余handler
-                ctx.pipeline().remove(ManagerHandler.class);
-                ctx.pipeline().remove(ErrorLogHandler.class);
-                clientManager.registerDataConnection(cmd.getSessionId(), new DataConnection(cmd, ctx));
-                return;
+                DataConnection dataConnection = new DataConnection(ctx);
+                clientManager.registerDataConnection(cmd.getSessionId(), dataConnection);
             }
-            ReferenceCountUtil.release(msg);
-            throw new RuntimeException("消息不能识别" + msg);
+            //无法识别
+            else {
+                log.info("服务端收到无法识别的消息:{}", msg);
+                ReferenceCountUtil.release(msg);
+                ctx.close();
+            }
+            ctx.pipeline().remove(this);
         }
     }
 

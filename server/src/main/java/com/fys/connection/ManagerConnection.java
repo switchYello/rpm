@@ -1,14 +1,21 @@
 package com.fys.connection;
 
 import com.fys.ClientManager;
+import com.fys.cmd.handler.ErrorLogHandler;
+import com.fys.cmd.listener.Listeners;
 import com.fys.cmd.message.LoginAuthInfo;
 import com.fys.cmd.message.LoginFailCmd;
+import com.fys.cmd.message.NeedDataConnectionCmd;
+import com.fys.cmd.message.Ping;
 import com.fys.cmd.message.Pong;
 import com.fys.cmd.util.CodeUtil;
+import com.fys.cmd.util.EventLoops;
+import com.fys.conf.ClientInfo;
 import com.fys.conf.ServerInfo;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,25 +32,40 @@ public class ManagerConnection {
     private static final Logger log = LoggerFactory.getLogger(ManagerConnection.class);
     private ChannelHandlerContext ctx;
     private ClientManager clientManager;
-    ServerInfo serverInfo;
-    String clientName;
+    private ServerInfo serverInfo;
+    private String clientName;
 
     public ManagerConnection(ChannelHandlerContext ctx, ClientManager clientManager, ServerInfo serverInfo) {
         this.ctx = ctx;
         this.clientManager = clientManager;
         this.serverInfo = serverInfo;
+        ctx.channel().closeFuture().addListener((ChannelFutureListener) future -> clientManager.unRegisterManagerConnection(ManagerConnection.this));
+        ctx.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+            @Override
+            public void channelRead(ChannelHandlerContext ctx, Object msg) {
+                if (msg instanceof Ping) {
+                    handlerPing();
+                    return;
+                }
+                if (msg instanceof LoginAuthInfo) {
+                    handlerLogin((LoginAuthInfo) msg);
+                    return;
+                }
+            }
+        });
+        ctx.pipeline().addLast(new ErrorLogHandler());
     }
 
-    public ChannelFuture writeMessage(Object obj) {
-        return ctx.writeAndFlush(obj);
+    public Promise<DataConnection> getTargetChannel(ClientInfo clientInfo) {
+        Promise<DataConnection> promise = EventLoops.newPromise();
+        NeedDataConnectionCmd msg = new NeedDataConnectionCmd(clientInfo.getLocalHost(), clientInfo.getLocalPort());
+        clientManager.registerNeedDataPromise(msg.getSessionId(), promise);
+        ctx.writeAndFlush(msg).addListeners(Listeners.ERROR_LOG, ChannelFutureListener.CLOSE_ON_FAILURE);
+        return promise;
     }
 
     public void close() {
         ctx.close();
-    }
-
-    public ChannelHandlerContext nativeChannel() {
-        return ctx;
     }
 
     public String getClientName() {
@@ -58,6 +80,7 @@ public class ManagerConnection {
         if (!Arrays.equals(msg.getReadMd5(), md5)) {
             log.info("客户端验证失败:{}", msg);
             ctx.writeAndFlush(new LoginFailCmd(msg.getClientName(), "验证失败")).addListener(ChannelFutureListener.CLOSE);
+            close();
             return;
         }
         if (clientName != null) {
@@ -69,7 +92,7 @@ public class ManagerConnection {
         log.info("客户端登录成功 - {}", ctx.channel());
     }
 
-    public void handlerPing() {
+    private void handlerPing() {
         ctx.writeAndFlush(new Pong()).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
     }
 

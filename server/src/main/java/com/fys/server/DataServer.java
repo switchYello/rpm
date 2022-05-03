@@ -15,7 +15,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
@@ -67,7 +66,7 @@ public class DataServer {
 
     private class DataHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
-        private DataConnection target;
+        private DataConnection targetConnection;
 
         /**
          * 用户连接创建后，开始与本地连接沟通
@@ -85,9 +84,9 @@ public class DataServer {
                 @Override
                 public void operationComplete(Future<DataConnection> future) {
                     if (future.isSuccess()) {
-                        target = future.getNow();
-                        target.bindToChannel(channelToUser);
-                        target.startTransaction();
+                        targetConnection = future.getNow();
+                        targetConnection.bindToChannel(channelToUser);
+                        targetConnection.startTransaction();
                         channelToUser.config().setAutoRead(true);
                     } else {
                         log.error("获取客户端连接失败", future.cause());
@@ -100,13 +99,13 @@ public class DataServer {
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
-            target.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+            targetConnection.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         }
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-            if (target != null) {
-                target.close();
+            if (targetConnection != null) {
+                targetConnection.close();
             }
             super.channelInactive(ctx);
         }

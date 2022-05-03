@@ -1,12 +1,9 @@
 package com.fys;
 
-import com.fys.cmd.listener.Listeners;
-import com.fys.cmd.message.NeedDataConnectionCmd;
 import com.fys.cmd.util.EventLoops;
 import com.fys.conf.ClientInfo;
 import com.fys.connection.DataConnection;
 import com.fys.connection.ManagerConnection;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,15 +28,19 @@ public class ClientManager {
 
     /**
      * 注册控制连接
-     *
-     * @param client 客户端
      */
     public void registerManagerConnection(ManagerConnection client) {
-        client.nativeChannel().channel().closeFuture().addListener((ChannelFutureListener) future -> clients.remove(client.getClientName()));
         ManagerConnection old = clients.put(client.getClientName(), client);
         if (old != null && old != client) {
             old.close();
         }
+    }
+
+    /**
+     * 取消注册客户端
+     */
+    public void unRegisterManagerConnection(ManagerConnection client) {
+        clients.remove(client.getClientName(), client);
     }
 
     /**
@@ -64,37 +65,30 @@ public class ClientManager {
         }
     }
 
+    public void registerNeedDataPromise(long sessionId, Promise<DataConnection> promise) {
+        needDataConnection.put(sessionId, promise);
+        EventLoops.schedule(() -> {
+            Promise<DataConnection> p = needDataConnection.remove(sessionId);
+            if (p != null) {
+                p.tryFailure(new TimeoutException("timeout1"));
+            }
+        }, 20, TimeUnit.SECONDS);
+    }
+
+
     /**
      * 获取客户端目标连接
      *
      * @param clientInfo 客户端信息
      */
     public Promise<DataConnection> getTargetChannel(ClientInfo clientInfo) {
-        Promise<DataConnection> promise = EventLoops.newPromise();
-        ManagerConnection manager = getClient(clientInfo.getClientName());
+        ManagerConnection manager = clients.get(clientInfo.getClientName());
         if (manager == null) {
+            Promise<DataConnection> promise = EventLoops.newPromise();
             promise.setFailure(new RuntimeException("未找到客户端:" + clientInfo.getClientName()));
             return promise;
         }
-        NeedDataConnectionCmd msg = new NeedDataConnectionCmd(clientInfo.getLocalHost(), clientInfo.getLocalPort());
-        needDataConnection.put(msg.getSessionId(), promise);
-        manager.writeMessage(msg).addListeners(Listeners.ERROR_LOG, ChannelFutureListener.CLOSE_ON_FAILURE);
-        EventLoops.schedule(() -> {
-            Promise<DataConnection> p = needDataConnection.remove(msg.getSessionId());
-            if (p != null) {
-                p.tryFailure(new TimeoutException("timeout1"));
-            }
-        }, 20, TimeUnit.SECONDS);
-        return promise;
-    }
-
-    /**
-     * 根据clientId查询客户端
-     *
-     * @param clientId 客户端名
-     */
-    private ManagerConnection getClient(String clientId) {
-        return clients.get(clientId);
+        return manager.getTargetChannel(clientInfo);
     }
 
 }
