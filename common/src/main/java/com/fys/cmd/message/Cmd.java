@@ -8,31 +8,35 @@ import io.netty.buffer.ByteBuf;
  */
 public interface Cmd {
 
-    int prefix = 'R' << 24 | 'P' << 16 | 'M' << 8;
-    //int prefix = 0;
+    int PREFIX = 'R' << 24 | 'P' << 16 | 'M' << 8;
+    //int PREFIX = 0;
 
     //raw数据
-    int rawData = prefix | 1;
+    int RAW_DATA = PREFIX | 1;
 
     //ping pong
-    int ping = prefix | 2;
-    int pong = prefix | 3;
+    int PING = PREFIX | 2;
+    int PONG = PREFIX | 3;
 
     //登陆失败
     interface ServerToClient {
         //登录认证失败
-        int loginFail = prefix | 4;
+        int LOGIN_FAIL = PREFIX | 4;
         //获取新连接
-        int needDataConnectionCmd = prefix | 5;
+        int NEED_DATA_CONNECTION_CMD = PREFIX | 5;
         //开始数据传输
-        int startTransactionCmd = prefix | 6;
+        int START_TRANSACTION_CMD = PREFIX | 6;
     }
 
     //发起登录
     interface ClientToServer {
-        int login = prefix | 7;
+        int LOGIN = PREFIX | 7;
         //新连接
-        int newDataConnectionCmd = prefix | 8;
+        int NEW_DATA_CONNECTION_CMD = PREFIX | 8;
+        //标识Manager连接
+        int MANAGER_CMD = PREFIX | 9;
+        //标识数据连接
+        int DATA_CMD = PREFIX | 10;
     }
 
     /*

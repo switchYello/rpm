@@ -19,7 +19,7 @@ public class LoginFailCmd implements Cmd {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeInt(ServerToClient.loginFail);
+        buf.writeInt(ServerToClient.LOGIN_FAIL);
         buf.writeInt(ByteBufUtil.utf8Bytes(clientName));
         buf.writeCharSequence(clientName, UTF_8);
         buf.writeInt(ByteBufUtil.utf8Bytes(failMsg));

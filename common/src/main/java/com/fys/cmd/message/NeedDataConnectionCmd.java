@@ -24,7 +24,7 @@ public class NeedDataConnectionCmd implements Cmd {
     //length host
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeInt(ServerToClient.needDataConnectionCmd);  //flag
+        buf.writeInt(ServerToClient.NEED_DATA_CONNECTION_CMD);  //flag
         buf.writeShort(ByteBufUtil.utf8Bytes(localHost)); //host length
         buf.writeCharSequence(localHost, UTF_8); //host
         buf.writeShort(localPort); //port

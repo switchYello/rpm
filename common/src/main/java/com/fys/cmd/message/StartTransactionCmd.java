@@ -10,7 +10,7 @@ public class StartTransactionCmd implements Cmd {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeInt(ServerToClient.startTransactionCmd);
+        buf.writeInt(ServerToClient.START_TRANSACTION_CMD);
     }
 
     public static StartTransactionCmd decoderFrom(ByteBuf in) {

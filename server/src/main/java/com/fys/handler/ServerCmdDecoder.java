@@ -1,10 +1,11 @@
 package com.fys.handler;
 
 import com.fys.cmd.message.Cmd;
+import com.fys.cmd.message.DataCmd;
 import com.fys.cmd.message.LoginCmd;
+import com.fys.cmd.message.ManagerCmd;
 import com.fys.cmd.message.NewDataConnectionCmd;
 import com.fys.cmd.message.Ping;
-import com.fys.cmd.message.Pong;
 import com.fys.cmd.message.RawDataCmd;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,25 +28,35 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         int flag = in.readInt();
 
-        if (flag == Cmd.rawData) {
+        if (flag == Cmd.RAW_DATA) {
             out.add(RawDataCmd.decoderFrom(in));
             return;
         }
 
-        if (flag == Cmd.ClientToServer.newDataConnectionCmd) {
+        if (flag == Cmd.ClientToServer.NEW_DATA_CONNECTION_CMD) {
             out.add(NewDataConnectionCmd.decoderFrom(in));
             return;
         }
 
         //收到客户端的ping
-        if (flag == Cmd.ping) {
+        if (flag == Cmd.PING) {
             out.add(Ping.decoderFrom(in));
             return;
         }
 
         //收到登录
-        if (flag == Cmd.ClientToServer.login) {
+        if (flag == Cmd.ClientToServer.LOGIN) {
             out.add(LoginCmd.decoderFrom(in));
+            return;
+        }
+
+        if (flag == Cmd.ClientToServer.MANAGER_CMD) {
+            out.add(new ManagerCmd());
+            return;
+        }
+
+        if (flag == Cmd.ClientToServer.DATA_CMD) {
+            out.add(new DataCmd());
             return;
         }
 

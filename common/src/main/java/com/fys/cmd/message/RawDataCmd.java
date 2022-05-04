@@ -21,7 +21,7 @@ public class RawDataCmd implements Cmd, ReferenceCounted {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeInt(Cmd.rawData);
+        buf.writeInt(Cmd.RAW_DATA);
         buf.writeInt(content.readableBytes());
         buf.writeBytes(content);
     }

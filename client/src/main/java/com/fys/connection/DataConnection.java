@@ -3,6 +3,7 @@ package com.fys.connection;
 import com.fys.InnerConnectionFactory;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.message.Cmd;
+import com.fys.cmd.message.DataCmd;
 import com.fys.cmd.message.NeedDataConnectionCmd;
 import com.fys.cmd.message.NewDataConnectionCmd;
 import com.fys.cmd.message.RawDataCmd;
@@ -58,8 +59,8 @@ public class DataConnection {
     //3.服务器连接成功后，发送指令
     private void onServiceActive(ConnectionToService service) {
         log.debug("serviceActive");
-        NewDataConnectionCmd cmd = new NewDataConnectionCmd(msg.getSessionId());
-        service.writeAndFlush(cmd);
+        service.writeAndFlush(new DataCmd());
+        service.writeAndFlush(new NewDataConnectionCmd(msg.getSessionId()));
     }
 
     private void onClientRead(ByteBuf msg, ConnectionToLocal local, ConnectionToService service) {

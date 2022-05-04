@@ -4,8 +4,8 @@ import com.fys.ClientManager;
 import com.fys.Debug;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.TimeOutHandler;
-import com.fys.cmd.message.LoginAuthInfo;
-import com.fys.cmd.message.NewDataConnectionCmd;
+import com.fys.cmd.message.DataCmd;
+import com.fys.cmd.message.ManagerCmd;
 import com.fys.cmd.util.EventLoops;
 import com.fys.conf.ServerInfo;
 import com.fys.connection.DataConnection;
@@ -78,18 +78,15 @@ public class ManagerServer {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            //登录,创建ManagerConnection 处理登录消息
-            if (msg instanceof LoginAuthInfo) {
-                log.debug("收到client登录请求:{}", ((LoginAuthInfo) msg).getClientName());
-                ManagerConnection manager = new ManagerConnection(ctx, clientManager, serverInfo);
-                manager.handlerLogin((LoginAuthInfo) msg);
+            //管理连接
+            if (msg instanceof ManagerCmd) {
+                log.debug("收到管理连接请求");
+                new ManagerConnection(ctx, clientManager, serverInfo);
             }
-            //新的数据连接
-            else if (msg instanceof NewDataConnectionCmd) {
-                log.debug("收到client数据连接请求:{}", msg);
-                NewDataConnectionCmd cmd = (NewDataConnectionCmd) msg;
-                DataConnection dataConnection = new DataConnection(ctx);
-                clientManager.registerDataConnection(cmd.getSessionId(), dataConnection);
+            //数据连接
+            else if (msg instanceof DataCmd) {
+                log.debug("收到数据连接请求");
+                new DataConnection(ctx, clientManager);
             }
             //无法识别
             else {

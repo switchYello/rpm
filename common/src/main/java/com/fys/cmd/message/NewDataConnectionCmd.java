@@ -16,7 +16,7 @@ public class NewDataConnectionCmd implements Cmd {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeInt(ClientToServer.newDataConnectionCmd);
+        buf.writeInt(ClientToServer.NEW_DATA_CONNECTION_CMD);
         buf.writeLong(sessionId);
     }
 

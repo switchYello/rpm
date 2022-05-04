@@ -11,7 +11,7 @@ public class Pong implements Cmd {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeInt(Cmd.pong);
+        buf.writeInt(Cmd.PONG);
     }
 
     public static Pong decoderFrom(ByteBuf in) {

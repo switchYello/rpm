@@ -1,6 +1,8 @@
 package com.fys.connection;
 
+import com.fys.ClientManager;
 import com.fys.cmd.handler.ErrorLogHandler;
+import com.fys.cmd.message.NewDataConnectionCmd;
 import com.fys.cmd.message.RawDataCmd;
 import com.fys.cmd.message.StartTransactionCmd;
 import io.netty.buffer.ByteBuf;
@@ -24,13 +26,16 @@ public class DataConnection {
     private ChannelHandlerContext ctx;
     private Channel target;
 
-    //
-    public DataConnection(ChannelHandlerContext ctx) {
+    public DataConnection(ChannelHandlerContext ctx, ClientManager clientManager) {
         this.ctx = ctx;
         ctx.pipeline().addLast(new ChannelInboundHandlerAdapter() {
             @Override
             public void channelRead(ChannelHandlerContext ctx, Object msg) {
-                if (target == null) {
+                if (msg instanceof NewDataConnectionCmd) {
+                    clientManager.registerDataConnection(((NewDataConnectionCmd) msg).getSessionId(), DataConnection.this);
+                    return;
+                }
+                if (msg instanceof RawDataCmd && target == null) {
                     throw new IllegalStateException("未绑定前不可能读取数据");
                 }
                 if (msg instanceof RawDataCmd) {

@@ -8,6 +8,7 @@ import com.fys.cmd.handler.PingHandler;
 import com.fys.cmd.message.Cmd;
 import com.fys.cmd.message.LoginCmd;
 import com.fys.cmd.message.LoginFailCmd;
+import com.fys.cmd.message.ManagerCmd;
 import com.fys.cmd.message.NeedDataConnectionCmd;
 import com.fys.handler.CmdDecoder;
 import io.netty.channel.ChannelFuture;
@@ -79,6 +80,7 @@ public class ManagerConnection {
          */
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
+            ctx.write(new ManagerCmd());
             ctx.writeAndFlush(new LoginCmd(clientName, serverToken)).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         }
 

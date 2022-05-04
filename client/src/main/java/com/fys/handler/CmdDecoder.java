@@ -24,23 +24,23 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         int flag = in.readInt();
-        if (flag == Cmd.rawData) {
+        if (flag == Cmd.RAW_DATA) {
             out.add(RawDataCmd.decoderFrom(in));
             return;
         }
-        if (flag == Cmd.pong) {
+        if (flag == Cmd.PONG) {
             out.add(Pong.decoderFrom(in));
             return;
         }
-        if (flag == Cmd.ServerToClient.needDataConnectionCmd) {
+        if (flag == Cmd.ServerToClient.NEED_DATA_CONNECTION_CMD) {
             out.add(NeedDataConnectionCmd.decoderFrom(in));
             return;
         }
-        if (flag == Cmd.ServerToClient.startTransactionCmd) {
+        if (flag == Cmd.ServerToClient.START_TRANSACTION_CMD) {
             out.add(StartTransactionCmd.decoderFrom(in));
             return;
         }
-        if (flag == Cmd.ServerToClient.loginFail) {
+        if (flag == Cmd.ServerToClient.LOGIN_FAIL) {
             out.add(LoginFailCmd.decoderFrom(in));
             return;
         }

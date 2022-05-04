@@ -24,7 +24,7 @@ public class LoginCmd implements Cmd {
     public void encoderTo(ByteBuf buf) {
         long timeStamp = System.currentTimeMillis();
         byte[] md5 = CodeUtil.md5((clientName + timeStamp + serverToken).getBytes(UTF_8)); //用户名加时间戳加token取md5，md5是128位
-        buf.writeInt(ClientToServer.login);
+        buf.writeInt(ClientToServer.LOGIN);
         buf.writeShort(ByteBufUtil.utf8Bytes(clientName)); //用户名长度
         buf.writeCharSequence(clientName, UTF_8); //用户名
         buf.writeLong(timeStamp); //时间戳
