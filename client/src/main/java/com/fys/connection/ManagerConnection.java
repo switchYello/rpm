@@ -60,20 +60,20 @@ public class ManagerConnection {
                 pipeline.addLast(new LoggingHandler());
                 pipeline.addLast(new CmdEncoder());
                 pipeline.addLast(new CmdDecoder());
-                pipeline.addLast(new ConnectionInitHandler());
+                pipeline.addLast(new ManagerHandler());
                 pipeline.addLast(new ErrorLogHandler());
             } else {
                 pipeline.addLast(new CmdEncoder());
                 pipeline.addLast(new CmdDecoder());
                 pipeline.addLast(new PingHandler()); //定时发ping
-                pipeline.addLast(new ConnectionInitHandler());
+                pipeline.addLast(new ManagerHandler());
                 pipeline.addLast(new ErrorLogHandler());
             }
         });
         return future;
     }
 
-    private class ConnectionInitHandler extends SimpleChannelInboundHandler<Cmd> {
+    private class ManagerHandler extends SimpleChannelInboundHandler<Cmd> {
         /**
          * 连接服务器成功后，发送登录指令
          */
@@ -100,7 +100,7 @@ public class ManagerConnection {
                 ctx.close();
                 return;
             }
-            log.info("收到未识别的消息:{}", msg);
+            log.error("收到未识别的消息:{}", msg);
             ctx.close();
         }
     }

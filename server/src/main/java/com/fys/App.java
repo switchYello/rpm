@@ -26,7 +26,9 @@ public class App {
      * -c config.properties
      * */
     public static void main(String[] args) throws ParseException {
-        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+        if (Debug.isDebug) {
+            ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+        }
         Config config = parseConfig(args);
         ClientManager clientManager = new ClientManager();
 

@@ -75,7 +75,7 @@ public class DataConnection {
         } else if (msg instanceof RawDataCmd) {
             local.writeAndFlush(((RawDataCmd) msg).getContent());
         } else {
-            log.info("接收到服务端未识别消息:{}", msg);
+            log.error("接收到服务端未识别消息:{}", msg);
             ReferenceCountUtil.release(msg);
         }
     }

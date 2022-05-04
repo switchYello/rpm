@@ -1,6 +1,7 @@
 package com.fys.server;
 
 import com.fys.ClientManager;
+import com.fys.Debug;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.TimeOutHandler;
 import com.fys.cmd.message.LoginAuthInfo;
@@ -49,11 +50,17 @@ public class ManagerServer {
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) {
-                        ch.pipeline().addLast(new LoggingHandler());
-                        ch.pipeline().addLast(new TimeOutHandler(0, 0, 600));
-                        ch.pipeline().addLast(new CmdEncoder());
-                        ch.pipeline().addLast(new ServerCmdDecoder());
-                        ch.pipeline().addLast(new ManagerHandler());
+                        if (Debug.isDebug) {
+                            ch.pipeline().addLast(new LoggingHandler());
+                            ch.pipeline().addLast(new CmdEncoder());
+                            ch.pipeline().addLast(new ServerCmdDecoder());
+                            ch.pipeline().addLast(new ManagerHandler());
+                        } else {
+                            ch.pipeline().addLast(new TimeOutHandler(0, 0, 600));
+                            ch.pipeline().addLast(new CmdEncoder());
+                            ch.pipeline().addLast(new ServerCmdDecoder());
+                            ch.pipeline().addLast(new ManagerHandler());
+                        }
                     }
                 })
                 .bind(serverInfo.getBindHost(), serverInfo.getBindPort())

@@ -73,7 +73,7 @@ public class DataServer {
          */
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            log.debug("收到客户请求，准备获取客户端连接");
+            log.debug("收到用户请求，准备获取客户端连接");
             //获取本地连接
             Promise<DataConnection> targetPromise = clientManager.getTargetChannel(clientInfo);
 
