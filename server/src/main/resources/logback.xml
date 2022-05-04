@@ -21,7 +21,7 @@
         </rollingPolicy>
     </appender>
 
-    <root level="debug">
+    <root level="info">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="server_info_log"/>
     </root>
