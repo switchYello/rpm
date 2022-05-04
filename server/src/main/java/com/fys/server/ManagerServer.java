@@ -54,12 +54,12 @@ public class ManagerServer {
                             ch.pipeline().addLast(new LoggingHandler());
                             ch.pipeline().addLast(new CmdEncoder());
                             ch.pipeline().addLast(new ServerCmdDecoder());
-                            ch.pipeline().addLast(new ManagerHandler());
+                            ch.pipeline().addLast(new ConnectionInitHandler());
                         } else {
                             ch.pipeline().addLast(new TimeOutHandler(0, 0, 600));
                             ch.pipeline().addLast(new CmdEncoder());
                             ch.pipeline().addLast(new ServerCmdDecoder());
-                            ch.pipeline().addLast(new ManagerHandler());
+                            ch.pipeline().addLast(new ConnectionInitHandler());
                         }
                     }
                 })
@@ -74,7 +74,7 @@ public class ManagerServer {
     }
 
 
-    private class ManagerHandler extends ChannelInboundHandlerAdapter {
+    private class ConnectionInitHandler extends ChannelInboundHandlerAdapter {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -93,7 +93,7 @@ public class ManagerServer {
             }
             //无法识别
             else {
-                log.info("服务端收到无法识别的消息:{}", msg);
+                log.error("收到无法识别的消息:{}", msg);
                 ReferenceCountUtil.release(msg);
                 ctx.close();
             }

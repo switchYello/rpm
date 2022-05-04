@@ -15,6 +15,7 @@ import com.fys.conf.ServerInfo;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,8 @@ public class ManagerConnection {
                     handlerLogin((LoginAuthInfo) msg);
                     return;
                 }
+                log.error("收到未识别消息:{}", msg);
+                ReferenceCountUtil.release(msg);
             }
         });
         ctx.pipeline().addLast(new ErrorLogHandler());
