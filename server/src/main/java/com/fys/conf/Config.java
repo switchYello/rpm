@@ -1,5 +1,6 @@
 package com.fys.conf;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.FileInputStream;
@@ -23,6 +24,7 @@ public class Config {
             throw new IllegalArgumentException("配置文件不存在:" + configPath);
         }
         ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false);
         try {
             return mapper.readValue(input, Config.class);
         } catch (IOException e) {
