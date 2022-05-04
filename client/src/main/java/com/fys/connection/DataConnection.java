@@ -8,7 +8,7 @@ import com.fys.cmd.message.NeedDataConnectionCmd;
 import com.fys.cmd.message.NewDataConnectionCmd;
 import com.fys.cmd.message.RawDataCmd;
 import com.fys.cmd.message.StartTransactionCmd;
-import com.fys.handler.CmdDecoder;
+import com.fys.handler.DataCmdDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -150,7 +150,7 @@ public class DataConnection {
                 public void operationComplete(ChannelFuture future) {
                     if (future.isSuccess()) {
                         pipeline.addLast(new CmdEncoder()); //编码器
-                        pipeline.addLast(new CmdDecoder()); //解码器
+                        pipeline.addLast(new DataCmdDecoder()); //解码器
                         pipeline.addLast(new ChannelInboundHandlerAdapter() {
                             @Override
                             public void channelRead(ChannelHandlerContext ctx, Object msg) {

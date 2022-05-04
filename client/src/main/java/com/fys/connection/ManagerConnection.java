@@ -10,7 +10,7 @@ import com.fys.cmd.message.LoginCmd;
 import com.fys.cmd.message.LoginFailCmd;
 import com.fys.cmd.message.ManagerCmd;
 import com.fys.cmd.message.NeedDataConnectionCmd;
-import com.fys.handler.CmdDecoder;
+import com.fys.handler.ManagerCmdDecoder;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -60,12 +60,12 @@ public class ManagerConnection {
             if (Debug.isDebug) {
                 pipeline.addLast(new LoggingHandler());
                 pipeline.addLast(new CmdEncoder());
-                pipeline.addLast(new CmdDecoder());
+                pipeline.addLast(new ManagerCmdDecoder());
                 pipeline.addLast(new ManagerHandler());
                 pipeline.addLast(new ErrorLogHandler());
             } else {
                 pipeline.addLast(new CmdEncoder());
-                pipeline.addLast(new CmdDecoder());
+                pipeline.addLast(new ManagerCmdDecoder());
                 pipeline.addLast(new PingHandler()); //定时发ping
                 pipeline.addLast(new ManagerHandler());
                 pipeline.addLast(new ErrorLogHandler());

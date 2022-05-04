@@ -1,9 +1,6 @@
 package com.fys.handler;
 
 import com.fys.cmd.message.Cmd;
-import com.fys.cmd.message.LoginFailCmd;
-import com.fys.cmd.message.NeedDataConnectionCmd;
-import com.fys.cmd.message.Pong;
 import com.fys.cmd.message.RawDataCmd;
 import com.fys.cmd.message.StartTransactionCmd;
 import io.netty.buffer.ByteBuf;
@@ -15,11 +12,12 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- * hcy 2020/2/18
+ * @author hcy
+ * @since 2022/5/4 14:04
  */
-public class CmdDecoder extends ReplayingDecoder<Void> {
+public class DataCmdDecoder extends ReplayingDecoder<Void> {
 
-    private static Logger log = LoggerFactory.getLogger(CmdDecoder.class);
+    private static Logger log = LoggerFactory.getLogger(DataCmdDecoder.class);
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
@@ -28,20 +26,8 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
             out.add(RawDataCmd.decoderFrom(in));
             return;
         }
-        if (flag == Cmd.PONG) {
-            out.add(new Pong());
-            return;
-        }
-        if (flag == Cmd.ServerToClient.NEED_DATA_CONNECTION_CMD) {
-            out.add(NeedDataConnectionCmd.decoderFrom(in));
-            return;
-        }
         if (flag == Cmd.ServerToClient.START_TRANSACTION_CMD) {
             out.add(new StartTransactionCmd());
-            return;
-        }
-        if (flag == Cmd.ServerToClient.LOGIN_FAIL) {
-            out.add(LoginFailCmd.decoderFrom(in));
             return;
         }
         log.error("无法识别服务端发送的指令,指令:{}", flag);
