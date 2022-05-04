@@ -20,7 +20,7 @@ import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Objects;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -79,8 +79,8 @@ public class ManagerConnection {
      * 验证登录信息，如已登录则忽略，如验证失败则发送响应后关闭连接
      */
     public void handlerLogin(LoginAuthInfo msg) {
-        byte[] md5 = CodeUtil.md5((msg.getClientName() + msg.getTimeStamp() + serverInfo.getToken()).getBytes(UTF_8));
-        if (!Arrays.equals(msg.getReadMd5(), md5)) {
+        String md5 = CodeUtil.md5Str((msg.getClientName() + msg.getTimeStamp() + serverInfo.getToken()).getBytes(UTF_8));
+        if (!Objects.equals(md5, msg.getReadMd5())) {
             log.info("客户端验证失败:{}", msg);
             ctx.writeAndFlush(new LoginFailCmd(msg.getClientName(), "验证失败")).addListener(ChannelFutureListener.CLOSE);
             close();

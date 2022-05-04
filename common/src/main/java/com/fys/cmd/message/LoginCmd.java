@@ -23,12 +23,12 @@ public class LoginCmd implements Cmd {
     @Override
     public void encoderTo(ByteBuf buf) {
         long timeStamp = System.currentTimeMillis();
-        byte[] md5 = CodeUtil.md5((clientName + timeStamp + serverToken).getBytes(UTF_8)); //用户名加时间戳加token取md5，md5是128位
         buf.writeInt(ClientToServer.LOGIN);
         buf.writeShort(ByteBufUtil.utf8Bytes(clientName)); //用户名长度
         buf.writeCharSequence(clientName, UTF_8); //用户名
         buf.writeLong(timeStamp); //时间戳
-        buf.writeBytes(md5); //签名
+        String md5 = CodeUtil.md5Str((clientName + timeStamp + serverToken).getBytes(UTF_8)); //用户名加时间戳加token取md5，md5是32位长度
+        buf.writeCharSequence(md5, UTF_8); //签名 32位固定长度
     }
 
     //客户端名长度(小于50)  客户端名  时间戳  签名
@@ -36,9 +36,8 @@ public class LoginCmd implements Cmd {
         int clientNameLength = in.readShort();
         String clientName = in.readCharSequence(clientNameLength, UTF_8).toString();
         long timeStamp = in.readLong();
-        byte[] readMd5 = new byte[16];
-        in.readBytes(readMd5);
-        return new LoginAuthInfo(clientName, timeStamp, readMd5);
+        String md5 = in.readCharSequence(32, UTF_8).toString();
+        return new LoginAuthInfo(clientName, timeStamp, md5);
     }
 
     @Override

@@ -8,6 +8,13 @@ import java.security.NoSuchAlgorithmException;
  */
 public class CodeUtil {
 
+    private static char[] TABLE = {
+            '0', '1', '2', '3',
+            '4', '5', '6', '7',
+            '8', '9', 'a', 'b',
+            'c', 'd', 'e', 'f'
+    };
+
     public static byte[] md5(byte[] src) {
         try {
             MessageDigest md = MessageDigest.getInstance("md5");
@@ -15,6 +22,16 @@ public class CodeUtil {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String md5Str(byte[] src) {
+        byte[] bytes = md5(src);
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(TABLE[b >>> 4 & 0x0f]);
+            sb.append(TABLE[b & 0x0f]);
+        }
+        return sb.toString();
     }
 
     public static byte[] md5(byte[] src, byte[] src2) {
