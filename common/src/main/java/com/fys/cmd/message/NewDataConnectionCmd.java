@@ -9,24 +9,24 @@ import io.netty.buffer.ByteBuf;
  */
 public class NewDataConnectionCmd implements Cmd {
 
-    private long sessionId;
+    private int sessionId;
 
-    public NewDataConnectionCmd(long sessionId) {
+    public NewDataConnectionCmd(int sessionId) {
         this.sessionId = sessionId;
     }
 
     @Override
     public void encoderTo(ByteBuf buf) {
         buf.writeInt(ClientToServer.NEW_DATA_CONNECTION_CMD);
-        buf.writeLong(sessionId);
+        buf.writeInt(sessionId);
     }
 
     public static NewDataConnectionCmd decoderFrom(ByteBuf in) {
-        long sessionId = in.readLong();
+        int sessionId = in.readInt();
         return new NewDataConnectionCmd(sessionId);
     }
 
-    public long getSessionId() {
+    public int getSessionId() {
         return sessionId;
     }
 }

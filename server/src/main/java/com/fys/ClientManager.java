@@ -24,7 +24,7 @@ public class ClientManager {
     //存储客户端 managerConnection
     private Map<String, ManagerConnection> clients = new ConcurrentHashMap<>();
     //存储需要客户端数据连接的promise
-    private Map<Long, Promise<DataConnection>> needDataConnection = new ConcurrentHashMap<>();
+    private Map<Integer, Promise<DataConnection>> needDataConnection = new ConcurrentHashMap<>();
 
     /**
      * 注册控制连接
@@ -45,12 +45,9 @@ public class ClientManager {
 
     /**
      * 注册数据连接
-     *
-     * @param token          请求token
-     * @param dataConnection 数据连接
      */
-    public void registerDataConnection(long token, DataConnection dataConnection) {
-        Promise<DataConnection> promise = needDataConnection.remove(token);
+    public void registerDataConnection(int sessionId, DataConnection dataConnection) {
+        Promise<DataConnection> promise = needDataConnection.remove(sessionId);
         if (promise == null) {
             log.warn("not find promise for DataConnection");
             dataConnection.close();
@@ -65,7 +62,7 @@ public class ClientManager {
         }
     }
 
-    public void registerNeedDataPromise(long sessionId, Promise<DataConnection> promise) {
+    public void registerNeedDataPromise(int sessionId, Promise<DataConnection> promise) {
         needDataConnection.put(sessionId, promise);
         EventLoops.schedule(() -> {
             Promise<DataConnection> p = needDataConnection.remove(sessionId);

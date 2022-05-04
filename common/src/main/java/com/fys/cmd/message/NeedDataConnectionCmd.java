@@ -1,5 +1,6 @@
 package com.fys.cmd.message;
 
+import com.fys.cmd.util.IdUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 
@@ -14,12 +15,12 @@ public class NeedDataConnectionCmd implements Cmd {
 
     private String localHost;
     private int localPort;
-    private long sessionId;
+    private int sessionId;
 
     public NeedDataConnectionCmd(String localHost, int localPort) {
         this.localHost = localHost;
         this.localPort = localPort;
-        this.sessionId = System.nanoTime();
+        this.sessionId = IdUtils.nextId();
     }
 
     //length host
@@ -29,16 +30,16 @@ public class NeedDataConnectionCmd implements Cmd {
         buf.writeShort(ByteBufUtil.utf8Bytes(localHost)); //host length
         buf.writeCharSequence(localHost, UTF_8); //host
         buf.writeShort(localPort); //port
-        buf.writeLong(sessionId); //sessionId
+        buf.writeInt(sessionId); //sessionId
     }
 
     public static NeedDataConnectionCmd decoderFrom(ByteBuf in) {
         short hostLength = in.readShort();
         CharSequence localHost = in.readCharSequence(hostLength, UTF_8);
-        int localPort = in.readUnsignedShort();
-        long token = in.readLong();
+        int localPort = in.readShort();
+        int sessionId = in.readInt();
         NeedDataConnectionCmd cmd = new NeedDataConnectionCmd(localHost.toString(), localPort);
-        cmd.sessionId = token;
+        cmd.sessionId = sessionId;
         return cmd;
     }
 
@@ -50,7 +51,7 @@ public class NeedDataConnectionCmd implements Cmd {
         return localPort;
     }
 
-    public long getSessionId() {
+    public int getSessionId() {
         return sessionId;
     }
 }
