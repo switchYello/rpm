@@ -8,6 +8,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author hcy
  * @since 2022/5/3 16:21
+ * 由服务端发送到客户端，表明需要一个指向此地址的连接
  */
 public class NeedDataConnectionCmd implements Cmd {
 

@@ -6,6 +6,7 @@ import io.netty.util.ReferenceCounted;
 /**
  * @author hcy
  * @since 2022/5/3 15:59
+ * 原始数据
  */
 public class RawDataCmd implements Cmd, ReferenceCounted {
 

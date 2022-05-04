@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
 /**
  * @author hcy
  * @since 2022/5/4 12:10
+ * 标识该连接是管理连接
  */
 public class ManagerCmd implements Cmd {
 
