@@ -1,17 +1,17 @@
 package com.fys.cmd.message;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.util.ReferenceCounted;
 
 /**
  * @author hcy
  * @since 2022/5/3 15:59
  */
-public class RawDataCmd implements Cmd {
+public class RawDataCmd implements Cmd, ReferenceCounted {
 
-    ByteBuf content;
+    private ByteBuf content;
 
     public RawDataCmd(ByteBuf content) {
-        content.retain();
         this.content = content.slice();
     }
 
@@ -32,4 +32,40 @@ public class RawDataCmd implements Cmd {
         return new RawDataCmd(data);
     }
 
+    @Override
+    public int refCnt() {
+        return content.refCnt();
+    }
+
+    @Override
+    public ReferenceCounted retain() {
+        return content.retain();
+    }
+
+    @Override
+    public ReferenceCounted retain(int increment) {
+        return content.retain(increment);
+    }
+
+    @Override
+    public ReferenceCounted touch() {
+        content.touch();
+        return this;
+    }
+
+    @Override
+    public ReferenceCounted touch(Object hint) {
+        content.touch(hint);
+        return this;
+    }
+
+    @Override
+    public boolean release() {
+        return content.release();
+    }
+
+    @Override
+    public boolean release(int decrement) {
+        return content.release(decrement);
+    }
 }

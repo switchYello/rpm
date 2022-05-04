@@ -61,7 +61,7 @@ public class ClientManager {
             promise.cancel(false);
             dataConnection.close();
         } else {
-            log.debug("数据连接批次成功");
+            log.debug("数据连接对接成功");
         }
     }
 

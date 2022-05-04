@@ -8,7 +8,10 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.ReferenceCountUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author hcy
@@ -16,19 +19,26 @@ import io.netty.channel.SimpleChannelInboundHandler;
  */
 public class DataConnection {
 
+    private static Logger log = LoggerFactory.getLogger(DataConnection.class);
+
     private ChannelHandlerContext ctx;
     private Channel target;
 
     //
     public DataConnection(ChannelHandlerContext ctx) {
         this.ctx = ctx;
-        ctx.pipeline().addLast(new SimpleChannelInboundHandler<RawDataCmd>() {
+        ctx.pipeline().addLast(new ChannelInboundHandlerAdapter() {
             @Override
-            public void channelRead0(ChannelHandlerContext ctx, RawDataCmd msg) {
+            public void channelRead(ChannelHandlerContext ctx, Object msg) {
                 if (target == null) {
                     throw new IllegalStateException("未绑定前不可能读取数据");
                 }
-                target.writeAndFlush(msg.getContent()).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+                if (msg instanceof RawDataCmd) {
+                    target.writeAndFlush(((RawDataCmd) msg).getContent()).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+                    return;
+                }
+                log.info("接收到未识别的数据:{}", msg);
+                ReferenceCountUtil.release(msg);
             }
 
             @Override
@@ -42,7 +52,8 @@ public class DataConnection {
     }
 
     public ChannelFuture writeAndFlush(ByteBuf msg) {
-        return ctx.writeAndFlush(new RawDataCmd(msg));
+        RawDataCmd rawDataCmd = new RawDataCmd(msg);
+        return ctx.writeAndFlush(rawDataCmd);
     }
 
     //发送开始传输数据指令给客户端，没发送前客户端不会传输数据

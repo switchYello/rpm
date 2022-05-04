@@ -13,8 +13,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +70,9 @@ public class DataConnection {
             local.startRead();
         } else if (msg instanceof RawDataCmd) {
             local.writeAndFlush(((RawDataCmd) msg).getContent());
+        } else {
+            log.info("接收到服务端未识别消息:{}", msg);
+            ReferenceCountUtil.release(msg);
         }
     }
 
@@ -90,10 +94,10 @@ public class DataConnection {
                 @Override
                 public void operationComplete(ChannelFuture future) {
                     if (future.isSuccess()) {
-                        pipeline.addLast(new SimpleChannelInboundHandler<ByteBuf>() {
+                        pipeline.addLast(new ChannelInboundHandlerAdapter() {
                             @Override
-                            protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
-                                onClientRead(msg, ConnectionToLocal.this, service);
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) {
+                                onClientRead((ByteBuf) msg, ConnectionToLocal.this, service);
                             }
                         });
                         onClientActive(ConnectionToLocal.this);
@@ -142,9 +146,9 @@ public class DataConnection {
                     if (future.isSuccess()) {
                         pipeline.addLast(new CmdEncoder()); //编码器
                         pipeline.addLast(new CmdDecoder()); //解码器
-                        pipeline.addLast(new SimpleChannelInboundHandler<Cmd>() {
+                        pipeline.addLast(new ChannelInboundHandlerAdapter() {
                             @Override
-                            protected void channelRead0(ChannelHandlerContext ctx, Cmd msg) {
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) {
                                 onServiceRead(msg, local, ConnectionToService.this);
                             }
                         });

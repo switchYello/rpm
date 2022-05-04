@@ -11,9 +11,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -64,7 +64,7 @@ public class DataServer {
                 });
     }
 
-    private class DataHandler extends SimpleChannelInboundHandler<ByteBuf> {
+    private class DataHandler extends ChannelInboundHandlerAdapter {
 
         private DataConnection targetConnection;
 
@@ -98,8 +98,9 @@ public class DataServer {
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
-            targetConnection.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            ByteBuf buf = (ByteBuf) msg;
+            targetConnection.writeAndFlush(buf).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
         }
 
         @Override

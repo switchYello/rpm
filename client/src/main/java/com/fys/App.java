@@ -2,6 +2,7 @@ package com.fys;
 
 import com.fys.connection.ManagerConnection;
 import io.netty.channel.ChannelFuture;
+import io.netty.util.ResourceLeakDetector;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
@@ -28,6 +29,7 @@ public class App {
     private static Options OPTIONS = new Options();
 
     public static void main(String[] args) throws ParseException {
+        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         Config config = parseConfig(args);
         ex.scheduleWithFixedDelay(() -> {
             log.info("启动客户端:{}", count.getAndIncrement());
