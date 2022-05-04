@@ -29,7 +29,7 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
             return;
         }
         if (flag == Cmd.PONG) {
-            out.add(Pong.decoderFrom(in));
+            out.add(new Pong());
             return;
         }
         if (flag == Cmd.ServerToClient.NEED_DATA_CONNECTION_CMD) {
@@ -37,7 +37,7 @@ public class CmdDecoder extends ReplayingDecoder<Void> {
             return;
         }
         if (flag == Cmd.ServerToClient.START_TRANSACTION_CMD) {
-            out.add(StartTransactionCmd.decoderFrom(in));
+            out.add(new StartTransactionCmd());
             return;
         }
         if (flag == Cmd.ServerToClient.LOGIN_FAIL) {

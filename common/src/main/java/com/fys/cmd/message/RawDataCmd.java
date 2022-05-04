@@ -9,6 +9,9 @@ import io.netty.util.ReferenceCounted;
  */
 public class RawDataCmd implements Cmd, ReferenceCounted {
 
+    //最大传输包大小，超过此值进行切分
+    private static final int limitPackageSize = 0x3FFF;
+
     private ByteBuf content;
 
     public RawDataCmd(ByteBuf content) {
@@ -21,13 +24,16 @@ public class RawDataCmd implements Cmd, ReferenceCounted {
 
     @Override
     public void encoderTo(ByteBuf buf) {
-        buf.writeInt(Cmd.RAW_DATA);
-        buf.writeInt(content.readableBytes());
-        buf.writeBytes(content);
+        while (content.isReadable()) {
+            int minSize = Math.min(limitPackageSize, content.readableBytes());
+            buf.writeInt(Cmd.RAW_DATA);
+            buf.writeShort(minSize);
+            buf.writeBytes(content, minSize);
+        }
     }
 
     public static RawDataCmd decoderFrom(ByteBuf in) {
-        int dataLength = in.readInt();
+        short dataLength = in.readShort();
         ByteBuf data = in.readBytes(dataLength);
         return new RawDataCmd(data);
     }

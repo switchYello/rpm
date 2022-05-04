@@ -13,8 +13,4 @@ public class StartTransactionCmd implements Cmd {
         buf.writeInt(ServerToClient.START_TRANSACTION_CMD);
     }
 
-    public static StartTransactionCmd decoderFrom(ByteBuf in) {
-        return new StartTransactionCmd();
-    }
-
 }

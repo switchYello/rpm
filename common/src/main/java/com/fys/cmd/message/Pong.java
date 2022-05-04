@@ -7,15 +7,9 @@ import io.netty.buffer.ByteBuf;
  */
 public class Pong implements Cmd {
 
-    private static Pong instance = new Pong();
-
     @Override
     public void encoderTo(ByteBuf buf) {
         buf.writeInt(Cmd.PONG);
-    }
-
-    public static Pong decoderFrom(ByteBuf in) {
-        return instance;
     }
 
 }

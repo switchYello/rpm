@@ -7,15 +7,9 @@ import io.netty.buffer.ByteBuf;
  */
 public class Ping implements Cmd {
 
-    private static Ping instance = new Ping();
-
     @Override
     public void encoderTo(ByteBuf buf) {
         buf.writeInt(Cmd.PING);
-    }
-
-    public static Ping decoderFrom(ByteBuf in) {
-        return instance;
     }
 
 }

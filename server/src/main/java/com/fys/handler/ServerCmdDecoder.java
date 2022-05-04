@@ -40,7 +40,7 @@ public class ServerCmdDecoder extends ReplayingDecoder<Void> {
 
         //收到客户端的ping
         if (flag == Cmd.PING) {
-            out.add(Ping.decoderFrom(in));
+            out.add(new Ping());
             return;
         }
 
