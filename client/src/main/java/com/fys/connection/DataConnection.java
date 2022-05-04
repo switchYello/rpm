@@ -51,22 +51,26 @@ public class DataConnection {
 
     //2.客户端连接成功后，才开始bind服务端
     private void onClientActive(ConnectionToLocal local) {
+        log.debug("clientActive");
         serviceConnection.bindToLocal(local);
     }
 
     //3.服务器连接成功后，发送指令
     private void onServiceActive(ConnectionToService service) {
+        log.debug("serviceActive");
         NewDataConnectionCmd cmd = new NewDataConnectionCmd(msg.getSessionId());
         service.writeAndFlush(cmd);
     }
 
     private void onClientRead(ByteBuf msg, ConnectionToLocal local, ConnectionToService service) {
+        log.debug("clientRead");
         RawDataCmd rawDataCmd = new RawDataCmd(msg);
         service.writeAndFlush(rawDataCmd);
     }
 
     private void onServiceRead(Object msg, ConnectionToLocal local, ConnectionToService service) {
         if (msg instanceof StartTransactionCmd) {
+            log.debug("client start read");
             local.startRead();
         } else if (msg instanceof RawDataCmd) {
             local.writeAndFlush(((RawDataCmd) msg).getContent());

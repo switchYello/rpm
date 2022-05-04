@@ -29,7 +29,9 @@ public class App {
     private static Options OPTIONS = new Options();
 
     public static void main(String[] args) throws ParseException {
-        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+        if (Debug.isDebug) {
+            ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+        }
         Config config = parseConfig(args);
         ex.scheduleWithFixedDelay(() -> {
             log.info("启动客户端:{}", count.getAndIncrement());

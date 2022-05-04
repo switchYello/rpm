@@ -1,5 +1,6 @@
 package com.fys.connection;
 
+import com.fys.Debug;
 import com.fys.InnerConnectionFactory;
 import com.fys.cmd.handler.CmdEncoder;
 import com.fys.cmd.handler.ErrorLogHandler;
@@ -55,19 +56,24 @@ public class ManagerConnection {
         ChannelFuture future = InnerConnectionFactory.createChannel(serverHost, serverPort, true);
         future.addListener((ChannelFutureListener) f -> {
             ChannelPipeline pipeline = f.channel().pipeline();
-            pipeline.addLast(new LoggingHandler());
-            pipeline.addLast(new CmdEncoder());
-
-            pipeline.addLast(new CmdDecoder());
-           // pipeline.addLast(new PingHandler()); //定时发ping
-            pipeline.addLast(new ManagerHandler());
-            pipeline.addLast(new ErrorLogHandler());
+            if (Debug.isDebug) {
+                pipeline.addLast(new LoggingHandler());
+                pipeline.addLast(new CmdEncoder());
+                pipeline.addLast(new CmdDecoder());
+                pipeline.addLast(new ConnectionInitHandler());
+                pipeline.addLast(new ErrorLogHandler());
+            } else {
+                pipeline.addLast(new CmdEncoder());
+                pipeline.addLast(new CmdDecoder());
+                pipeline.addLast(new PingHandler()); //定时发ping
+                pipeline.addLast(new ConnectionInitHandler());
+                pipeline.addLast(new ErrorLogHandler());
+            }
         });
         return future;
     }
 
-    private class ManagerHandler extends SimpleChannelInboundHandler<Cmd> {
-
+    private class ConnectionInitHandler extends SimpleChannelInboundHandler<Cmd> {
         /**
          * 连接服务器成功后，发送登录指令
          */
@@ -82,6 +88,7 @@ public class ManagerConnection {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, Cmd msg) {
             if (msg instanceof NeedDataConnectionCmd) {
+                log.debug("收到服务端 NeedDataConnectionCmd");
                 NeedDataConnectionCmd cmd = (NeedDataConnectionCmd) msg;
                 DataConnection dataConnection = new DataConnection(serverHost, serverPort, cmd.getLocalHost(), cmd.getLocalPort(), cmd);
                 dataConnection.startConnection();
@@ -96,7 +103,6 @@ public class ManagerConnection {
             log.info("收到未识别的消息:{}", msg);
             ctx.close();
         }
-
     }
 
 
